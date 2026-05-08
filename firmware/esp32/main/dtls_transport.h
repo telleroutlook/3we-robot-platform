@@ -25,6 +25,7 @@ void dtls_stop(void);
 esp_err_t dtls_send(const uint8_t *data, size_t len);
 void dtls_set_recv_callback(dtls_recv_callback_t cb);
 bool dtls_is_connected(void);
+bool dtls_session_was_resumed(void);
 void dtls_task(void *params);
 
 // Default configuration values

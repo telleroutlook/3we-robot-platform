@@ -19,6 +19,7 @@ static const char *TAG = "safety";
 
 #define NVS_NAMESPACE       "safety"
 #define NVS_KEY_SPEED_LIM   "spd_lim"
+#define NVS_KEY_RELAY_FAULT "relay_flt"
 #define DEFAULT_SPEED_LIMIT 1.0f
 
 static portMUX_TYPE safety_spinlock = portMUX_INITIALIZER_UNLOCKED;
@@ -26,6 +27,9 @@ static volatile safety_state_t state = SAFETY_NORMAL;
 static volatile int64_t last_watchdog_feed = 0;
 static safety_callback_t user_callback = NULL;
 static float speed_limit_mps = DEFAULT_SPEED_LIMIT;
+static uint8_t relay_fault_count = 0;
+
+static void persist_relay_fault(void);
 
 static void notify_state_change(void)
 {
@@ -72,6 +76,11 @@ esp_err_t safety_init(void)
                 speed_limit_mps = loaded;
             }
         }
+        uint8_t fault_flag = 0;
+        if (nvs_get_u8(nvs, NVS_KEY_RELAY_FAULT, &fault_flag) == ESP_OK && fault_flag != 0) {
+            state = SAFETY_RELAY_FAULT;
+            ESP_LOGE(TAG, "Persistent relay fault flag set - physical service required");
+        }
         nvs_close(nvs);
     }
 
@@ -96,6 +105,14 @@ bool safety_is_estopped(void)
     return estopped;
 }
 
+bool safety_is_relay_faulted(void)
+{
+    portENTER_CRITICAL(&safety_spinlock);
+    bool faulted = (state == SAFETY_RELAY_FAULT);
+    portEXIT_CRITICAL(&safety_spinlock);
+    return faulted;
+}
+
 void safety_trigger_estop(void)
 {
     portENTER_CRITICAL(&safety_spinlock);
@@ -118,6 +135,11 @@ esp_err_t safety_reset(void)
     }
 
     portENTER_CRITICAL(&safety_spinlock);
+    if (state == SAFETY_RELAY_FAULT) {
+        portEXIT_CRITICAL(&safety_spinlock);
+        ESP_LOGE(TAG, "Cannot reset: relay hardware fault - physical service required");
+        return ESP_ERR_INVALID_STATE;
+    }
     if (state != SAFETY_ESTOPPED) {
         portEXIT_CRITICAL(&safety_spinlock);
         return ESP_ERR_INVALID_STATE;
@@ -190,14 +212,36 @@ void safety_task(void *params)
         // Continuous relay feedback monitoring
         int relay_fb = gpio_get_level(SAFETY_RELAY_FB);
         if (current_state == SAFETY_NORMAL && relay_fb == 0) {
+            relay_fault_count++;
             portENTER_CRITICAL(&safety_spinlock);
             state = SAFETY_ESTOPPED;
             portEXIT_CRITICAL(&safety_spinlock);
             motor_stop_all();
             notify_state_change();
             ESP_LOGE(TAG, "RELAY FAULT: relay unexpectedly de-energized in NORMAL state");
+            if (relay_fault_count >= 3) {
+                portENTER_CRITICAL(&safety_spinlock);
+                state = SAFETY_RELAY_FAULT;
+                portEXIT_CRITICAL(&safety_spinlock);
+                notify_state_change();
+                persist_relay_fault();
+                ESP_LOGE(TAG, "RELAY FAULT ESCALATED: hardware damage suspected - service required");
+            }
         } else if (current_state == SAFETY_ESTOPPED && relay_fb != 0) {
+            relay_fault_count++;
             ESP_LOGE(TAG, "RELAY FAULT: relay energized while E-stopped - possible welded contact");
+            if (relay_fault_count >= 3) {
+                portENTER_CRITICAL(&safety_spinlock);
+                state = SAFETY_RELAY_FAULT;
+                portEXIT_CRITICAL(&safety_spinlock);
+                notify_state_change();
+                persist_relay_fault();
+                ESP_LOGE(TAG, "RELAY FAULT ESCALATED: welded contact confirmed - service required");
+            }
+        } else if (current_state == SAFETY_RELAY_FAULT) {
+            motor_stop_all();
+        } else {
+            relay_fault_count = 0;
         }
 
         // Watchdog: if control loop stalls, stop motors
@@ -239,7 +283,8 @@ esp_err_t safety_relay_selftest(void)
         int fb_level = gpio_get_level(SAFETY_RELAY_FB);
         if (fb_level == 0) {
             ESP_LOGE(TAG, "SELF-TEST FAILED: Relay not energized despite E-stop released");
-            state = SAFETY_ESTOPPED;
+            state = SAFETY_RELAY_FAULT;
+            persist_relay_fault();
             return ESP_ERR_INVALID_STATE;
         }
         ESP_LOGI(TAG, "Relay self-test PASSED (feedback=HIGH, relay energized)");
@@ -249,11 +294,48 @@ esp_err_t safety_relay_selftest(void)
         int fb_level = gpio_get_level(SAFETY_RELAY_FB);
         if (fb_level != 0) {
             ESP_LOGE(TAG, "SELF-TEST FAILED: Relay energized despite E-stop pressed");
+            state = SAFETY_RELAY_FAULT;
+            persist_relay_fault();
             return ESP_ERR_INVALID_STATE;
         }
         ESP_LOGI(TAG, "Relay self-test PASSED (feedback=LOW, E-stop active)");
     }
 
+    return ESP_OK;
+}
+
+static void persist_relay_fault(void)
+{
+    nvs_handle_t nvs;
+    if (nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs) == ESP_OK) {
+        nvs_set_u8(nvs, NVS_KEY_RELAY_FAULT, 1);
+        nvs_commit(nvs);
+        nvs_close(nvs);
+    }
+}
+
+esp_err_t safety_clear_relay_fault(void)
+{
+    portENTER_CRITICAL(&safety_spinlock);
+    if (state != SAFETY_RELAY_FAULT) {
+        portEXIT_CRITICAL(&safety_spinlock);
+        return ESP_ERR_INVALID_STATE;
+    }
+    state = SAFETY_ESTOPPED;
+    portEXIT_CRITICAL(&safety_spinlock);
+
+    relay_fault_count = 0;
+
+    nvs_handle_t nvs;
+    esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs);
+    if (err == ESP_OK) {
+        nvs_erase_key(nvs, NVS_KEY_RELAY_FAULT);
+        nvs_commit(nvs);
+        nvs_close(nvs);
+    }
+
+    notify_state_change();
+    ESP_LOGI(TAG, "Relay fault cleared - moved to ESTOPPED (manual reset still required)");
     return ESP_OK;
 }
 

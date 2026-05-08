@@ -191,3 +191,19 @@ int mbedtls_net_recv(void *ctx, unsigned char *buf, size_t len) {
 int mbedtls_net_recv_timeout(void *ctx, unsigned char *buf, size_t len, uint32_t timeout) {
     (void)ctx; (void)buf; (void)len; (void)timeout; return MBEDTLS_ERR_SSL_WANT_READ;
 }
+
+// Session cache stubs
+void mbedtls_ssl_cache_init(mbedtls_ssl_cache_context *cache) { (void)cache; }
+void mbedtls_ssl_cache_free(mbedtls_ssl_cache_context *cache) { (void)cache; }
+void mbedtls_ssl_cache_set_timeout(mbedtls_ssl_cache_context *cache, int timeout) { (void)cache; (void)timeout; }
+void mbedtls_ssl_cache_set_max_entries(mbedtls_ssl_cache_context *cache, int max) { (void)cache; (void)max; }
+int mbedtls_ssl_cache_get(void *data, mbedtls_ssl_session *session) { (void)data; (void)session; return -1; }
+int mbedtls_ssl_cache_set(void *data, const mbedtls_ssl_session *session) { (void)data; (void)session; return 0; }
+void mbedtls_ssl_conf_session_cache(mbedtls_ssl_config *conf, void *p_cache,
+                                     int (*f_get)(void *, mbedtls_ssl_session *),
+                                     int (*f_set)(void *, const mbedtls_ssl_session *)) {
+    (void)conf; (void)p_cache; (void)f_get; (void)f_set;
+}
+int mbedtls_ssl_get_session(const mbedtls_ssl_context *ssl, mbedtls_ssl_session *session) {
+    (void)ssl; (void)session; return 0;
+}

@@ -13,6 +13,8 @@ typedef struct { int fd; } mbedtls_net_context;
 typedef struct { int dummy; } mbedtls_entropy_context;
 typedef struct { int dummy; } mbedtls_ctr_drbg_context;
 typedef struct { int dummy; } mbedtls_ssl_cookie_ctx;
+typedef struct { int dummy; } mbedtls_ssl_cache_context;
+typedef struct { int dummy; } mbedtls_ssl_session;
 typedef struct { uint32_t fin_ms; uint32_t int_ms; } mbedtls_timing_delay_context;
 
 // --- SSL transport/preset constants ---
@@ -97,6 +99,18 @@ int mbedtls_ssl_session_reset(mbedtls_ssl_context *ssl);
 int mbedtls_ssl_close_notify(mbedtls_ssl_context *ssl);
 const char *mbedtls_ssl_get_ciphersuite(const mbedtls_ssl_context *ssl);
 int mbedtls_ssl_set_hs_psk(mbedtls_ssl_context *ssl, const unsigned char *psk, size_t psk_len);
+
+// Session cache
+void mbedtls_ssl_cache_init(mbedtls_ssl_cache_context *cache);
+void mbedtls_ssl_cache_free(mbedtls_ssl_cache_context *cache);
+void mbedtls_ssl_cache_set_timeout(mbedtls_ssl_cache_context *cache, int timeout);
+void mbedtls_ssl_cache_set_max_entries(mbedtls_ssl_cache_context *cache, int max);
+int mbedtls_ssl_cache_get(void *data, mbedtls_ssl_session *session);
+int mbedtls_ssl_cache_set(void *data, const mbedtls_ssl_session *session);
+void mbedtls_ssl_conf_session_cache(mbedtls_ssl_config *conf, void *p_cache,
+                                     int (*f_get)(void *, mbedtls_ssl_session *),
+                                     int (*f_set)(void *, const mbedtls_ssl_session *));
+int mbedtls_ssl_get_session(const mbedtls_ssl_context *ssl, mbedtls_ssl_session *session);
 
 int mbedtls_net_send(void *ctx, const unsigned char *buf, size_t len);
 int mbedtls_net_recv(void *ctx, unsigned char *buf, size_t len);

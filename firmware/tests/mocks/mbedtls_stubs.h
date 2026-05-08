@@ -38,6 +38,12 @@ int mbedtls_ecdsa_verify(mbedtls_ecp_group *grp, const unsigned char *buf, size_
                           const mbedtls_ecp_point *Q, const mbedtls_mpi *r, const mbedtls_mpi *s);
 
 // --- mbedtls SHA-256 ---
+typedef struct { int dummy; } mbedtls_sha256_context;
+void mbedtls_sha256_init(mbedtls_sha256_context *ctx);
+void mbedtls_sha256_free(mbedtls_sha256_context *ctx);
+int mbedtls_sha256_starts(mbedtls_sha256_context *ctx, int is224);
+int mbedtls_sha256_update(mbedtls_sha256_context *ctx, const unsigned char *input, size_t ilen);
+int mbedtls_sha256_finish(mbedtls_sha256_context *ctx, unsigned char *output);
 int mbedtls_sha256(const unsigned char *input, size_t ilen,
                    unsigned char *output, int is224);
 

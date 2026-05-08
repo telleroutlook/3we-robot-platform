@@ -8,7 +8,8 @@
 typedef enum {
     SAFETY_NORMAL = 0,
     SAFETY_ESTOPPED,
-    SAFETY_RECOVERY_PENDING
+    SAFETY_RECOVERY_PENDING,
+    SAFETY_RELAY_FAULT
 } safety_state_t;
 
 typedef void (*safety_callback_t)(safety_state_t state);
@@ -25,6 +26,12 @@ void safety_task(void *params);
 
 // Safety relay self-test (run at startup)
 esp_err_t safety_relay_selftest(void);
+
+// Returns true if relay hardware is faulted (requires physical service)
+bool safety_is_relay_faulted(void);
+
+// Clear relay fault flag in NVS (called after physical service intervention)
+esp_err_t safety_clear_relay_fault(void);
 
 // Speed limiter (persisted to NVS)
 #define SPEED_LIMIT_HARD_CAP_MPS  1.2f  // meters per second

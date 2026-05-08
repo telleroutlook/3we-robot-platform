@@ -62,6 +62,18 @@ esp_err_t nvs_set_u32(nvs_handle_t handle, const char *key, uint32_t value) {
     return ESP_OK;
 }
 esp_err_t nvs_commit(nvs_handle_t handle) { (void)handle; return ESP_OK; }
+esp_err_t nvs_get_u8(nvs_handle_t handle, const char *key, uint8_t *out) {
+    (void)handle; (void)key; (void)out;
+    return ESP_FAIL;
+}
+esp_err_t nvs_set_u8(nvs_handle_t handle, const char *key, uint8_t value) {
+    (void)handle; (void)key; (void)value;
+    return ESP_OK;
+}
+esp_err_t nvs_erase_key(nvs_handle_t handle, const char *key) {
+    (void)handle; (void)key;
+    return ESP_OK;
+}
 
 // --- PCNT mocks ---
 static int mock_pcnt_counts[4] = {0};

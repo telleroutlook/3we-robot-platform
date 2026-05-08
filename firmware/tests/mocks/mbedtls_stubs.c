@@ -63,6 +63,15 @@ int mbedtls_ecdsa_verify(mbedtls_ecp_group *grp, const unsigned char *buf, size_
 }
 
 // --- mbedtls SHA-256 ---
+void mbedtls_sha256_init(mbedtls_sha256_context *ctx) { (void)ctx; }
+void mbedtls_sha256_free(mbedtls_sha256_context *ctx) { (void)ctx; }
+int mbedtls_sha256_starts(mbedtls_sha256_context *ctx, int is224) { (void)ctx; (void)is224; return 0; }
+int mbedtls_sha256_update(mbedtls_sha256_context *ctx, const unsigned char *input, size_t ilen) { (void)ctx; (void)input; (void)ilen; return 0; }
+int mbedtls_sha256_finish(mbedtls_sha256_context *ctx, unsigned char *output) {
+    (void)ctx;
+    memcpy(output, mock_sha256, 32);
+    return 0;
+}
 int mbedtls_sha256(const unsigned char *input, size_t ilen,
                    unsigned char *output, int is224) {
     (void)input; (void)ilen; (void)is224;
