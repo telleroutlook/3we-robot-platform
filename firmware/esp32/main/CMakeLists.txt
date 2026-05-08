@@ -6,6 +6,7 @@ idf_component_register(
         "ultrasonic.c"
         "encoder.c"
         "imu.c"
+        "i2c_bus.c"
         "battery.c"
         "safety.c"
         "microros_transport.c"

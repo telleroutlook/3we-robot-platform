@@ -1,5 +1,4 @@
 Reference,Value,Package,Manufacturer,MPN,Quantity,Unit_Price_CNY,Supplier,Notes
-# Includes all Pro SKU components plus:
 5G1,RM520N-GL,M.2 3052,Quectel,RM520N-GL,1,680.00,LCSC,5G NR Sub-6GHz modem (replaces 4G)
 ANT2,5G MIMO Antenna x2,-,-,-,2,35.00,Taobao,600-6000MHz dual antenna
 LORA1,SX1276 LoRa Module,DIP,Semtech,SX1276,1,28.00,LCSC,868/915MHz long-range

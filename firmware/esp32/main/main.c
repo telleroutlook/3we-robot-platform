@@ -3,6 +3,7 @@
 #include "ultrasonic.h"
 #include "encoder.h"
 #include "imu.h"
+#include "i2c_bus.h"
 #include "battery.h"
 #include "safety.h"
 #include "microros_transport.h"
@@ -67,6 +68,9 @@ void app_main(void)
     ESP_ERROR_CHECK(motor_init());
     ESP_ERROR_CHECK(encoder_init());
     ESP_ERROR_CHECK(ultrasonic_init());
+
+    // I2C bus mutex must be initialized before any I2C consumers
+    ESP_ERROR_CHECK(i2c_bus_init());
 
     esp_err_t imu_ret = imu_init();
     if (imu_ret != ESP_OK) {
@@ -137,9 +141,9 @@ void app_main(void)
     }
 
     // Validate PSK is provisioned (not all-zeros)
-    static const uint8_t zero_key[16] = {0};
+    static const uint8_t zero_key[sizeof(dtls_cfg.psk_key)] = {0};
     esp_err_t dtls_ret;
-    if (memcmp(dtls_cfg.psk_key, zero_key, dtls_cfg.psk_key_len) == 0) {
+    if (memcmp(dtls_cfg.psk_key, zero_key, sizeof(dtls_cfg.psk_key)) == 0) {
         ESP_LOGE(TAG, "DTLS PSK not provisioned - encrypted channel DISABLED. "
                  "Provision a key via NVS 'security/dtls_psk' before deployment.");
         dtls_ret = ESP_ERR_INVALID_STATE;

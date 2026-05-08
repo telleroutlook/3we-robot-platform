@@ -64,7 +64,7 @@ class PayloadDescriptor:
             return None
 
         payload_id = data[5:21].rstrip(b'\x00').decode('ascii', errors='replace')
-        name = data[0x15:0x35].rstrip(b'\x00').decode('utf-8', errors='replace')
+        name = data[0x15:0x35].rstrip(b'\x00').decode('ascii', errors='replace')
         power_5v = struct.unpack('>H', data[0x35:0x37])[0]
         power_12v = struct.unpack('>H', data[0x37:0x39])[0]
         capabilities = data[0x39]

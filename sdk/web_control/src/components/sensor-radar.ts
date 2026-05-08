@@ -79,6 +79,7 @@ export class RobotSensorRadar extends HTMLElement {
     right: { range: 4.0, maxRange: 4.0 },
   };
 
+  private pendingRender = false;
   private unsubscribers: Array<() => void> = [];
 
   constructor() {
@@ -119,7 +120,13 @@ export class RobotSensorRadar extends HTMLElement {
       range: msg.range,
       maxRange: msg.max_range || 4.0,
     };
-    this.render();
+    if (!this.pendingRender) {
+      this.pendingRender = true;
+      requestAnimationFrame(() => {
+        this.pendingRender = false;
+        this.render();
+      });
+    }
   }
 
   private render(): void {

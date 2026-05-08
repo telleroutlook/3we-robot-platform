@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "payload_hotplug.h"
+#include "i2c_bus.h"
 #include "pin_definitions.h"
 
 #include "driver/i2c.h"
@@ -22,6 +23,16 @@ static const char *TAG = "hotplug";
 #define INIT_WAIT_MS        110
 #define READY_CONFIRM_MS    100
 
+// Capability bit allowlist: only these interfaces are supported by hardware
+#define CAP_I2C     (1 << 0)
+#define CAP_SPI     (1 << 1)
+#define CAP_UART    (1 << 2)
+#define CAP_GPIO    (1 << 3)
+#define CAP_CAN     (1 << 4)
+#define ALLOWED_CAPABILITIES (CAP_I2C | CAP_SPI | CAP_UART | CAP_GPIO | CAP_CAN)
+// Allowed GPIO mask: only pins exposed on the payload connector
+#define ALLOWED_GPIO_MASK   0x0F
+
 // MCP23017 register addresses for payload power control
 #define MCP_IODIRA          0x00
 #define MCP_GPIOA           0x12
@@ -37,22 +48,33 @@ static esp_err_t mcp23017_write_bit(uint8_t bit, bool value)
     uint8_t reg_val = 0;
     uint8_t reg_addr = MCP_OLATA;
 
-    i2c_master_write_read_device(I2C_NUM_0, MCP23017_ADDR, &reg_addr, 1, &reg_val, 1,
-                                  pdMS_TO_TICKS(50));
+    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
+
+    esp_err_t read_err = i2c_master_write_read_device(I2C_NUM_0, MCP23017_ADDR, &reg_addr, 1,
+                                                       &reg_val, 1, pdMS_TO_TICKS(50));
+    if (read_err != ESP_OK) {
+        i2c_bus_unlock();
+        return read_err;
+    }
 
     if (value) reg_val |= (1 << bit);
     else reg_val &= ~(1 << bit);
 
     uint8_t buf[2] = { MCP_OLATA, reg_val };
-    return i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf, 2, pdMS_TO_TICKS(50));
+    esp_err_t err = i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf, 2, pdMS_TO_TICKS(50));
+    i2c_bus_unlock();
+    return err;
 }
 
 static bool read_detect_pin(void)
 {
     uint8_t reg_addr = MCP_GPIOA;
     uint8_t reg_val = 0;
-    i2c_master_write_read_device(I2C_NUM_0, MCP23017_ADDR, &reg_addr, 1, &reg_val, 1,
-                                  pdMS_TO_TICKS(50));
+    if (!i2c_bus_lock()) return false;
+    esp_err_t err = i2c_master_write_read_device(I2C_NUM_0, MCP23017_ADDR, &reg_addr, 1,
+                                                  &reg_val, 1, pdMS_TO_TICKS(50));
+    i2c_bus_unlock();
+    if (err != ESP_OK) return false;
     return !(reg_val & (1 << PAYLOAD_DETECT_BIT));  // Active low
 }
 
@@ -61,8 +83,10 @@ static esp_err_t read_eeprom_descriptor(payload_descriptor_t *desc)
     uint8_t data[64];
     uint8_t reg = 0x00;
 
+    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
     esp_err_t err = i2c_master_write_read_device(I2C_NUM_0, EEPROM_ADDR,
                                                   &reg, 1, data, 64, pdMS_TO_TICKS(100));
+    i2c_bus_unlock();
     if (err != ESP_OK) return err;
 
     // Verify magic
@@ -81,6 +105,18 @@ static esp_err_t read_eeprom_descriptor(payload_descriptor_t *desc)
     desc->power_12v_ma = (data[0x37] << 8) | data[0x38];
     desc->capabilities = data[0x39];
     desc->gpio_mask = data[0x3A];
+
+    // Validate capabilities against hardware allowlist
+    if (desc->capabilities & ~ALLOWED_CAPABILITIES) {
+        ESP_LOGW(TAG, "Unsupported capabilities bits 0x%02X masked",
+                 desc->capabilities & ~ALLOWED_CAPABILITIES);
+        desc->capabilities &= ALLOWED_CAPABILITIES;
+    }
+    if (desc->gpio_mask & ~ALLOWED_GPIO_MASK) {
+        ESP_LOGW(TAG, "GPIO mask 0x%02X exceeds allowed pins, masked to 0x%02X",
+                 desc->gpio_mask, desc->gpio_mask & ALLOWED_GPIO_MASK);
+        desc->gpio_mask &= ALLOWED_GPIO_MASK;
+    }
 
     return ESP_OK;
 }
@@ -104,11 +140,13 @@ esp_err_t payload_hotplug_init(void)
     // Configure MCP23017 GPA0-2 as outputs (power control)
     // GPA3 as input (DETECT)
     uint8_t iodir_buf[2] = { MCP_IODIRA, 0xF8 };  // GPA0-2 output, GPA3-7 input
+    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
     i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, iodir_buf, 2, pdMS_TO_TICKS(50));
 
     // Ensure all power rails off at init
     uint8_t latch_buf[2] = { MCP_OLATA, 0x00 };
     i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, latch_buf, 2, pdMS_TO_TICKS(50));
+    i2c_bus_unlock();
 
     state = PAYLOAD_STATE_ABSENT;
     ESP_LOGI(TAG, "Payload hot-plug system initialized");

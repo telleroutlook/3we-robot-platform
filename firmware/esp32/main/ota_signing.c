@@ -5,12 +5,12 @@
 #include "esp_ota_ops.h"
 #include "esp_partition.h"
 #include "mbedtls/sha256.h"
-
-// Ed25519 verification using libsodium-style or tweetnacl
-// ESP-IDF includes mbedtls which supports Ed25519 via ECDSA alt
-// For pure Ed25519, we use a minimal implementation
-#include "mbedtls/md.h"
+#include "mbedtls/ecdsa.h"
+#include "mbedtls/ecp.h"
 #include "mbedtls/pk.h"
+#include "mbedtls/md.h"
+#include "mbedtls/error.h"
+#include "mbedtls/bignum.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -21,30 +21,51 @@ static const char *TAG = "ota_sign";
 static uint8_t stored_pubkey[OTA_PUBKEY_SIZE];
 static bool initialized = false;
 
-// Minimal Ed25519 verify (using mbedtls ECDSA with Edwards curve)
-// In production, use esp_secure_boot APIs or dedicated Ed25519 lib
-static bool ed25519_verify(const uint8_t *message, size_t msg_len,
-                           const uint8_t *signature, const uint8_t *pubkey)
+static bool ecdsa_p256_verify(const uint8_t *hash, size_t hash_len,
+                              const uint8_t *signature, const uint8_t *pubkey)
 {
-    // ESP-IDF secure boot v2 uses RSA-PSS or ECDSA-256 natively.
-    // For Ed25519 specifically, the recommended approach is:
-    // 1. Use esp_secure_boot (hardware verified boot) in production
-    // 2. For application-level OTA verification, use a bundled Ed25519 lib
-    //
-    // This is a placeholder that demonstrates the verification flow.
-    // Replace with actual Ed25519 verify when integrating a crypto library
-    // (e.g., micro-ecc, tweetnacl, or libsodium)
-    //
-    // SECURITY NOTE: This placeholder always returns false to prevent
-    // accepting unsigned images. A real implementation must be provided.
+    int ret;
+    mbedtls_ecdsa_context ctx;
+    mbedtls_ecdsa_init(&ctx);
 
-    (void)message;
-    (void)msg_len;
-    (void)signature;
-    (void)pubkey;
+    ret = mbedtls_ecp_group_load(&ctx.grp, MBEDTLS_ECP_DP_SECP256R1);
+    if (ret != 0) {
+        ESP_LOGE(TAG, "ecp_group_load P-256 failed: -0x%04X", (unsigned int)-ret);
+        mbedtls_ecdsa_free(&ctx);
+        return false;
+    }
 
-    ESP_LOGW(TAG, "Ed25519 verify placeholder - integrate actual crypto lib");
-    return false;
+    // Load uncompressed public key (0x04 || X || Y = 65 bytes)
+    uint8_t uncompressed[65];
+    uncompressed[0] = 0x04;
+    memcpy(&uncompressed[1], pubkey, OTA_PUBKEY_SIZE);
+
+    ret = mbedtls_ecp_point_read_binary(&ctx.grp, &ctx.Q, uncompressed, sizeof(uncompressed));
+    if (ret != 0) {
+        ESP_LOGE(TAG, "point_read_binary failed: -0x%04X", (unsigned int)-ret);
+        mbedtls_ecdsa_free(&ctx);
+        return false;
+    }
+
+    // Signature is 64 bytes: r (32) || s (32)
+    mbedtls_mpi r, s;
+    mbedtls_mpi_init(&r);
+    mbedtls_mpi_init(&s);
+    mbedtls_mpi_read_binary(&r, signature, 32);
+    mbedtls_mpi_read_binary(&s, signature + 32, 32);
+
+    ret = mbedtls_ecdsa_verify(&ctx.grp, hash, hash_len, &ctx.Q, &r, &s);
+
+    mbedtls_mpi_free(&r);
+    mbedtls_mpi_free(&s);
+    mbedtls_ecdsa_free(&ctx);
+
+    if (ret != 0) {
+        ESP_LOGW(TAG, "Signature verification failed: -0x%04X", (unsigned int)-ret);
+        return false;
+    }
+
+    return true;
 }
 
 esp_err_t ota_signing_init(const uint8_t pubkey[OTA_PUBKEY_SIZE])
@@ -52,7 +73,7 @@ esp_err_t ota_signing_init(const uint8_t pubkey[OTA_PUBKEY_SIZE])
     if (!pubkey) return ESP_ERR_INVALID_ARG;
     memcpy(stored_pubkey, pubkey, OTA_PUBKEY_SIZE);
     initialized = true;
-    ESP_LOGI(TAG, "OTA signing initialized (Ed25519 pubkey loaded)");
+    ESP_LOGI(TAG, "OTA signing initialized (ECDSA P-256 pubkey loaded)");
     return ESP_OK;
 }
 
@@ -87,10 +108,10 @@ bool ota_verify_image(const uint8_t *image_data, size_t image_size,
         return false;
     }
 
-    // Verify Ed25519 signature over the hash
-    if (!ed25519_verify(computed_hash, OTA_HASH_SIZE,
+    // Verify ECDSA P-256 signature over the hash
+    if (!ecdsa_p256_verify(computed_hash, OTA_HASH_SIZE,
                         header->signature, stored_pubkey)) {
-        ESP_LOGE(TAG, "Ed25519 signature verification FAILED - rejecting image");
+        ESP_LOGE(TAG, "ECDSA P-256 signature verification FAILED - rejecting image");
         return false;
     }
 
@@ -105,12 +126,22 @@ esp_err_t ota_apply_update(const uint8_t *image_data, size_t total_size)
         return ESP_ERR_INVALID_SIZE;
     }
 
+    // Reject unreasonably large images (16 MB max for ESP32 flash)
+    if (total_size > (16 * 1024 * 1024)) {
+        ESP_LOGE(TAG, "Image too large: %zu bytes", total_size);
+        return ESP_ERR_INVALID_SIZE;
+    }
+
     const ota_image_header_t *header = (const ota_image_header_t *)image_data;
     const uint8_t *firmware = image_data + sizeof(ota_image_header_t);
     size_t firmware_size = total_size - sizeof(ota_image_header_t);
 
     // Reject version downgrades
     uint32_t current = ota_get_current_version();
+    if (current == UINT32_MAX) {
+        ESP_LOGE(TAG, "Cannot determine current version - rejecting update");
+        return ESP_ERR_INVALID_STATE;
+    }
     if (header->version <= current) {
         ESP_LOGE(TAG, "Version rollback rejected: incoming=0x%08lX, current=0x%08lX",
                  (unsigned long)header->version, (unsigned long)current);

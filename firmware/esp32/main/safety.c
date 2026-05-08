@@ -21,6 +21,7 @@ static const char *TAG = "safety";
 #define NVS_KEY_SPEED_LIM   "spd_lim"
 #define DEFAULT_SPEED_LIMIT 1.0f
 
+static portMUX_TYPE safety_spinlock = portMUX_INITIALIZER_UNLOCKED;
 static volatile safety_state_t state = SAFETY_NORMAL;
 static volatile int64_t last_watchdog_feed = 0;
 static safety_callback_t user_callback = NULL;
@@ -33,7 +34,9 @@ static void notify_state_change(void)
 
 static void IRAM_ATTR estop_isr(void *arg)
 {
+    portENTER_CRITICAL_ISR(&safety_spinlock);
     state = SAFETY_ESTOPPED;
+    portEXIT_CRITICAL_ISR(&safety_spinlock);
 }
 
 esp_err_t safety_init(void)
@@ -89,11 +92,15 @@ bool safety_is_estopped(void)
 
 void safety_trigger_estop(void)
 {
+    portENTER_CRITICAL(&safety_spinlock);
     if (state == SAFETY_NORMAL) {
         state = SAFETY_ESTOPPED;
+        portEXIT_CRITICAL(&safety_spinlock);
         motor_stop_all();
         notify_state_change();
         ESP_LOGW(TAG, "Software E-stop triggered");
+    } else {
+        portEXIT_CRITICAL(&safety_spinlock);
     }
 }
 
@@ -105,8 +112,10 @@ esp_err_t safety_reset(void)
         return ESP_ERR_INVALID_STATE;
     }
 
+    portENTER_CRITICAL(&safety_spinlock);
     state = SAFETY_NORMAL;
     last_watchdog_feed = esp_timer_get_time();
+    portEXIT_CRITICAL(&safety_spinlock);
     notify_state_change();
     ESP_LOGI(TAG, "Safety reset - returning to normal operation");
     return ESP_OK;
@@ -126,10 +135,16 @@ void safety_task(void *params)
 {
     while (1) {
         // Check hardware E-stop (debounced via ISR + periodic poll)
-        if (gpio_get_level(ESTOP_GPIO) == 0 && state == SAFETY_NORMAL) {
+        portENTER_CRITICAL(&safety_spinlock);
+        safety_state_t current_state = state;
+        portEXIT_CRITICAL(&safety_spinlock);
+
+        if (gpio_get_level(ESTOP_GPIO) == 0 && current_state == SAFETY_NORMAL) {
             vTaskDelay(pdMS_TO_TICKS(ESTOP_DEBOUNCE_MS));
             if (gpio_get_level(ESTOP_GPIO) == 0) {
+                portENTER_CRITICAL(&safety_spinlock);
                 state = SAFETY_ESTOPPED;
+                portEXIT_CRITICAL(&safety_spinlock);
                 motor_stop_all();
                 notify_state_change();
                 ESP_LOGW(TAG, "Hardware E-stop detected");
@@ -137,10 +152,12 @@ void safety_task(void *params)
         }
 
         // Watchdog: if control loop stalls, stop motors
-        if (state == SAFETY_NORMAL) {
+        if (current_state == SAFETY_NORMAL) {
             int64_t elapsed = esp_timer_get_time() - last_watchdog_feed;
             if (elapsed > (WATCHDOG_TIMEOUT_MS * 1000LL)) {
+                portENTER_CRITICAL(&safety_spinlock);
                 state = SAFETY_ESTOPPED;
+                portEXIT_CRITICAL(&safety_spinlock);
                 motor_stop_all();
                 notify_state_change();
                 ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");

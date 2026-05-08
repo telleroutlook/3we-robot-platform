@@ -4,10 +4,13 @@
 #include "robot_params.h"
 
 #include "driver/gpio.h"
+#include "driver/rmt_rx.h"
+#include "driver/rmt_tx.h"
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 
 #include <string.h>
 
@@ -22,6 +25,21 @@ static const uint8_t echo_pins[US_COUNT] = {
 
 static float last_distance[US_COUNT];
 
+static rmt_channel_handle_t rx_channels[US_COUNT];
+static rmt_receive_config_t rx_config;
+static rmt_symbol_word_t rx_symbols[US_COUNT][64];
+static SemaphoreHandle_t rx_done_sem[US_COUNT];
+
+static bool rmt_rx_done_callback(rmt_channel_handle_t channel,
+                                 const rmt_rx_done_event_data_t *edata,
+                                 void *user_data)
+{
+    BaseType_t high_task_wakeup = pdFALSE;
+    SemaphoreHandle_t sem = (SemaphoreHandle_t)user_data;
+    xSemaphoreGiveFromISR(sem, &high_task_wakeup);
+    return high_task_wakeup == pdTRUE;
+}
+
 esp_err_t ultrasonic_init(void)
 {
     gpio_config_t trig_cfg = {
@@ -34,17 +52,29 @@ esp_err_t ultrasonic_init(void)
     gpio_set_level(US_TRIG, 0);
 
     for (int i = 0; i < US_COUNT; i++) {
-        gpio_config_t echo_cfg = {
-            .pin_bit_mask = (1ULL << echo_pins[i]),
-            .mode = GPIO_MODE_INPUT,
-            .pull_up_en = GPIO_PULLUP_DISABLE,
-            .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        };
-        gpio_config(&echo_cfg);
         last_distance[i] = US_MAX_RANGE_M;
+
+        rx_done_sem[i] = xSemaphoreCreateBinary();
+
+        rmt_rx_channel_config_t rx_chan_cfg = {
+            .gpio_num = echo_pins[i],
+            .clk_src = RMT_CLK_SRC_DEFAULT,
+            .resolution_hz = 1000000,  // 1 µs resolution
+            .mem_block_symbols = 64,
+        };
+        ESP_ERROR_CHECK(rmt_new_rx_channel(&rx_chan_cfg, &rx_channels[i]));
+
+        rmt_rx_event_callbacks_t cbs = {
+            .on_recv_done = rmt_rx_done_callback,
+        };
+        ESP_ERROR_CHECK(rmt_rx_register_event_callbacks(rx_channels[i], &cbs, rx_done_sem[i]));
+        ESP_ERROR_CHECK(rmt_enable(rx_channels[i]));
     }
 
-    ESP_LOGI(TAG, "Ultrasonic sensors initialized (trig=%d)", US_TRIG);
+    rx_config.signal_range_min_ns = 1000;
+    rx_config.signal_range_max_ns = US_TIMEOUT_US * 1000;
+
+    ESP_LOGI(TAG, "Ultrasonic sensors initialized with RMT (trig=%d)", US_TRIG);
     return ESP_OK;
 }
 
@@ -52,32 +82,39 @@ esp_err_t ultrasonic_read(ultrasonic_id_t id, float *distance_m)
 {
     if (id >= US_COUNT || !distance_m) return ESP_ERR_INVALID_ARG;
 
+    ESP_ERROR_CHECK(rmt_receive(rx_channels[id], rx_symbols[id],
+                                sizeof(rx_symbols[id]), &rx_config));
+
     // Send trigger pulse
     gpio_set_level(US_TRIG, 1);
     esp_rom_delay_us(US_TRIGGER_PULSE_US);
     gpio_set_level(US_TRIG, 0);
 
-    // Wait for echo to go high
-    int64_t start = esp_timer_get_time();
-    while (gpio_get_level(echo_pins[id]) == 0) {
-        if ((esp_timer_get_time() - start) > US_TIMEOUT_US) {
-            *distance_m = US_MAX_RANGE_M;
-            return ESP_ERR_TIMEOUT;
+    // Wait for RMT capture to complete (interrupt-driven)
+    if (xSemaphoreTake(rx_done_sem[id], pdMS_TO_TICKS(30)) != pdTRUE) {
+        *distance_m = US_MAX_RANGE_M;
+        return ESP_ERR_TIMEOUT;
+    }
+
+    // Parse captured symbols: look for the echo pulse (high duration)
+    uint32_t pulse_us = 0;
+    for (int s = 0; s < 64 && rx_symbols[id][s].duration0 != 0; s++) {
+        if (rx_symbols[id][s].level0 == 1) {
+            pulse_us = rx_symbols[id][s].duration0;
+            break;
+        }
+        if (rx_symbols[id][s].level1 == 1) {
+            pulse_us = rx_symbols[id][s].duration1;
+            break;
         }
     }
 
-    // Measure echo pulse width
-    int64_t echo_start = esp_timer_get_time();
-    while (gpio_get_level(echo_pins[id]) == 1) {
-        if ((esp_timer_get_time() - echo_start) > US_TIMEOUT_US) {
-            *distance_m = US_MAX_RANGE_M;
-            return ESP_ERR_TIMEOUT;
-        }
+    if (pulse_us == 0) {
+        *distance_m = US_MAX_RANGE_M;
+        return ESP_ERR_TIMEOUT;
     }
-    int64_t echo_end = esp_timer_get_time();
 
-    float pulse_us = (float)(echo_end - echo_start);
-    *distance_m = (pulse_us * 0.000343f) / 2.0f;
+    *distance_m = ((float)pulse_us * 0.000343f) / 2.0f;
 
     if (*distance_m < US_MIN_RANGE_M) *distance_m = US_MIN_RANGE_M;
     if (*distance_m > US_MAX_RANGE_M) *distance_m = US_MAX_RANGE_M;

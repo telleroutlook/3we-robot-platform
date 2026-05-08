@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "thermal_monitor.h"
+#include "i2c_bus.h"
 #include "motor_control.h"
 #include "safety.h"
 #include "pin_definitions.h"
@@ -41,14 +42,19 @@ static thermal_reading_t last_reading;
 static esp_err_t ina219_write_reg(uint8_t reg, uint16_t value)
 {
     uint8_t buf[3] = { reg, (value >> 8) & 0xFF, value & 0xFF };
-    return i2c_master_write_to_device(I2C_NUM_0, INA219_ADDR, buf, 3, pdMS_TO_TICKS(50));
+    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
+    esp_err_t err = i2c_master_write_to_device(I2C_NUM_0, INA219_ADDR, buf, 3, pdMS_TO_TICKS(50));
+    i2c_bus_unlock();
+    return err;
 }
 
 static esp_err_t ina219_read_reg(uint8_t reg, uint16_t *value)
 {
     uint8_t data[2];
+    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
     esp_err_t err = i2c_master_write_read_device(I2C_NUM_0, INA219_ADDR,
                                                   &reg, 1, data, 2, pdMS_TO_TICKS(50));
+    i2c_bus_unlock();
     if (err == ESP_OK) {
         *value = ((uint16_t)data[0] << 8) | data[1];
     }

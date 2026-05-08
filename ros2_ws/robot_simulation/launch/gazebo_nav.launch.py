@@ -34,8 +34,8 @@ def generate_launch_description():
 
     nav2_params_arg = DeclareLaunchArgument(
         'nav2_params',
-        default_value=PathJoinSubstitution([pkg_bringup, 'config', 'nav2_params.yaml']),
-        description='Path to Nav2 parameters file',
+        default_value=PathJoinSubstitution([pkg_simulation, 'config', 'nav2_params_sim.yaml']),
+        description='Path to Nav2 parameters file (defaults to simulation overlay)',
     )
 
     # --- Include base Gazebo simulation ---
@@ -50,25 +50,15 @@ def generate_launch_description():
         }.items(),
     )
 
-    # --- Include Nav2 navigation stack ---
-    nav2_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution([pkg_nav2_bringup, 'launch', 'navigation_launch.py'])
-        ),
-        launch_arguments={
-            'params_file': LaunchConfiguration('nav2_params'),
-            'use_sim_time': 'true',
-        }.items(),
-    )
-
-    # --- Include SLAM or localization from robot_bringup ---
-    slam_launch = IncludeLaunchDescription(
+    # --- Include Nav2 + SLAM from robot_bringup (single unified stack) ---
+    navigation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([pkg_bringup, 'launch', 'navigation.launch.py'])
         ),
         launch_arguments={
             'use_slam': LaunchConfiguration('use_slam'),
             'map': LaunchConfiguration('map'),
+            'use_sim_time': 'true',
         }.items(),
     )
 
@@ -90,7 +80,6 @@ def generate_launch_description():
         nav2_params_arg,
         # Launch includes
         gazebo_launch,
-        nav2_launch,
-        slam_launch,
+        navigation_launch,
         rviz_launch,
     ])

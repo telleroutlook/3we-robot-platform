@@ -26,7 +26,7 @@ static const motor_config_t motors[MOTOR_COUNT] = {
     [MOTOR_RR] = { MOTOR_RR_IN1, MOTOR_RR_IN2, MOTOR_RR_IN1_CH, MOTOR_RR_IN2_CH },
 };
 
-static bool stopped = true;
+static volatile bool stopped = true;
 
 esp_err_t motor_init(void)
 {

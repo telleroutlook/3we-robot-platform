@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define OTA_SIGNATURE_SIZE      64  // Ed25519 signature
-#define OTA_PUBKEY_SIZE         32  // Ed25519 public key
+#define OTA_SIGNATURE_SIZE      64  // ECDSA P-256 signature (r || s)
+#define OTA_PUBKEY_SIZE         64  // ECDSA P-256 public key (X || Y, uncompressed without 0x04 prefix)
 #define OTA_HASH_SIZE           32  // SHA-256 hash
 
 // Firmware image header (prepended to binary)

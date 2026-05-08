@@ -1,5 +1,4 @@
 Reference,Value,Package,Manufacturer,MPN,Quantity,Unit_Price_CNY,Supplier,Notes
-# Includes all Basic SKU components plus:
 SBC1,Raspberry Pi 5 8GB,SBC,Raspberry Pi,RPI5-8GB,1,595.00,Pimoroni,Main compute unit
 AI1,Hailo-8L M.2 Module,M.2 2242,Hailo,HAILO-8L-M2,1,580.00,Hailo,13 TOPS AI accelerator
 HAT1,Hailo AI HAT+,HAT,Raspberry Pi,SC1213,1,198.00,Pimoroni,M.2 carrier for Pi 5

@@ -1,5 +1,5 @@
-# Software emergency stop control
-bool activate               # true=stop, false=reset (recovery)
+# Software emergency stop trigger (one-way activation only)
+# Recovery requires physical hardware acknowledgment — cannot be reset via software.
 string reason               # Human-readable reason for E-stop
 ---
 bool success

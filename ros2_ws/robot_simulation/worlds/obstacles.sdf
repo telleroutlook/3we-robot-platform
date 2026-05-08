@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <sdf version="1.8">
-  <world name="obstacles_world">
+  <world name="empty_world">
 
     <!-- Physics configuration -->
     <physics name="default_physics" type="ode">

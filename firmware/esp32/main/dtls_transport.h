@@ -27,11 +27,9 @@ void dtls_set_recv_callback(dtls_recv_callback_t cb);
 bool dtls_is_connected(void);
 void dtls_task(void *params);
 
-// Default PSK for development (MUST be changed in production)
-#define DTLS_DEFAULT_PSK_IDENTITY   "robot-platform-dev"
-#define DTLS_DEFAULT_PSK_KEY        "change-me-in-production"
-#define DTLS_CMD_PORT               8888
-#define DTLS_TELEMETRY_PORT         9999
+// Default configuration values
+#define DTLS_CMD_PORT               5684
+#define DTLS_TELEMETRY_PORT         5685
 #define DTLS_HANDSHAKE_TIMEOUT_MS   5000
 #define DTLS_SESSION_TIMEOUT_MS     30000
 

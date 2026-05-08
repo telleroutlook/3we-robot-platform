@@ -8,7 +8,6 @@ and publishes it as a ROS2 topic.
 
 import sys
 import time
-sys.path.insert(0, '..')
 
 from payload_interface.payload_protocol import PayloadInterface
 
@@ -37,6 +36,7 @@ class SensorPayloadNode(Node):
 
         if descriptor is None:
             self.get_logger().error("No payload detected on PBC-34")
+            self.interface.close()
             raise RuntimeError("Payload not found")
 
         self.get_logger().info(f"Connected to payload: {descriptor.name}")

@@ -16,10 +16,12 @@ Usage:
 import argparse
 import struct
 import sys
+import time
 from pathlib import Path
 from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from payload_interface.capability_flags import (
     CAP_ADC,
     CAP_CAN,
@@ -315,7 +317,6 @@ def cmd_program(args):
             chunk = data[offset:offset + page_size]
             msg = smbus2.i2c_msg.write(eeprom_addr, [offset] + list(chunk))
             bus.i2c_rdwr(msg)
-            import time
             time.sleep(0.005)  # 5ms write cycle time
 
         # Verify

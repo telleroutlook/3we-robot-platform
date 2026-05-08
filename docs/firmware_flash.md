@@ -90,7 +90,7 @@ idf.py -p /dev/ttyUSB0 monitor
 Expected boot messages:
 ```
 I (xxx) main: Robot Platform Firmware starting...
-I (xxx) safety: Safety system initialized (E-stop GPIO=36)
+I (xxx) safety: Safety system initialized (E-stop GPIO=41)
 I (xxx) motor: Motor control initialized (20000 Hz PWM, 8-bit)
 I (xxx) encoder: Encoders initialized (PCNT, 1440 CPR)
 I (xxx) ultrasonic: Ultrasonic sensors initialized (trig=12)

@@ -2,9 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """Minimal payload discovery and communication example."""
 
-import sys
-sys.path.insert(0, '..')
-
 from payload_interface.payload_protocol import PayloadInterface
 
 
@@ -31,7 +28,6 @@ def main():
     if descriptor.uses_i2c:  interfaces.append("I2C")
     if descriptor.uses_uart: interfaces.append("UART")
     if descriptor.uses_gpio: interfaces.append("GPIO")
-    if descriptor.uses_usb:  interfaces.append("USB")
     if descriptor.uses_can:  interfaces.append("CAN")
     print(", ".join(interfaces) or "None")
 

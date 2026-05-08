@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "imu.h"
+#include "i2c_bus.h"
 #include "pin_definitions.h"
 
 #include "driver/i2c.h"
@@ -27,13 +28,19 @@ static uint8_t imu_addr = IMU_ADDR;
 
 static esp_err_t i2c_read_reg(uint8_t reg, uint8_t *data, size_t len)
 {
-    return i2c_master_write_read_device(I2C_PORT, imu_addr, &reg, 1, data, len, I2C_TIMEOUT);
+    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
+    esp_err_t err = i2c_master_write_read_device(I2C_PORT, imu_addr, &reg, 1, data, len, I2C_TIMEOUT);
+    i2c_bus_unlock();
+    return err;
 }
 
 static esp_err_t i2c_write_reg(uint8_t reg, uint8_t val)
 {
     uint8_t buf[2] = { reg, val };
-    return i2c_master_write_to_device(I2C_PORT, imu_addr, buf, 2, I2C_TIMEOUT);
+    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
+    esp_err_t err = i2c_master_write_to_device(I2C_PORT, imu_addr, buf, 2, I2C_TIMEOUT);
+    i2c_bus_unlock();
+    return err;
 }
 
 esp_err_t imu_init(void)

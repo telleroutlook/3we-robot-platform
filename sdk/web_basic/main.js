@@ -18,7 +18,7 @@ class RobotConnection {
         this.ws.onopen = () => {
             this.connected = true;
             document.getElementById('statusDot').classList.add('connected');
-            this.subscribe('/battery_state', 'sensor_msgs/BatteryState', this.onBattery);
+            this.subscribe('/battery_state', 'sensor_msgs/BatteryState', (msg) => this.onBattery(msg));
             this.subscribe('/ultrasonic/front', 'sensor_msgs/Range', (msg) => this.onRange('Front', msg));
             this.subscribe('/ultrasonic/back', 'sensor_msgs/Range', (msg) => this.onRange('Back', msg));
             this.subscribe('/ultrasonic/left', 'sensor_msgs/Range', (msg) => this.onRange('Left', msg));
@@ -203,9 +203,9 @@ document.getElementById('speedSlider').addEventListener('input', (e) => {
 
 // E-stop
 function toggleEstop() {
-    estopped = !estopped;
     const btn = document.getElementById('estopBtn');
-    if (estopped) {
+    if (!estopped) {
+        estopped = true;
         robot.stop();
         btn.textContent = 'RESET (Click to Resume)';
         btn.classList.add('active');
@@ -219,6 +219,8 @@ function toggleEstop() {
             }));
         }
     } else {
+        if (!confirm('Reset Emergency Stop? Ensure the area is clear before resuming.')) return;
+        estopped = false;
         btn.textContent = 'EMERGENCY STOP';
         btn.classList.remove('active');
         if (robot.ws && robot.ws.readyState === WebSocket.OPEN) {
