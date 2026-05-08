@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+idf_component_register(
+    SRCS
+        "main.c"
+        "motor_control.c"
+        "ultrasonic.c"
+        "encoder.c"
+        "imu.c"
+        "battery.c"
+        "safety.c"
+        "microros_transport.c"
+    INCLUDE_DIRS
+        "."
+        "../../config"
+    REQUIRES
+        driver
+        esp_timer
+        esp_adc
+        nvs_flash
+        esp_event
+    PRIV_REQUIRES
+        micro_ros_espidf_component
+)

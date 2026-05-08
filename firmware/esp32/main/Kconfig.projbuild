@@ -1,0 +1,90 @@
+# SPDX-License-Identifier: Apache-2.0
+menu "Robot Platform Configuration"
+
+    choice ROBOT_SKU
+        prompt "Robot SKU variant"
+        default ROBOT_SKU_BASIC
+        help
+            Select the hardware SKU to configure available features.
+
+        config ROBOT_SKU_BASIC
+            bool "Basic (Education/Hobby)"
+        config ROBOT_SKU_STANDARD
+            bool "Standard (Research/Prototyping)"
+        config ROBOT_SKU_PRO
+            bool "Pro (Commercial)"
+        config ROBOT_SKU_INDUSTRIAL
+            bool "Industrial (Automation)"
+    endchoice
+
+    menu "Motor PID Tuning"
+        config MOTOR_PID_KP
+            int "Proportional gain (x100)"
+            default 120
+            help
+                PID Kp * 100. Default 120 = 1.20
+
+        config MOTOR_PID_KI
+            int "Integral gain (x100)"
+            default 80
+            help
+                PID Ki * 100. Default 80 = 0.80
+
+        config MOTOR_PID_KD
+            int "Derivative gain (x100)"
+            default 1
+            help
+                PID Kd * 100. Default 1 = 0.01
+    endmenu
+
+    menu "Communication"
+        config WIFI_SSID
+            string "Wi-Fi SSID"
+            default "robot-platform"
+
+        config WIFI_PASSWORD
+            string "Wi-Fi Password"
+            default ""
+
+        config MICROROS_UART_BAUD
+            int "micro-ROS UART baud rate"
+            default 921600
+
+        config CMD_UDP_PORT
+            int "Command UDP port"
+            default 8888
+
+        config TELEMETRY_UDP_PORT
+            int "Telemetry UDP port"
+            default 9999
+    endmenu
+
+    menu "Safety"
+        config ESTOP_ENABLED
+            bool "Enable hardware E-stop monitoring"
+            default y
+
+        config CMD_VEL_TIMEOUT_MS
+            int "cmd_vel timeout (ms)"
+            default 500
+            help
+                Stop motors if no velocity command received within this period.
+
+        config US_SAFETY_DISTANCE_CM
+            int "Ultrasonic safety distance (cm)"
+            default 5
+            help
+                Trigger emergency stop when any sensor reads below this distance.
+    endmenu
+
+    menu "Battery"
+        config BATTERY_CAPACITY_MAH
+            int "Battery capacity (mAh)"
+            default 6000
+
+        config BATTERY_CELLS
+            int "Number of cells in series"
+            default 2
+    endmenu
+
+endmenu
