@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Hardware Validation
+
+on:
+  push:
+    paths:
+      - 'hardware/**'
+      - 'firmware/config/**'
+      - 'ros2_ws/robot_description/**'
+      - 'sdk/payload_interface/**'
+  pull_request:
+    paths:
+      - 'hardware/**'
+      - 'firmware/config/**'
+      - 'ros2_ws/robot_description/**'
+      - 'sdk/payload_interface/**'
+
+jobs:
+  cross-layer-validation:
+    name: Cross-Layer Consistency Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run hardware validation
+        run: python3 hardware/validation/validate_hardware.py
+
+      - name: Run BOM-schematic consistency check
+        run: python3 hardware/validation/check_bom_schematic.py
+
+  kicad-drc:
+    name: KiCad Design Rule Check
+    runs-on: ubuntu-latest
+    container:
+      image: kicad/kicad:8.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run DRC
+        run: |
+          chmod +x hardware/validation/kicad_drc.sh
+          hardware/validation/kicad_drc.sh
+        continue-on-error: true
+
+  dxf-validation:
+    name: DXF File Integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify DXF files exist and are non-empty
+        run: |
+          echo "Checking DXF file integrity..."
+          failed=0
+          for f in hardware/structure/*.dxf; do
+            if [ ! -s "$f" ]; then
+              echo "FAIL: $f is empty or missing"
+              failed=1
+            else
+              echo "OK: $f ($(wc -l < "$f") lines)"
+            fi
+          done
+          exit $failed
+
+      - name: Verify DXF header format
+        run: |
+          echo "Checking DXF format headers..."
+          for f in hardware/structure/*.dxf; do
+            if ! head -5 "$f" | grep -q "SECTION"; then
+              echo "WARN: $f may not be valid DXF (no SECTION in first 5 lines)"
+            fi
+          done
