@@ -119,6 +119,35 @@ ros2 launch robot_bringup bringup.launch.py
 - ROS2: `colcon test` with pytest and gtest
 - SDK: pytest for Python, browser testing for web components
 
+## Validation Checklist
+
+Run these checks (in order) to verify cross-layer consistency after any code change:
+
+```bash
+# 1. Firmware — compile with GCC (host-side unit test build)
+cd firmware/tests && make clean && make
+
+# 2. Firmware — run unit tests
+cd firmware/tests && ./test_runner
+
+# 3. SDK web_control — TypeScript type-check
+cd sdk/web_control && npx tsc --noEmit
+
+# 4. SDK web_control — Playwright E2E tests
+cd sdk/web_control && npx playwright test
+
+# 5. Cross-layer — ROS2 msg/srv ↔ TypeScript ↔ firmware enum alignment
+npx tsx scripts/validate-ros-types.ts
+
+# 6. Python SDK — format and lint
+ruff format --check sdk/
+ruff check sdk/
+```
+
+If any step fails, fix before committing. Steps 1–2 catch firmware regressions, 3–4 catch web UI issues, 5 catches interface drift between layers, and 6 enforces Python code quality.
+
+**Important**: Fix ALL errors and warnings — including pre-existing ones not caused by your current changes. Do not leave known issues unfixed or skip them because "they were already there." The codebase must be clean after every session.
+
 ## What NOT to Put Here
 
 This file intentionally omits volatile information:
