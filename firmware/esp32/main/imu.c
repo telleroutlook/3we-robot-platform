@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "imu.h"
 #include "i2c_bus.h"
+#include "pin_definitions.h"
 
 #include "driver/i2c.h"
 #include "esp_log.h"

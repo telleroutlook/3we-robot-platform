@@ -11,17 +11,29 @@
 typedef int esp_err_t;
 #define ESP_OK              0
 #define ESP_FAIL            (-1)
+#define ESP_ERR_NO_MEM      0x0101
 #define ESP_ERR_INVALID_ARG 0x0102
 #define ESP_ERR_INVALID_STATE 0x0103
+#define ESP_ERR_NOT_FOUND   0x0105
+#define ESP_ERR_TIMEOUT     0x0107
+#define ESP_ERR_INVALID_RESPONSE 0x0108
 #define ESP_ERROR_CHECK(x)  do { (void)(x); } while(0)
+
+static inline const char *esp_err_to_name(esp_err_t err) { (void)err; return "MOCK_ERR"; }
+
+#define GPIO_MODE_OUTPUT    1
 
 // Logging stubs
 #define ESP_LOGI(tag, fmt, ...)  ((void)0)
 #define ESP_LOGW(tag, fmt, ...)  ((void)0)
 #define ESP_LOGE(tag, fmt, ...)  ((void)0)
+#define ESP_LOGD(tag, fmt, ...)  ((void)0)
 
 // IRAM_ATTR
 #define IRAM_ATTR
+
+// Allow test stubs to override firmware functions
+#define TESTABLE_WEAK __attribute__((weak))
 
 // LEDC stubs
 typedef int ledc_channel_t;
@@ -142,6 +154,8 @@ void mock_set_adc_voltage_mv(int mv);
 
 // FreeRTOS stubs
 #define pdMS_TO_TICKS(x) (x)
+#define pdTRUE  1
+#define pdFALSE 0
 typedef int TickType_t;
 void vTaskDelay(int ticks);
 static inline void vTaskDelete(void *handle) { (void)handle; }

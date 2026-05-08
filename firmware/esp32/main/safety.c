@@ -113,7 +113,11 @@ bool safety_is_relay_faulted(void)
     return faulted;
 }
 
-void safety_trigger_estop(void)
+#ifndef TESTABLE_WEAK
+#define TESTABLE_WEAK
+#endif
+
+TESTABLE_WEAK void safety_trigger_estop(void)
 {
     portENTER_CRITICAL(&safety_spinlock);
     if (state == SAFETY_NORMAL) {

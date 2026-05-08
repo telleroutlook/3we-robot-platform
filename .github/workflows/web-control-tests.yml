@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Web Control E2E Tests
+
+on:
+  push:
+    paths: ['sdk/web_control/**']
+  pull_request:
+    paths: ['sdk/web_control/**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      # actions/setup-node v4.0.1
+      - uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: sdk/web_control
+        run: npm ci
+
+      - name: TypeScript type check
+        working-directory: sdk/web_control
+        run: npx tsc --noEmit
+
+      - name: Install Playwright browsers
+        working-directory: sdk/web_control
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: sdk/web_control
+        run: npx playwright test
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392
+        with:
+          name: playwright-report
+          path: sdk/web_control/playwright-report/
+          retention-days: 14

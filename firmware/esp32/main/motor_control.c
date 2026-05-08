@@ -138,7 +138,11 @@ motor_output_t motor_mecanum_drive(const cmd_vel_t *cmd)
     return out;
 }
 
-void motor_stop_all(void)
+#ifndef TESTABLE_WEAK
+#define TESTABLE_WEAK
+#endif
+
+TESTABLE_WEAK void motor_stop_all(void)
 {
     for (int i = 0; i < MOTOR_COUNT; i++) {
         ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[i].in1_ch, 0);

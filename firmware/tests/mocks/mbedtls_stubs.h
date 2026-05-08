@@ -75,7 +75,9 @@ const esp_app_desc_t *esp_app_get_description(void);
 
 #define ESP_ERR_INVALID_SIZE   0x0105
 #define ESP_ERR_INVALID_VERSION 0x0106
+#ifndef ESP_ERR_NOT_FOUND
 #define ESP_ERR_NOT_FOUND      0x0107
+#endif
 
 void mock_ota_set_current_version(const char *version);
 void mock_ota_set_partition_available(bool available);

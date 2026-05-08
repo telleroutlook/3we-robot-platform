@@ -82,6 +82,94 @@ extern void test_ultrasonic_at_threshold_does_not_trigger(void);
 extern void test_ultrasonic_above_threshold_does_not_trigger(void);
 extern void test_ultrasonic_does_not_retrigger_when_already_estopped(void);
 
+// test_payload_hotplug.c
+extern void test_hotplug_init_success(void);
+extern void test_hotplug_init_failure_iodir(void);
+extern void test_hotplug_state_absent_after_init(void);
+extern void test_hotplug_descriptor_null_when_absent(void);
+extern void test_hotplug_power_off_writes_zeros(void);
+extern void test_hotplug_register_callback_smoke(void);
+extern void test_hotplug_power_off_notifies_callback(void);
+extern void test_hotplug_init_iodir_write_first(void);
+extern void test_hotplug_init_failure_olat(void);
+extern void test_hotplug_power_off_idempotent(void);
+extern void test_hotplug_eeprom_mock_setup(void);
+extern void test_hotplug_power_off_with_i2c_error(void);
+extern void hotplug_test_setUp(void);
+
+// test_canbus.c
+extern void test_canbus_init_null_config(void);
+extern void test_canbus_init_spi_bus_failure(void);
+extern void test_canbus_init_not_config_mode(void);
+extern void test_canbus_init_config_mode_verified(void);
+extern void test_canbus_is_ready_initially_false(void);
+extern void test_canbus_send_null_frame(void);
+extern void test_canbus_send_not_ready(void);
+extern void test_canbus_set_bitrate_invalid(void);
+extern void test_canbus_set_filter_not_ready(void);
+extern void test_canbus_set_recv_callback(void);
+
+// test_imu.c
+extern void test_imu_init_primary_addr(void);
+extern void test_imu_init_alt_addr(void);
+extern void test_imu_init_not_found(void);
+extern void test_imu_read_quaternion(void);
+extern void test_imu_read_quaternion_negative(void);
+extern void test_imu_read_euler(void);
+extern void test_imu_read_angular_velocity(void);
+extern void test_imu_read_linear_accel(void);
+extern void test_imu_is_calibrated_true(void);
+extern void test_imu_is_calibrated_false(void);
+extern void test_imu_read_fails_i2c_error(void);
+
+// test_safety_state_machine.c
+extern void test_safety_init_normal(void);
+extern void test_safety_init_estopped_at_boot(void);
+extern void test_safety_trigger_estop_from_normal(void);
+extern void test_safety_trigger_estop_already_stopped(void);
+extern void test_safety_is_estopped_all_non_normal(void);
+extern void test_safety_reset_success(void);
+extern void test_safety_reset_rejects_button_pressed(void);
+extern void test_safety_reset_rejects_relay_fault(void);
+extern void test_safety_reset_rejects_wrong_state(void);
+extern void test_safety_confirm_reset_success(void);
+extern void test_safety_confirm_reset_rejects_button_pressed(void);
+extern void test_safety_confirm_reset_rejects_wrong_state(void);
+extern void test_safety_watchdog_timeout(void);
+extern void test_safety_feed_watchdog_resets(void);
+extern void test_safety_relay_selftest_pass_released(void);
+extern void test_safety_relay_selftest_fail_stuck_off(void);
+extern void test_safety_relay_selftest_pass_pressed(void);
+extern void test_safety_relay_selftest_fail_welded(void);
+extern void test_safety_clear_relay_fault_success(void);
+extern void test_safety_clear_relay_fault_wrong_state(void);
+extern void test_safety_callback_invoked_on_trigger(void);
+
+// test_thermal_monitor.c
+extern void test_thermal_init_success(void);
+extern void test_thermal_init_verifies_i2c_writes(void);
+extern void test_thermal_init_failure_i2c_write_error(void);
+extern void test_thermal_get_state_after_init(void);
+extern void test_thermal_get_reading_null_returns_invalid_arg(void);
+extern void test_thermal_get_reading_valid_returns_zeroed_after_init(void);
+extern void test_thermal_register_callback_does_not_crash(void);
+extern void test_thermal_register_callback_null_does_not_crash(void);
+
+// test_i2c_bus.c
+extern void test_i2c_bus_init_success(void);
+extern void test_i2c_bus_init_idempotent(void);
+extern void test_i2c_bus_get_mutex_after_init(void);
+extern void test_i2c_bus_lock_unlock_cycle(void);
+
+// test_udp_transport.c
+extern void test_udp_init_rejects_null_config(void);
+extern void test_udp_has_client_initially_false(void);
+extern void test_udp_init_fails_socket_create(void);
+extern void test_udp_init_fails_bind(void);
+extern void test_udp_init_success(void);
+extern void test_udp_send_telemetry_no_client(void);
+extern void test_udp_set_recv_callback(void);
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -165,6 +253,95 @@ int main(void)
     RUN_TEST(test_ultrasonic_at_threshold_does_not_trigger);
     RUN_TEST(test_ultrasonic_above_threshold_does_not_trigger);
     RUN_TEST(test_ultrasonic_does_not_retrigger_when_already_estopped);
+
+    // Payload hot-plug
+#define RUN_HOTPLUG_TEST(f) do { hotplug_test_setUp(); RUN_TEST(f); } while(0)
+    RUN_HOTPLUG_TEST(test_hotplug_init_success);
+    RUN_HOTPLUG_TEST(test_hotplug_init_failure_iodir);
+    RUN_HOTPLUG_TEST(test_hotplug_state_absent_after_init);
+    RUN_HOTPLUG_TEST(test_hotplug_descriptor_null_when_absent);
+    RUN_HOTPLUG_TEST(test_hotplug_power_off_writes_zeros);
+    RUN_HOTPLUG_TEST(test_hotplug_register_callback_smoke);
+    RUN_HOTPLUG_TEST(test_hotplug_power_off_notifies_callback);
+    RUN_HOTPLUG_TEST(test_hotplug_init_iodir_write_first);
+    RUN_HOTPLUG_TEST(test_hotplug_init_failure_olat);
+    RUN_HOTPLUG_TEST(test_hotplug_power_off_idempotent);
+    RUN_HOTPLUG_TEST(test_hotplug_eeprom_mock_setup);
+    RUN_HOTPLUG_TEST(test_hotplug_power_off_with_i2c_error);
+#undef RUN_HOTPLUG_TEST
+
+    // CAN bus (MCP2515)
+    RUN_TEST(test_canbus_init_null_config);
+    RUN_TEST(test_canbus_init_spi_bus_failure);
+    RUN_TEST(test_canbus_init_not_config_mode);
+    RUN_TEST(test_canbus_init_config_mode_verified);
+    RUN_TEST(test_canbus_is_ready_initially_false);
+    RUN_TEST(test_canbus_send_null_frame);
+    RUN_TEST(test_canbus_send_not_ready);
+    RUN_TEST(test_canbus_set_bitrate_invalid);
+    RUN_TEST(test_canbus_set_filter_not_ready);
+    RUN_TEST(test_canbus_set_recv_callback);
+
+    // IMU (BNO055)
+    RUN_TEST(test_imu_init_primary_addr);
+    RUN_TEST(test_imu_init_alt_addr);
+    RUN_TEST(test_imu_init_not_found);
+    RUN_TEST(test_imu_read_quaternion);
+    RUN_TEST(test_imu_read_quaternion_negative);
+    RUN_TEST(test_imu_read_euler);
+    RUN_TEST(test_imu_read_angular_velocity);
+    RUN_TEST(test_imu_read_linear_accel);
+    RUN_TEST(test_imu_is_calibrated_true);
+    RUN_TEST(test_imu_is_calibrated_false);
+    RUN_TEST(test_imu_read_fails_i2c_error);
+
+    // Safety state machine
+    RUN_TEST(test_safety_init_normal);
+    RUN_TEST(test_safety_init_estopped_at_boot);
+    RUN_TEST(test_safety_trigger_estop_from_normal);
+    RUN_TEST(test_safety_trigger_estop_already_stopped);
+    RUN_TEST(test_safety_is_estopped_all_non_normal);
+    RUN_TEST(test_safety_reset_success);
+    RUN_TEST(test_safety_reset_rejects_button_pressed);
+    RUN_TEST(test_safety_reset_rejects_relay_fault);
+    RUN_TEST(test_safety_reset_rejects_wrong_state);
+    RUN_TEST(test_safety_confirm_reset_success);
+    RUN_TEST(test_safety_confirm_reset_rejects_button_pressed);
+    RUN_TEST(test_safety_confirm_reset_rejects_wrong_state);
+    RUN_TEST(test_safety_watchdog_timeout);
+    RUN_TEST(test_safety_feed_watchdog_resets);
+    RUN_TEST(test_safety_relay_selftest_pass_released);
+    RUN_TEST(test_safety_relay_selftest_fail_stuck_off);
+    RUN_TEST(test_safety_relay_selftest_pass_pressed);
+    RUN_TEST(test_safety_relay_selftest_fail_welded);
+    RUN_TEST(test_safety_clear_relay_fault_success);
+    RUN_TEST(test_safety_clear_relay_fault_wrong_state);
+    RUN_TEST(test_safety_callback_invoked_on_trigger);
+
+    // Thermal monitor (INA219)
+    RUN_TEST(test_thermal_init_success);
+    RUN_TEST(test_thermal_init_verifies_i2c_writes);
+    RUN_TEST(test_thermal_init_failure_i2c_write_error);
+    RUN_TEST(test_thermal_get_state_after_init);
+    RUN_TEST(test_thermal_get_reading_null_returns_invalid_arg);
+    RUN_TEST(test_thermal_get_reading_valid_returns_zeroed_after_init);
+    RUN_TEST(test_thermal_register_callback_does_not_crash);
+    RUN_TEST(test_thermal_register_callback_null_does_not_crash);
+
+    // I2C bus
+    RUN_TEST(test_i2c_bus_init_success);
+    RUN_TEST(test_i2c_bus_init_idempotent);
+    RUN_TEST(test_i2c_bus_get_mutex_after_init);
+    RUN_TEST(test_i2c_bus_lock_unlock_cycle);
+
+    // UDP transport
+    RUN_TEST(test_udp_init_rejects_null_config);
+    RUN_TEST(test_udp_has_client_initially_false);
+    RUN_TEST(test_udp_init_fails_socket_create);
+    RUN_TEST(test_udp_init_fails_bind);
+    RUN_TEST(test_udp_init_success);
+    RUN_TEST(test_udp_send_telemetry_no_client);
+    RUN_TEST(test_udp_set_recv_callback);
 
     return UNITY_END();
 }

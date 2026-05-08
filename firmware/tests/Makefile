@@ -17,7 +17,17 @@ SRCS = test_runner.c \
        test_dtls_transport.c \
        test_dtls_integration.c \
        test_ultrasonic_estop.c \
+       test_payload_hotplug.c \
+       test_canbus.c \
+       test_imu.c \
+       test_safety_state_machine.c \
+       test_thermal_monitor.c \
+       test_i2c_bus.c \
+       test_udp_transport.c \
        mocks/esp_stubs.c \
+       mocks/i2c_stubs.c \
+       mocks/spi_stubs.c \
+       mocks/lwip_stubs.c \
        mocks/mbedtls_stubs.c \
        mocks/mbedtls_ssl_stubs.c \
        unity/src/unity.c \
@@ -26,7 +36,13 @@ SRCS = test_runner.c \
        $(FIRMWARE_SRC)/encoder.c \
        $(FIRMWARE_SRC)/battery.c \
        $(FIRMWARE_SRC)/ota_signing.c \
-       $(FIRMWARE_SRC)/dtls_transport.c
+       $(FIRMWARE_SRC)/dtls_transport.c \
+       $(FIRMWARE_SRC)/payload_hotplug.c \
+       $(FIRMWARE_SRC)/canbus.c \
+       $(FIRMWARE_SRC)/imu.c \
+       $(FIRMWARE_SRC)/thermal_monitor.c \
+       $(FIRMWARE_SRC)/i2c_bus.c \
+       $(FIRMWARE_SRC)/udp_transport.c
 
 BUILD_DIR = build
 TARGET = $(BUILD_DIR)/test_runner

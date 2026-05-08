@@ -16,5 +16,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES std_msgs geometry_msgs
 )
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(test_interfaces test/test_interfaces.py)
+endif()
+
 ament_export_dependencies(rosidl_default_runtime)
 ament_package()
