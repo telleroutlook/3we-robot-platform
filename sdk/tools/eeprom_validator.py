@@ -153,8 +153,8 @@ def validate_descriptor(desc: EepromDescriptor) -> ValidationResult:
         result.add_error(f"Invalid magic: {desc.magic!r} (expected {DESCRIPTOR_MAGIC!r})")
 
     # Version check
-    if desc.version == 0 or desc.version > 2:
-        result.add_error(f"Unsupported version: {desc.version} (supported: 1-2)")
+    if desc.version != 1:
+        result.add_error(f"Unsupported version: {desc.version} (only version 1 is supported)")
 
     # Payload ID validation
     if not desc.payload_id:

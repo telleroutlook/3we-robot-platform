@@ -15,6 +15,7 @@ SRCS = test_runner.c \
        test_battery_pct.c \
        test_ota_signing.c \
        test_dtls_transport.c \
+       test_ultrasonic_estop.c \
        mocks/esp_stubs.c \
        mocks/mbedtls_stubs.c \
        mocks/mbedtls_ssl_stubs.c \

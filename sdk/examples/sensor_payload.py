@@ -44,7 +44,7 @@ class SensorPayloadNode(Node):
     def timer_callback(self):
         response = self.interface.send_command(CMD_READ_TEMPERATURE)
         if response is None or len(response) < 3:
-            self.get_logger().warn("Failed to read temperature from payload")
+            self.get_logger().warning("Failed to read temperature from payload")
             return
 
         # Parse response: [CMD_ACK, TEMP_INT, TEMP_FRAC]
@@ -68,14 +68,16 @@ class SensorPayloadNode(Node):
 
 def main():
     rclpy.init()
-    node = SensorPayloadNode()
+    node = None
 
     try:
+        node = SensorPayloadNode()
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        node.destroy_node()
+        if node is not None:
+            node.destroy_node()
         rclpy.shutdown()
 
 

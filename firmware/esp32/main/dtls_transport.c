@@ -54,6 +54,10 @@ static int dtls_psk_callback(void *parameter, mbedtls_ssl_context *ssl_ctx,
 esp_err_t dtls_init(const dtls_config_t *config)
 {
     if (!config) return ESP_ERR_INVALID_ARG;
+    if (config->psk_key_len < 16) {
+        ESP_LOGE(TAG, "PSK key too short: %u bytes (minimum 16)", config->psk_key_len);
+        return ESP_ERR_INVALID_ARG;
+    }
     memcpy(&current_config, config, sizeof(dtls_config_t));
 
     mbedtls_ssl_init(&ssl);
@@ -104,11 +108,12 @@ esp_err_t dtls_init(const dtls_config_t *config)
     mbedtls_ssl_conf_handshake_timeout(&conf, 1000, config->handshake_timeout_ms);
     mbedtls_ssl_conf_read_timeout(&conf, config->session_timeout_ms);
 
-    // Only allow PSK ciphersuites (no certificates needed)
+    // Prefer AEAD ciphersuites for safety-critical control channel
     static const int ciphersuites[] = {
         MBEDTLS_TLS_PSK_WITH_AES_128_GCM_SHA256,
         MBEDTLS_TLS_PSK_WITH_AES_256_GCM_SHA384,
         MBEDTLS_TLS_PSK_WITH_AES_128_CCM,
+        MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
         0
     };
     mbedtls_ssl_conf_ciphersuites(&conf, ciphersuites);

@@ -74,6 +74,7 @@ esp_err_t gpio_config(const gpio_config_t *cfg);
 int gpio_get_level(int gpio);
 esp_err_t gpio_install_isr_service(int flags);
 esp_err_t gpio_isr_handler_add(int gpio, void (*handler)(void*), void *arg);
+void mock_set_gpio_level(int gpio, int level);
 
 // Timer stubs
 int64_t esp_timer_get_time(void);

@@ -38,6 +38,10 @@ export class RosbridgeConnection extends EventTarget {
   }
 
   connect(url: string): void {
+    if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
+      this.setState('error');
+      return;
+    }
     this.intentionalClose = false;
     this.url = url;
     this.clearReconnectTimer();

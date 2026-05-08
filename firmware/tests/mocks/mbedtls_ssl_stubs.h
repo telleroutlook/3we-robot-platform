@@ -23,6 +23,7 @@ typedef struct { uint32_t fin_ms; uint32_t int_ms; } mbedtls_timing_delay_contex
 #define MBEDTLS_NET_PROTO_UDP          1
 
 // Ciphersuite IDs
+#define MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 0xC037
 #define MBEDTLS_TLS_PSK_WITH_AES_128_GCM_SHA256 0x00A8
 #define MBEDTLS_TLS_PSK_WITH_AES_256_GCM_SHA384 0x00A9
 #define MBEDTLS_TLS_PSK_WITH_AES_128_CCM        0xC0A4

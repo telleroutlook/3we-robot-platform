@@ -70,6 +70,12 @@ extern void test_dtls_callback_registration(void);
 extern void test_dtls_default_ports(void);
 extern void test_dtls_default_timeouts(void);
 
+// test_ultrasonic_estop.c
+extern void test_ultrasonic_below_threshold_triggers_estop(void);
+extern void test_ultrasonic_at_threshold_does_not_trigger(void);
+extern void test_ultrasonic_above_threshold_does_not_trigger(void);
+extern void test_ultrasonic_does_not_retrigger_when_already_estopped(void);
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -141,6 +147,12 @@ int main(void)
     RUN_TEST(test_dtls_callback_registration);
     RUN_TEST(test_dtls_default_ports);
     RUN_TEST(test_dtls_default_timeouts);
+
+    // Ultrasonic safety estop path
+    RUN_TEST(test_ultrasonic_below_threshold_triggers_estop);
+    RUN_TEST(test_ultrasonic_at_threshold_does_not_trigger);
+    RUN_TEST(test_ultrasonic_above_threshold_does_not_trigger);
+    RUN_TEST(test_ultrasonic_does_not_retrigger_when_already_estopped);
 
     return UNITY_END();
 }

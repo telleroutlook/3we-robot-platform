@@ -203,6 +203,15 @@ export class RobotPayloadPanel extends HTMLElement {
     this.toggle12v.addEventListener('click', () => this.toggleRail('RAIL_12V', this.toggle12v));
     this.toggleVbat.addEventListener('click', () => this.toggleRail('RAIL_VBAT', this.toggleVbat));
 
+    [this.toggle5v, this.toggle12v, this.toggleVbat].forEach(el => {
+      el.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          (e.currentTarget as HTMLElement).click();
+        }
+      });
+    });
+
     this.unsubscribe = connection.subscribe<PayloadState>(
       '/payload_state',
       'robot_interfaces/PayloadState',

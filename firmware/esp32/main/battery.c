@@ -13,6 +13,7 @@
 
 static const char *TAG = "battery";
 
+static portMUX_TYPE batt_spinlock = portMUX_INITIALIZER_UNLOCKED;
 static adc_oneshot_unit_handle_t adc_handle;
 static adc_cali_handle_t cali_handle;
 static float voltage_avg = 0.0f;
@@ -64,12 +65,14 @@ float battery_read_voltage(void)
 
     float voltage = ((float)mv / 1000.0f) * BATT_VOLTAGE_DIVIDER;
 
+    portENTER_CRITICAL(&batt_spinlock);
     readings[reading_idx] = voltage;
     reading_idx = (reading_idx + 1) % BATT_ADC_SAMPLES;
 
     float sum = 0.0f;
     for (int i = 0; i < BATT_ADC_SAMPLES; i++) sum += readings[i];
     voltage_avg = sum / BATT_ADC_SAMPLES;
+    portEXIT_CRITICAL(&batt_spinlock);
 
     return voltage_avg;
 }

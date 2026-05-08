@@ -79,6 +79,16 @@ static esp_err_t mcp2515_write_reg(uint8_t reg, uint8_t value)
     return ret;
 }
 
+static esp_err_t mcp2515_write_reg_unlocked(uint8_t reg, uint8_t value)
+{
+    uint8_t tx[3] = { MCP_WRITE, reg, value };
+    spi_transaction_t t = {
+        .length = 24,
+        .tx_buffer = tx,
+    };
+    return spi_device_polling_transmit(spi_dev, &t);
+}
+
 static uint8_t mcp2515_read_reg(uint8_t reg)
 {
     uint8_t tx[3] = { MCP_READ, reg, 0x00 };
@@ -260,26 +270,29 @@ esp_err_t canbus_send(const can_frame_t *frame)
         return ESP_ERR_TIMEOUT;
     }
 
-    // Load ID
+    // Hold SPI mutex for entire TX buffer load to prevent interleaving
+    xSemaphoreTake(spi_mutex, portMAX_DELAY);
+
+    // Load ID (using raw SPI without per-call mutex)
     if (frame->extended) {
-        mcp2515_write_reg(MCP_TXB0SIDH, (frame->id >> 21) & 0xFF);
-        mcp2515_write_reg(MCP_TXB0SIDH + 1,
+        mcp2515_write_reg_unlocked(MCP_TXB0SIDH, (frame->id >> 21) & 0xFF);
+        mcp2515_write_reg_unlocked(MCP_TXB0SIDH + 1,
             ((frame->id >> 13) & 0xE0) | 0x08 | ((frame->id >> 16) & 0x03));
-        mcp2515_write_reg(MCP_TXB0SIDH + 2, (frame->id >> 8) & 0xFF);
-        mcp2515_write_reg(MCP_TXB0SIDH + 3, frame->id & 0xFF);
+        mcp2515_write_reg_unlocked(MCP_TXB0SIDH + 2, (frame->id >> 8) & 0xFF);
+        mcp2515_write_reg_unlocked(MCP_TXB0SIDH + 3, frame->id & 0xFF);
     } else {
-        mcp2515_write_reg(MCP_TXB0SIDH, (frame->id >> 3) & 0xFF);
-        mcp2515_write_reg(MCP_TXB0SIDH + 1, ((frame->id & 0x07) << 5));
+        mcp2515_write_reg_unlocked(MCP_TXB0SIDH, (frame->id >> 3) & 0xFF);
+        mcp2515_write_reg_unlocked(MCP_TXB0SIDH + 1, ((frame->id & 0x07) << 5));
     }
 
     // Load DLC + RTR
     uint8_t dlc_reg = frame->dlc & 0x0F;
     if (frame->rtr) dlc_reg |= 0x40;
-    mcp2515_write_reg(MCP_TXB0DLC, dlc_reg);
+    mcp2515_write_reg_unlocked(MCP_TXB0DLC, dlc_reg);
 
     // Load data
     for (uint8_t i = 0; i < frame->dlc; i++) {
-        mcp2515_write_reg(MCP_TXB0D0 + i, frame->data[i]);
+        mcp2515_write_reg_unlocked(MCP_TXB0D0 + i, frame->data[i]);
     }
 
     // Request to send
@@ -288,8 +301,8 @@ esp_err_t canbus_send(const can_frame_t *frame)
         .length = 8,
         .tx_buffer = tx,
     };
-    xSemaphoreTake(spi_mutex, portMAX_DELAY);
     spi_device_polling_transmit(spi_dev, &t);
+
     xSemaphoreGive(spi_mutex);
 
     return ESP_OK;

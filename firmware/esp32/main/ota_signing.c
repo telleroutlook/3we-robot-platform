@@ -51,8 +51,14 @@ static bool ecdsa_p256_verify(const uint8_t *hash, size_t hash_len,
     mbedtls_mpi r, s;
     mbedtls_mpi_init(&r);
     mbedtls_mpi_init(&s);
-    mbedtls_mpi_read_binary(&r, signature, 32);
-    mbedtls_mpi_read_binary(&s, signature + 32, 32);
+    if (mbedtls_mpi_read_binary(&r, signature, 32) != 0 ||
+        mbedtls_mpi_read_binary(&s, signature + 32, 32) != 0) {
+        ESP_LOGE(TAG, "Failed to decode signature components");
+        mbedtls_mpi_free(&r);
+        mbedtls_mpi_free(&s);
+        mbedtls_ecdsa_free(&ctx);
+        return false;
+    }
 
     ret = mbedtls_ecdsa_verify(&ctx.grp, hash, hash_len, &ctx.Q, &r, &s);
 
@@ -196,9 +202,10 @@ uint32_t ota_get_current_version(void)
     const esp_app_desc_t *app_desc = esp_app_get_description();
     int major = 0, minor = 0, patch = 0;
     int n = sscanf(app_desc->version, "%d.%d.%d", &major, &minor, &patch);
-    if (n != 3) {
+    if (n != 3 || major < 0 || major > 255 ||
+        minor < 0 || minor > 255 || patch < 0 || patch > 255) {
         ESP_LOGW(TAG, "Could not parse version string '%s'", app_desc->version);
         return UINT32_MAX;
     }
-    return (major << 16) | (minor << 8) | patch;
+    return ((uint32_t)major << 16) | ((uint32_t)minor << 8) | (uint32_t)patch;
 }

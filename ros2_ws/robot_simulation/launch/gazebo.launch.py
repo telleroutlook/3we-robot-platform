@@ -127,7 +127,7 @@ def generate_launch_description():
         use_sim_time_arg,
         # Nodes and processes
         robot_state_publisher_node,
-        joint_state_publisher_node,
+        # joint_state_publisher removed: Gazebo bridge provides /joint_states
         gazebo,
         spawn_robot,
         ros_gz_bridge_node,

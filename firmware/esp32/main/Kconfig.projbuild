@@ -39,12 +39,18 @@ menu "Robot Platform Configuration"
 
     menu "Communication"
         config WIFI_SSID
-            string "Wi-Fi SSID"
+            string "Wi-Fi SSID (development fallback)"
             default "robot-platform"
+            help
+                Compile-time SSID used only when NVS wifi/ssid is empty.
+                For deployed robots, provision via NVS at runtime.
 
         config WIFI_PASSWORD
-            string "Wi-Fi Password"
+            string "Wi-Fi Password (development fallback)"
             default ""
+            help
+                Compile-time password used only when NVS wifi/password is empty.
+                For deployed robots, provision via NVS at runtime.
 
         config MICROROS_UART_BAUD
             int "micro-ROS UART baud rate"

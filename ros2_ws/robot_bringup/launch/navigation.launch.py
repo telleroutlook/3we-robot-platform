@@ -51,7 +51,10 @@ def generate_launch_description():
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
-        parameters=[slam_params_file],
+        parameters=[
+            slam_params_file,
+            {'use_sim_time': LaunchConfiguration('use_sim_time')},
+        ],
         condition=IfCondition(LaunchConfiguration('use_slam')),
         output='screen',
     )

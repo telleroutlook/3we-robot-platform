@@ -20,12 +20,14 @@
 #endif
 
 #include "esp_log.h"
+#include "esp_mac.h"
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include <string.h>
+#include <stdio.h>
 
 static const char *TAG = "main";
 
@@ -123,12 +125,19 @@ void app_main(void)
     // Communication: DTLS encrypted control channel
     dtls_config_t dtls_cfg = {
         .listen_port = 5684,
-        .psk_identity = "robot-platform",
+        .psk_identity = {0},
         .psk_key = {0},
         .psk_key_len = 16,
         .handshake_timeout_ms = 10000,
         .session_timeout_ms = 60000,
     };
+
+    // Derive PSK identity from device MAC for per-unit isolation
+    uint8_t mac[6];
+    esp_efuse_mac_get_default(mac);
+    snprintf(dtls_cfg.psk_identity, sizeof(dtls_cfg.psk_identity),
+             "robot-%02X%02X%02X%02X%02X%02X",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
     // Load PSK from NVS - refuse to start DTLS with unprovisioned key
     nvs_handle_t nvs_dtls;
@@ -140,10 +149,11 @@ void app_main(void)
         nvs_close(nvs_dtls);
     }
 
-    // Validate PSK is provisioned (not all-zeros)
+    // Validate PSK is provisioned (not all-zeros or too short)
     static const uint8_t zero_key[sizeof(dtls_cfg.psk_key)] = {0};
     esp_err_t dtls_ret;
-    if (memcmp(dtls_cfg.psk_key, zero_key, sizeof(dtls_cfg.psk_key)) == 0) {
+    if (dtls_cfg.psk_key_len < 16 ||
+        memcmp(dtls_cfg.psk_key, zero_key, dtls_cfg.psk_key_len) == 0) {
         ESP_LOGE(TAG, "DTLS PSK not provisioned - encrypted channel DISABLED. "
                  "Provision a key via NVS 'security/dtls_psk' before deployment.");
         dtls_ret = ESP_ERR_INVALID_STATE;
@@ -174,11 +184,31 @@ void app_main(void)
 #endif
 
     // Create FreeRTOS tasks (highest priority first)
-    xTaskCreate(safety_task, "safety", TASK_STACK_SAFETY, NULL, TASK_PRIO_SAFETY, NULL);
-    xTaskCreate(microros_task, "microros", TASK_STACK_MICROROS, NULL, TASK_PRIO_MICROROS, NULL);
-    xTaskCreate(ultrasonic_task, "ultrasonic", TASK_STACK_SENSORS, NULL, TASK_PRIO_SENSORS, NULL);
-    xTaskCreate(payload_hotplug_task, "payload", TASK_STACK_PAYLOAD, NULL, TASK_PRIO_PAYLOAD, NULL);
-    xTaskCreate(battery_task, "battery", TASK_STACK_BATTERY, NULL, TASK_PRIO_BATTERY, NULL);
+    BaseType_t rc;
+    rc = xTaskCreate(safety_task, "safety", TASK_STACK_SAFETY, NULL, TASK_PRIO_SAFETY, NULL);
+    if (rc != pdPASS) {
+        ESP_LOGE(TAG, "FATAL: safety_task creation failed - rebooting");
+        esp_restart();
+    }
+    rc = xTaskCreate(microros_task, "microros", TASK_STACK_MICROROS, NULL, TASK_PRIO_MICROROS, NULL);
+    if (rc != pdPASS) {
+        ESP_LOGE(TAG, "FATAL: microros_task creation failed - rebooting");
+        esp_restart();
+    }
+    rc = xTaskCreate(ultrasonic_task, "ultrasonic", TASK_STACK_SENSORS, NULL, TASK_PRIO_SENSORS, NULL);
+    if (rc != pdPASS) {
+        ESP_LOGE(TAG, "FATAL: ultrasonic_task creation failed - rebooting");
+        esp_restart();
+    }
+    rc = xTaskCreate(payload_hotplug_task, "payload", TASK_STACK_PAYLOAD, NULL, TASK_PRIO_PAYLOAD, NULL);
+    if (rc != pdPASS) {
+        ESP_LOGW(TAG, "payload_hotplug_task creation failed");
+    }
+    rc = xTaskCreate(battery_task, "battery", TASK_STACK_BATTERY, NULL, TASK_PRIO_BATTERY, NULL);
+    if (rc != pdPASS) {
+        ESP_LOGE(TAG, "FATAL: battery_task creation failed - rebooting");
+        esp_restart();
+    }
 
     if (thermal_ret == ESP_OK) {
         xTaskCreate(thermal_monitor_task, "thermal", TASK_STACK_THERMAL, NULL, TASK_PRIO_THERMAL, NULL);

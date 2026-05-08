@@ -87,7 +87,10 @@ safety_state_t safety_get_state(void)
 
 bool safety_is_estopped(void)
 {
-    return state != SAFETY_NORMAL;
+    portENTER_CRITICAL(&safety_spinlock);
+    bool estopped = (state != SAFETY_NORMAL);
+    portEXIT_CRITICAL(&safety_spinlock);
+    return estopped;
 }
 
 void safety_trigger_estop(void)
@@ -106,18 +109,44 @@ void safety_trigger_estop(void)
 
 esp_err_t safety_reset(void)
 {
-    // Only allow reset if physical button is released (high)
     if (gpio_get_level(ESTOP_GPIO) == 0) {
         ESP_LOGW(TAG, "Cannot reset: E-stop button still pressed");
         return ESP_ERR_INVALID_STATE;
     }
 
     portENTER_CRITICAL(&safety_spinlock);
+    if (state != SAFETY_ESTOPPED) {
+        portEXIT_CRITICAL(&safety_spinlock);
+        return ESP_ERR_INVALID_STATE;
+    }
+    state = SAFETY_RECOVERY_PENDING;
+    portEXIT_CRITICAL(&safety_spinlock);
+    notify_state_change();
+    ESP_LOGI(TAG, "Safety recovery pending - awaiting confirmation");
+    return ESP_OK;
+}
+
+esp_err_t safety_confirm_reset(void)
+{
+    if (gpio_get_level(ESTOP_GPIO) == 0) {
+        portENTER_CRITICAL(&safety_spinlock);
+        state = SAFETY_ESTOPPED;
+        portEXIT_CRITICAL(&safety_spinlock);
+        notify_state_change();
+        ESP_LOGW(TAG, "Confirm failed: E-stop pressed during recovery");
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    portENTER_CRITICAL(&safety_spinlock);
+    if (state != SAFETY_RECOVERY_PENDING) {
+        portEXIT_CRITICAL(&safety_spinlock);
+        return ESP_ERR_INVALID_STATE;
+    }
     state = SAFETY_NORMAL;
     last_watchdog_feed = esp_timer_get_time();
     portEXIT_CRITICAL(&safety_spinlock);
     notify_state_change();
-    ESP_LOGI(TAG, "Safety reset - returning to normal operation");
+    ESP_LOGI(TAG, "Safety reset confirmed - returning to normal operation");
     return ESP_OK;
 }
 
@@ -128,7 +157,9 @@ void safety_register_callback(safety_callback_t cb)
 
 void safety_feed_watchdog(void)
 {
+    portENTER_CRITICAL(&safety_spinlock);
     last_watchdog_feed = esp_timer_get_time();
+    portEXIT_CRITICAL(&safety_spinlock);
 }
 
 void safety_task(void *params)
@@ -153,7 +184,10 @@ void safety_task(void *params)
 
         // Watchdog: if control loop stalls, stop motors
         if (current_state == SAFETY_NORMAL) {
-            int64_t elapsed = esp_timer_get_time() - last_watchdog_feed;
+            portENTER_CRITICAL(&safety_spinlock);
+            int64_t last_feed = last_watchdog_feed;
+            portEXIT_CRITICAL(&safety_spinlock);
+            int64_t elapsed = esp_timer_get_time() - last_feed;
             if (elapsed > (WATCHDOG_TIMEOUT_MS * 1000LL)) {
                 portENTER_CRITICAL(&safety_spinlock);
                 state = SAFETY_ESTOPPED;
@@ -212,7 +246,9 @@ esp_err_t safety_set_speed_limit(float limit_mps)
         return ESP_ERR_INVALID_ARG;
     }
 
+    portENTER_CRITICAL(&safety_spinlock);
     speed_limit_mps = limit_mps;
+    portEXIT_CRITICAL(&safety_spinlock);
 
     // Persist to NVS
     nvs_handle_t nvs;
@@ -231,13 +267,19 @@ esp_err_t safety_set_speed_limit(float limit_mps)
 
 float safety_get_speed_limit(void)
 {
-    return speed_limit_mps;
+    portENTER_CRITICAL(&safety_spinlock);
+    float limit = speed_limit_mps;
+    portEXIT_CRITICAL(&safety_spinlock);
+    return limit;
 }
 
 float safety_clamp_speed(float requested_mps)
 {
-    if (requested_mps > speed_limit_mps) return speed_limit_mps;
-    if (requested_mps < -speed_limit_mps) return -speed_limit_mps;
+    portENTER_CRITICAL(&safety_spinlock);
+    float limit = speed_limit_mps;
+    portEXIT_CRITICAL(&safety_spinlock);
+    if (requested_mps > limit) return limit;
+    if (requested_mps < -limit) return -limit;
     return requested_mps;
 }
 

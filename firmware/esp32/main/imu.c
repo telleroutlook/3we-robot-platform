@@ -57,9 +57,17 @@ esp_err_t imu_init(void)
     }
 
     // Configure NDOF fusion mode
-    i2c_write_reg(BNO055_OPR_MODE_REG, BNO055_OPR_MODE_CONFIG);
+    err = i2c_write_reg(BNO055_OPR_MODE_REG, BNO055_OPR_MODE_CONFIG);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set CONFIG mode");
+        return err;
+    }
     vTaskDelay(pdMS_TO_TICKS(25));
-    i2c_write_reg(BNO055_OPR_MODE_REG, BNO055_OPR_MODE_NDOF);
+    err = i2c_write_reg(BNO055_OPR_MODE_REG, BNO055_OPR_MODE_NDOF);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set NDOF mode");
+        return err;
+    }
     vTaskDelay(pdMS_TO_TICKS(20));
 
     ESP_LOGI(TAG, "BNO055 initialized (addr=0x%02X, NDOF mode)", imu_addr);

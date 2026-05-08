@@ -18,6 +18,7 @@ safety_state_t safety_get_state(void);
 bool safety_is_estopped(void);
 void safety_trigger_estop(void);
 esp_err_t safety_reset(void);
+esp_err_t safety_confirm_reset(void);
 void safety_register_callback(safety_callback_t cb);
 void safety_feed_watchdog(void);
 void safety_task(void *params);

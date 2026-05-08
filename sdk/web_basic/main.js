@@ -7,11 +7,16 @@ class RobotConnection {
         this.connected = false;
         this.subscribers = {};
         this.publishInterval = null;
+        this.reconnectTimer = null;
         this.cmdVel = { linear: { x: 0, y: 0, z: 0 }, angular: { x: 0, y: 0, z: 0 } };
         this._intentionalClose = false;
     }
 
     connect(url) {
+        if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
+            document.getElementById('statusDot').classList.remove('connected');
+            return;
+        }
         if (this.ws) this.disconnect();
 
         this.ws = new WebSocket(url);
@@ -31,7 +36,7 @@ class RobotConnection {
             document.getElementById('statusDot').classList.remove('connected');
             this.stopPublishing();
             if (!this._intentionalClose) {
-                setTimeout(() => this.connect(url), 3000);
+                this.reconnectTimer = setTimeout(() => this.connect(url), 3000);
             }
             this._intentionalClose = false;
         };
@@ -48,12 +53,18 @@ class RobotConnection {
             }
         };
 
-        this.ws.onerror = () => {};
+        this.ws.onerror = () => {
+            document.getElementById('statusDot').classList.remove('connected');
+        };
     }
 
     disconnect() {
         this._intentionalClose = true;
         this.stopPublishing();
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
         if (this.ws) {
             this.ws.close();
             this.ws = null;
@@ -228,10 +239,15 @@ function toggleEstop() {
                 args: { data: false },
                 id: 'estop_reset_' + Date.now()
             }));
+            btn.textContent = 'RESETTING...';
         }
-        estopped = false;
-        btn.textContent = 'EMERGENCY STOP';
-        btn.classList.remove('active');
+        // State cleared only after brief delay to allow server processing
+        // In production, subscribe to estop state topic for confirmation
+        setTimeout(() => {
+            estopped = false;
+            btn.textContent = 'EMERGENCY STOP';
+            btn.classList.remove('active');
+        }, 500);
     }
 }
 
@@ -247,7 +263,9 @@ function toggleConnection() {
 
 // Keyboard controls (WASD + QE for rotation)
 document.addEventListener('keydown', (e) => {
-    if (estopped) return;
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (estopped && e.key !== ' ') return;
     switch (e.key.toLowerCase()) {
         case 'w': robot.setCmdVel(1, 0, 0); break;
         case 's': robot.setCmdVel(-1, 0, 0); break;
@@ -255,7 +273,7 @@ document.addEventListener('keydown', (e) => {
         case 'd': robot.setCmdVel(0, -1, 0); break;
         case 'q': robot.setCmdVel(0, 0, 1); break;
         case 'e': robot.setCmdVel(0, 0, -1); break;
-        case ' ': toggleEstop(); break;
+        case ' ': e.preventDefault(); toggleEstop(); break;
     }
 });
 

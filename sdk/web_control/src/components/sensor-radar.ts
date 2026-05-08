@@ -116,10 +116,9 @@ export class RobotSensorRadar extends HTMLElement {
   }
 
   private onRange(direction: string, msg: Range): void {
-    this.sensors[direction] = {
-      range: msg.range,
-      maxRange: msg.max_range || 4.0,
-    };
+    const range = (Number.isFinite(msg.range) && msg.range >= 0) ? msg.range : Infinity;
+    const maxRange = (Number.isFinite(msg.max_range) && msg.max_range > 0) ? msg.max_range : 4.0;
+    this.sensors[direction] = { range, maxRange };
     if (!this.pendingRender) {
       this.pendingRender = true;
       requestAnimationFrame(() => {
@@ -173,6 +172,9 @@ export class RobotSensorRadar extends HTMLElement {
   }
 
   private getDistanceColor(range: number): { fill: string; stroke: string } {
+    if (!Number.isFinite(range)) {
+      return { fill: 'rgba(34,197,94,0.15)', stroke: 'rgba(34,197,94,0.4)' };
+    }
     if (range < 0.15) {
       return { fill: 'rgba(239,68,68,0.3)', stroke: 'rgba(239,68,68,0.7)' };
     }
