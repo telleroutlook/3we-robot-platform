@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: Apache-2.0
+name: ROS2 Build
+
+on:
+  push:
+    paths: ['ros2_ws/**']
+  pull_request:
+    paths: ['ros2_ws/**']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ros:humble
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y python3-colcon-common-extensions
+          rosdep update
+          rosdep install --from-paths ros2_ws --ignore-src -y
+
+      - name: Build
+        working-directory: ros2_ws
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --symlink-install
+
+      - name: Test
+        working-directory: ros2_ws
+        run: |
+          source /opt/ros/humble/setup.bash
+          source install/setup.bash
+          colcon test --return-code-on-test-failure
