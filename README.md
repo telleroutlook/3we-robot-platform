@@ -1,98 +1,163 @@
-# Robot Platform 🤖
+<div align="center">
 
-**通用模块化移动平台 — Universal Modular Mobile Platform**
+# Robot Platform
 
-An open-source omnidirectional mobile robot platform designed for modularity, extensibility, and rapid payload integration.
+**Universal Modular Mobile Platform**
+
+[![License](https://img.shields.io/badge/Code-Apache_2.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/Hardware-CERN--OHL--P_v2-green.svg)](LICENSE-HARDWARE)
+[![License](https://img.shields.io/badge/Docs-CC_BY--SA_4.0-orange.svg)](LICENSE-DOCS)
+[![ROS2](https://img.shields.io/badge/ROS2-Humble%20|%20Jazzy-blueviolet.svg)](https://ros.org/)
+[![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.x-red.svg)](https://github.com/espressif/esp-idf)
+
+An open-source omnidirectional mobile robot platform designed for<br/>
+**modularity**, **extensibility**, and **rapid payload integration**.
+
+[Getting Started](#-quick-start) &bull;
+[Documentation](docs/) &bull;
+[Contributing](CONTRIBUTING.md) &bull;
+[Hardware](hardware/)
+
+**[English](README.md) | [中文](README_zh.md)**
+
+</div>
+
+---
 
 > [!NOTE]
 > This project is under active development. Hardware designs and firmware are being validated.
 
----
+<br/>
 
-## Core Capabilities
+## ✦ Core Capabilities
 
-| Capability | Description |
-|-----------|-------------|
-| Omnidirectional Movement | Mecanum wheel drive with independent motor control |
-| Onboard AI | Edge inference for vision, tracking, and navigation |
-| Standardized Payload Bus | Hot-plug connector with auto-identification (EEPROM) |
-| Multi-Protocol Communication | Wi-Fi, BLE, 4G/5G, LoRa (model dependent) |
-| Hardware Safety | Physical E-stop + safety relay interlock (ISO 13850) |
-| ROS2 Native | Full Nav2 + SLAM integration out of the box |
+<table>
+<tr>
+<td width="50%">
 
----
+**Motion & Control**
+- Omnidirectional mecanum drive
+- Closed-loop PID with encoder feedback
+- 50 Hz control loop, < 20 ms latency
+- Configurable speed limit (max 1.2 m/s)
 
-## Product Line
+</td>
+<td width="50%">
 
-| SKU | Target Use Case | AI | Communication |
-|-----|----------------|-----|---------------|
-| Basic | Education, Hobby | — | Wi-Fi + BLE |
-| Standard | Research, Prototyping | Hailo-8L | Wi-Fi + BLE |
-| Pro | Commercial Deployment | Hailo-8 | Wi-Fi + BLE + 4G |
-| Industrial | Industrial Automation | Hailo-8 | Wi-Fi + BLE + 5G + LoRa |
+**Intelligence & Navigation**
+- Edge AI inference (Hailo-8/8L)
+- Nav2 autonomous navigation
+- SLAM with slam_toolbox
+- ROS2 native integration
 
----
+</td>
+</tr>
+<tr>
+<td>
 
-## Architecture
+**Safety & Security**
+- ISO 13850 hardware E-stop
+- Dual-channel safety relay with self-test
+- DTLS 1.2 encrypted communication
+- Ed25519 signed OTA updates
+
+</td>
+<td>
+
+**Modularity & Extensibility**
+- PBC-34 hot-plug payload bus
+- EEPROM auto-identification
+- Power sequencing & budget management
+- Multi-protocol: Wi-Fi / BLE / 4G / 5G / LoRa
+
+</td>
+</tr>
+</table>
+
+<br/>
+
+## ✦ Product Line
+
+| | **Basic** | **Standard** | **Pro** | **Industrial** |
+|:--|:--:|:--:|:--:|:--:|
+| **Target** | Education | Research | Commercial | Industrial |
+| **AI** | — | Hailo-8L (13 TOPS) | Hailo-8 (26 TOPS) | Hailo-8 (26 TOPS) |
+| **Connectivity** | Wi-Fi + BLE | Wi-Fi + BLE | + 4G | + 5G + LoRa |
+| **CAN Bus** | — | — | — | MCP2515 + TJA1050 |
+| **Protection** | IP20 | IP20 | IP40 | IP65 |
+
+<br/>
+
+## ✦ Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  Payload Layer                    │
-│         (User devices via PBC-34 connector)      │
-├─────────────────────────────────────────────────┤
-│              Application Layer                    │
-│      ROS2 (Nav2, SLAM, Custom Nodes)            │
-├─────────────────────────────────────────────────┤
-│              Compute Layer                        │
-│     Raspberry Pi 5 + AI Accelerator             │
-├─────────────────────────────────────────────────┤
-│              Firmware Layer                       │
-│   ESP32-S3 (Motor, Sensors, Communication)      │
-├─────────────────────────────────────────────────┤
-│              Hardware Layer                       │
-│  Mecanum Wheels, Drivers, Battery, Safety       │
-└─────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                       Payload Layer                         │
+│            User devices via PBC-34 connector               │
+├───────────────────────────────────────────────────────────┤
+│                    Application Layer                        │
+│          ROS2  ·  Nav2  ·  SLAM  ·  Custom Nodes          │
+├───────────────────────────────────────────────────────────┤
+│                     Compute Layer                           │
+│          Raspberry Pi 5  +  AI Accelerator (Hailo)         │
+├───────────────────────────────────────────────────────────┤
+│                     Firmware Layer                          │
+│     ESP32-S3  ·  Motor  ·  Sensors  ·  Safety  ·  Comm    │
+├───────────────────────────────────────────────────────────┤
+│                     Hardware Layer                          │
+│   Mecanum Wheels  ·  DRV8833  ·  Battery  ·  E-Stop       │
+└───────────────────────────────────────────────────────────┘
 ```
 
----
+<br/>
 
-## Repository Structure
+## ✦ Repository Structure
 
 ```
 robot-platform/
-├── firmware/          # ESP32-S3 firmware (ESP-IDF + micro-ROS)
-│   ├── esp32/         # Main application
-│   └── config/        # Configuration schemas
-├── ros2_ws/           # ROS2 workspace
-│   ├── robot_bringup/      # Launch files
-│   ├── robot_description/  # URDF, meshes
-│   └── robot_interfaces/   # Custom msg/srv/action
-├── hardware/          # Hardware design
-│   ├── pcb/           # KiCad projects
-│   ├── structure/     # Mechanical drawings
-│   └── bom/           # Bill of materials
-├── sdk/               # Payload developer toolkit
-│   ├── payload_interface/  # Communication library
-│   ├── examples/      # Reference implementations
-│   └── web_basic/     # Minimal web control UI
-├── docs/              # Documentation
-├── LICENSE            # Apache 2.0 (code)
-├── LICENSE-HARDWARE   # CERN-OHL-P v2 (hardware)
-└── LICENSE-DOCS       # CC BY-SA 4.0 (documentation)
+│
+├── firmware/                    # ESP32-S3 firmware (ESP-IDF + micro-ROS)
+│   ├── esp32/main/             #   Application source
+│   └── config/                 #   Pin definitions, robot parameters
+│
+├── ros2_ws/                    # ROS2 workspace
+│   ├── robot_bringup/          #   Launch files, Nav2/SLAM config
+│   ├── robot_description/      #   URDF model (Xacro)
+│   └── robot_interfaces/       #   Custom msg/srv definitions
+│
+├── hardware/                   # Hardware design
+│   ├── pcb/                    #   PCB specs, PBC-34 pinout
+│   ├── structure/              #   Mechanical drawings
+│   └── bom/                    #   Bill of materials (4 SKUs)
+│
+├── sdk/                        # Payload developer toolkit
+│   ├── payload_interface/      #   Python communication library
+│   ├── tools/                  #   EEPROM validator, diagnostics
+│   ├── examples/               #   Reference implementations
+│   └── web_basic/              #   Browser-based teleop UI
+│
+└── docs/                       # Documentation
+    ├── assembly_guide.md       #   Hardware assembly
+    ├── firmware_flash.md       #   Build & flash guide
+    ├── payload_dev_guide.md    #   Payload development tutorial
+    ├── compliance_checklist.md #   Regulatory compliance
+    └── performance_benchmarks.md
 ```
 
----
+<br/>
 
-## Quick Start
+## ✦ Quick Start
 
 ### Prerequisites
 
-- ESP-IDF v5.x ([Installation Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/get-started/))
-- ROS2 Humble or Jazzy ([Installation Guide](https://docs.ros.org/en/humble/Installation.html))
-- Python 3.10+
-- KiCad 8+ (for hardware modifications)
+| Tool | Version | Purpose |
+|------|---------|---------|
+| [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/get-started/) | v5.x | Firmware build toolchain |
+| [ROS2](https://docs.ros.org/en/humble/Installation.html) | Humble / Jazzy | Robot middleware |
+| Python | 3.10+ | SDK and tools |
+| [KiCad](https://www.kicad.org/) | 8+ | Hardware modifications (optional) |
 
-### 1. Build Firmware
+### 1. Build & Flash Firmware
 
 ```bash
 cd firmware/esp32
@@ -109,89 +174,90 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-### 3. Launch
+### 3. Launch the Robot
 
 ```bash
-ros2 launch robot_bringup bringup.launch.py
+ros2 launch robot_bringup robot.launch.py
 ```
 
----
+<br/>
 
-## Tech Stack
+## ✦ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| MCU | ESP32-S3 (dual-core, 240MHz, Wi-Fi + BLE) |
-| SBC | Raspberry Pi 5 (8GB) |
-| AI Accelerator | Hailo-8L / Hailo-8 (13/26 TOPS) |
-| RTOS | FreeRTOS (via ESP-IDF) |
-| Middleware | micro-ROS ↔ ROS2 |
-| Navigation | Nav2 + slam_toolbox |
-| Vision | ONNX Runtime + OpenCV |
-| Motor Driver | DRV8833 (dual H-bridge) |
-| Safety | ISO 13850 E-stop + dual-channel safety relay |
+| Layer | Technology | Role |
+|:------|:-----------|:-----|
+| MCU | ESP32-S3 | Dual-core 240 MHz, Wi-Fi + BLE |
+| SBC | Raspberry Pi 5 (8 GB) | ROS2, navigation, vision |
+| AI | Hailo-8L / Hailo-8 | 13–26 TOPS edge inference |
+| RTOS | FreeRTOS (ESP-IDF) | Real-time motor + sensor control |
+| Middleware | micro-ROS ↔ ROS2 | MCU–SBC bridge |
+| Navigation | Nav2 + slam_toolbox | SLAM and path planning |
+| Motor Driver | DRV8833 x2 | 4 × DC motor H-bridge |
+| Security | DTLS 1.2 + Ed25519 OTA | Encrypted control, signed updates |
+| Safety | ISO 13850 E-stop | Hardware interlock |
 
----
+<br/>
 
-## Licensing
+## ✦ Licensing
 
-This project uses a multi-license structure:
+This project uses an **Open Core** multi-license structure:
 
 | Component | License | File |
-|-----------|---------|------|
-| Firmware & Software | Apache License 2.0 | `LICENSE` |
-| Hardware Designs | CERN-OHL-P v2 | `LICENSE-HARDWARE` |
-| Documentation | CC BY-SA 4.0 | `LICENSE-DOCS` |
+|:----------|:--------|:-----|
+| Firmware & Software | Apache License 2.0 | [`LICENSE`](LICENSE) |
+| Hardware Designs | CERN-OHL-P v2 | [`LICENSE-HARDWARE`](LICENSE-HARDWARE) |
+| Documentation | CC BY-SA 4.0 | [`LICENSE-DOCS`](LICENSE-DOCS) |
 
-See `NOTICE` for third-party dependency attributions.
+Third-party attributions: [`NOTICE`](NOTICE)
 
----
+<br/>
 
-## Contributing
+## ✦ Contributing
 
-We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
 
-- Development setup
-- Branch strategy and commit format
+- Development environment setup
+- Branch strategy & conventional commits
 - Pull request process
-- Code style guidelines
 - Safety-critical contribution rules
 
----
+<br/>
 
-## Safety Notice
+## ✦ Safety Notice
 
-This platform includes moving mechanical parts and lithium batteries. Please:
+> [!WARNING]
+> This platform contains **moving mechanical parts** and **lithium batteries**.
 
-- Always verify the E-stop button functions before operation
-- Do not bypass or modify the safety relay circuit
-- Follow battery handling guidelines in the documentation
+- Always verify E-stop function before operation
+- Never bypass or modify the safety relay circuit
+- Follow battery handling guidelines in documentation
 - Keep clear of wheel assemblies during operation
 
+<br/>
+
+## ✦ Community & Support
+
+| Channel | Purpose |
+|---------|---------|
+| [GitHub Issues](../../issues) | Bug reports, feature requests |
+| [GitHub Discussions](../../discussions) | Questions, ideas, show & tell |
+
+<br/>
+
+## ✦ Acknowledgments
+
+Built on the shoulders of:
+
+| Project | Maintainer |
+|---------|-----------|
+| [ESP-IDF](https://github.com/espressif/esp-idf) | Espressif Systems |
+| [micro-ROS](https://micro.ros.org/) | eProsima |
+| [ROS 2](https://ros.org/) | Open Robotics |
+| [Nav2](https://nav2.org/) | Steve Macenski et al. |
+| [KiCad](https://www.kicad.org/) | KiCad Community |
+
 ---
 
-## Community
-
-- [GitHub Issues](../../issues) — Bug reports and feature requests
-- [GitHub Discussions](../../discussions) — Questions and ideas
-
----
-
-## Roadmap
-
-See [GitHub Milestones](../../milestones) for planned releases.
-
----
-
-## Acknowledgments
-
-Built with:
-- [ESP-IDF](https://github.com/espressif/esp-idf) by Espressif
-- [micro-ROS](https://micro.ros.org/) by eProsima
-- [ROS 2](https://ros.org/) by Open Robotics
-- [Nav2](https://nav2.org/) by Steve Macenski et al.
-- [KiCad](https://www.kicad.org/) EDA
-
----
-
-*Made with care for the robotics community.*
+<div align="center">
+<sub>Made with care for the robotics community.</sub>
+</div>
