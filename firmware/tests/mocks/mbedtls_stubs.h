@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
+#include "esp_stubs.h"
 
 // --- mbedtls bignum ---
 typedef struct { int s; size_t n; uint32_t *p; } mbedtls_mpi;

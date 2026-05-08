@@ -45,7 +45,6 @@ add_executable(test_runner
     ${FIRMWARE_SRC}/battery.c
     ${FIRMWARE_SRC}/ota_signing.c
     ${FIRMWARE_SRC}/dtls_transport.c
-    ${FIRMWARE_SRC}/ultrasonic.c
 )
 
 target_include_directories(test_runner PRIVATE
