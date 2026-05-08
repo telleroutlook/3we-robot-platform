@@ -59,9 +59,10 @@ TEMPLATE.innerHTML = `
     color: var(--color-text-primary, #e2e8f0);
   }
 
-  .payload-vendor {
+  .payload-id {
     font-size: var(--text-2xs, 10px);
     color: var(--color-text-muted, #7a8ba5);
+    font-family: var(--font-mono, monospace);
   }
 
   .payload-power-info {
@@ -146,22 +147,22 @@ TEMPLATE.innerHTML = `
 
     <div class="payload-info hidden" id="payloadInfo">
       <span class="payload-name" id="payloadName">--</span>
-      <span class="payload-vendor" id="payloadVendor">--</span>
+      <span class="payload-id" id="payloadId">--</span>
       <span class="payload-power-info" id="payloadPower">-- W</span>
     </div>
 
     <div class="rail-toggles hidden" id="railToggles">
       <div class="rail-row">
         <span class="rail-label">5V</span>
-        <div class="toggle-switch" id="toggle5v" data-rail="RAIL_5V" role="switch" aria-checked="false" tabindex="0"></div>
+        <div class="toggle-switch" id="toggle5v" data-rail="5V" role="switch" aria-checked="false" tabindex="0"></div>
       </div>
       <div class="rail-row">
         <span class="rail-label">12V</span>
-        <div class="toggle-switch" id="toggle12v" data-rail="RAIL_12V" role="switch" aria-checked="false" tabindex="0"></div>
+        <div class="toggle-switch" id="toggle12v" data-rail="12V" role="switch" aria-checked="false" tabindex="0"></div>
       </div>
       <div class="rail-row">
         <span class="rail-label">VBAT</span>
-        <div class="toggle-switch" id="toggleVbat" data-rail="RAIL_VBAT" role="switch" aria-checked="false" tabindex="0"></div>
+        <div class="toggle-switch" id="toggleVbat" data-rail="VBAT" role="switch" aria-checked="false" tabindex="0"></div>
       </div>
     </div>
   </div>
@@ -174,7 +175,7 @@ export class RobotPayloadPanel extends HTMLElement {
   private payloadInfo!: HTMLElement;
   private railToggles!: HTMLElement;
   private payloadName!: HTMLElement;
-  private payloadVendor!: HTMLElement;
+  private payloadId!: HTMLElement;
   private payloadPower!: HTMLElement;
   private toggle5v!: HTMLElement;
   private toggle12v!: HTMLElement;
@@ -193,15 +194,15 @@ export class RobotPayloadPanel extends HTMLElement {
     this.payloadInfo = this.shadowRoot!.getElementById('payloadInfo')!;
     this.railToggles = this.shadowRoot!.getElementById('railToggles')!;
     this.payloadName = this.shadowRoot!.getElementById('payloadName')!;
-    this.payloadVendor = this.shadowRoot!.getElementById('payloadVendor')!;
+    this.payloadId = this.shadowRoot!.getElementById('payloadId')!;
     this.payloadPower = this.shadowRoot!.getElementById('payloadPower')!;
     this.toggle5v = this.shadowRoot!.getElementById('toggle5v')!;
     this.toggle12v = this.shadowRoot!.getElementById('toggle12v')!;
     this.toggleVbat = this.shadowRoot!.getElementById('toggleVbat')!;
 
-    this.toggle5v.addEventListener('click', () => this.toggleRail('RAIL_5V', this.toggle5v));
-    this.toggle12v.addEventListener('click', () => this.toggleRail('RAIL_12V', this.toggle12v));
-    this.toggleVbat.addEventListener('click', () => this.toggleRail('RAIL_VBAT', this.toggleVbat));
+    this.toggle5v.addEventListener('click', () => this.toggleRail('5V', this.toggle5v));
+    this.toggle12v.addEventListener('click', () => this.toggleRail('12V', this.toggle12v));
+    this.toggleVbat.addEventListener('click', () => this.toggleRail('VBAT', this.toggleVbat));
 
     [this.toggle5v, this.toggle12v, this.toggleVbat].forEach(el => {
       el.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -234,7 +235,7 @@ export class RobotPayloadPanel extends HTMLElement {
       this.railToggles.classList.remove('hidden');
 
       this.payloadName.textContent = msg.name || 'Unknown Payload';
-      this.payloadVendor.textContent = msg.vendor || 'Unknown Vendor';
+      this.payloadId.textContent = msg.payload_id || '';
       this.payloadPower.textContent = `${msg.power_consumption_watts.toFixed(1)} W`;
 
       this.setToggleState(this.toggle5v, msg.power_5v_active);
@@ -259,7 +260,7 @@ export class RobotPayloadPanel extends HTMLElement {
   }
 
   private async toggleRail(
-    rail: PayloadPowerRequest['rail'],
+    rail: string,
     toggleEl: HTMLElement
   ): Promise<void> {
     const currentlyActive = toggleEl.classList.contains('active');
@@ -272,7 +273,7 @@ export class RobotPayloadPanel extends HTMLElement {
       await connection.callService<PayloadPowerRequest, PayloadPowerResponse>(
         '/payload_power',
         'robot_interfaces/PayloadPower',
-        { rail, enable }
+        { payload_id: '', rail, enable }
       );
     } catch {
       // Revert on failure

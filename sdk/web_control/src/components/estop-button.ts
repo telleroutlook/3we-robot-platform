@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import type { EmergencyStop } from '../types';
+import type { EmergencyStopState } from '../types';
 import { connection } from '../connection';
 
 type EstopVisualState = 'normal' | 'estopped' | 'recovery_pending';
@@ -201,9 +201,9 @@ export class RobotEstopButton extends HTMLElement {
     cancelBtn.addEventListener('click', () => this.hideConfirm());
     confirmBtn.addEventListener('click', () => this.doReset());
 
-    this.unsubscribe = connection.subscribe<EmergencyStop>(
+    this.unsubscribe = connection.subscribe<EmergencyStopState>(
       '/emergency_stop_state',
-      'robot_interfaces/EmergencyStop',
+      'robot_interfaces/EmergencyStopState',
       (msg) => this.onEstopState(msg)
     );
   }
@@ -263,7 +263,7 @@ export class RobotEstopButton extends HTMLElement {
     }
   }
 
-  private onEstopState(msg: EmergencyStop): void {
+  private onEstopState(msg: EmergencyStopState): void {
     this.estopped = msg.stopped;
     if (msg.stopped) {
       this.setVisualState('estopped');

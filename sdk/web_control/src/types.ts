@@ -73,27 +73,44 @@ export interface WheelSpeeds {
 }
 
 export interface PayloadState {
+  header: Header;
+  payload_id: string;
   name: string;
-  vendor: string;
   connected: boolean;
   power_5v_active: boolean;
   power_12v_active: boolean;
   power_vbat_active: boolean;
+  current_5v: number;
+  current_12v: number;
   power_consumption_watts: number;
+  status: number;
 }
 
-export interface EmergencyStop {
+export interface EmergencyStopState {
+  header: Header;
   stopped: boolean;
+  state: number;
   reason: string;
 }
 
 export interface PayloadPowerRequest {
-  rail: 'RAIL_5V' | 'RAIL_12V' | 'RAIL_VBAT';
+  payload_id: string;
+  rail: string;
   enable: boolean;
 }
 
 export interface PayloadPowerResponse {
   success: boolean;
+  message: string;
+}
+
+export interface EmergencyStopRequest {
+  reason: string;
+}
+
+export interface EmergencyStopResponse {
+  success: boolean;
+  current_state: number;
   message: string;
 }
 

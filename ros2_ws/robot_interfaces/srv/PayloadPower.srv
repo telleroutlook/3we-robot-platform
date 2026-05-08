@@ -1,7 +1,7 @@
-# Control payload power rails
+# Control a single payload power rail
 string payload_id
-bool enable_5v
-bool enable_12v
+string rail                     # "5V", "12V", or "VBAT"
+bool enable
 ---
 bool success
 string message

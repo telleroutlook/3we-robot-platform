@@ -1,0 +1,2 @@
+#!/bin/sh
+npx tsx scripts/validate-ros-types.ts

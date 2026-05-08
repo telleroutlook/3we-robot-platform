@@ -51,6 +51,10 @@ log/
 *.tar.gz
 *.rar
 
+# Node.js
+node_modules/
+package-lock.json
+
 # Secrets (should never be committed)
 .env
 .env.*

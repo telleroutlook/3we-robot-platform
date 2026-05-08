@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate:ros-types": "tsx scripts/validate-ros-types.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4"
+  }
+}
