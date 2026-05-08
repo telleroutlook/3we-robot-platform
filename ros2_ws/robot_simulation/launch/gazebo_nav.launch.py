@@ -59,6 +59,7 @@ def generate_launch_description():
             'use_slam': LaunchConfiguration('use_slam'),
             'map': LaunchConfiguration('map'),
             'use_sim_time': 'true',
+            'params_file': LaunchConfiguration('nav2_params'),
         }.items(),
     )
 

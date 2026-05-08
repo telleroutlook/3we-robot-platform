@@ -248,6 +248,7 @@ export class RobotJoystick extends HTMLElement {
   };
 
   private startPublishing(): void {
+    this.stopPublishing();
     // Publish at 20 Hz
     this.publishTimer = setInterval(() => {
       const msg: Twist = {

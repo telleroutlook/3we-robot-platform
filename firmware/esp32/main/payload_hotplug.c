@@ -141,12 +141,22 @@ esp_err_t payload_hotplug_init(void)
     // GPA3 as input (DETECT)
     uint8_t iodir_buf[2] = { MCP_IODIRA, 0xF8 };  // GPA0-2 output, GPA3-7 input
     if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
-    i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, iodir_buf, 2, pdMS_TO_TICKS(50));
+
+    esp_err_t err = i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, iodir_buf, 2, pdMS_TO_TICKS(50));
+    if (err != ESP_OK) {
+        i2c_bus_unlock();
+        ESP_LOGE(TAG, "MCP23017 IODIR write failed: 0x%x", err);
+        return err;
+    }
 
     // Ensure all power rails off at init
     uint8_t latch_buf[2] = { MCP_OLATA, 0x00 };
-    i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, latch_buf, 2, pdMS_TO_TICKS(50));
+    err = i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, latch_buf, 2, pdMS_TO_TICKS(50));
     i2c_bus_unlock();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "MCP23017 OLAT write failed: 0x%x", err);
+        return err;
+    }
 
     state = PAYLOAD_STATE_ABSENT;
     ESP_LOGI(TAG, "Payload hot-plug system initialized");

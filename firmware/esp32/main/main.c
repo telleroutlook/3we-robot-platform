@@ -157,12 +157,12 @@ void app_main(void)
 #ifdef CONFIG_ROBOT_SKU_INDUSTRIAL
     // CAN bus (industrial SKU only)
     canbus_config_t can_cfg = {
-        .spi_host = SPI3_HOST,
-        .pin_mosi = 11,
-        .pin_miso = 13,
-        .pin_sclk = 12,
-        .pin_cs = 10,
-        .pin_int = 9,
+        .spi_host = CAN_SPI_HOST,
+        .pin_mosi = CAN_MOSI,
+        .pin_miso = CAN_MISO,
+        .pin_sclk = CAN_SCLK,
+        .pin_cs = CAN_CS,
+        .pin_int = CAN_INT,
         .bitrate = CAN_BITRATE_500K,
         .accept_mask = 0x7FF,
         .accept_filter = 0x000,
@@ -203,9 +203,7 @@ void app_main(void)
 
     // Main loop: watchdog feed and status monitoring
     while (1) {
-        if (!safety_is_estopped()) {
-            safety_feed_watchdog();
-        }
+        safety_feed_watchdog();
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

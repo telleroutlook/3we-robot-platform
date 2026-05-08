@@ -178,7 +178,7 @@ esp_err_t safety_relay_selftest(void)
         .pull_down_en = GPIO_PULLDOWN_ENABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
-    gpio_config(&fb_cfg);
+    ESP_ERROR_CHECK(gpio_config(&fb_cfg));
 
     // With E-stop NOT pressed (NC circuit closed), relay should be energized
     // Feedback pin should read HIGH when relay is properly engaged

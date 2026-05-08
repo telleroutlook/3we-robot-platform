@@ -82,6 +82,10 @@ export class RosbridgeConnection extends EventTarget {
     this.intentionalClose = true;
     this.clearReconnectTimer();
     this.reconnectAttempts = 0;
+    for (const [, pending] of this.pendingServices) {
+      pending.reject(new Error('Disconnected'));
+    }
+    this.pendingServices.clear();
     if (this.ws) {
       this.ws.close();
       this.ws = null;

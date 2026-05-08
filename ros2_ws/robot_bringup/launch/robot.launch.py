@@ -1,15 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 """Top-level launch file for robot-platform."""
 
-import os
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-import xacro
 
 
 def generate_launch_description():
@@ -28,17 +26,16 @@ def generate_launch_description():
         'serial_port', default_value='/dev/ttyUSB0',
         description='Serial port for micro-ROS agent')
 
-    # Robot description
+    # Robot description (deferred xacro processing via Command substitution)
     xacro_file = PathJoinSubstitution([pkg_description, 'urdf', 'robot.urdf.xacro'])
+    robot_description_content = Command([
+        FindExecutable(name='xacro'), ' ', xacro_file
+    ])
 
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        parameters=[{'robot_description': xacro.process_file(
-            os.path.join(
-                FindPackageShare('robot_description').find('robot_description'),
-                'urdf', 'robot.urdf.xacro'
-            )).toxml()}],
+        parameters=[{'robot_description': robot_description_content}],
     )
 
     # Hardware launch

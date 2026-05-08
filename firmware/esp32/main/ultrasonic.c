@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "ultrasonic.h"
+#include "safety.h"
 #include "pin_definitions.h"
 #include "robot_params.h"
 
@@ -137,6 +138,11 @@ void ultrasonic_task(void *params)
         float dist;
         if (ultrasonic_read(current, &dist) == ESP_OK) {
             last_distance[current] = dist;
+            if (dist < US_SAFETY_THRESHOLD_M && !safety_is_estopped()) {
+                ESP_LOGW(TAG, "Obstacle at %.3fm on sensor %d - triggering estop",
+                         dist, current);
+                safety_trigger_estop();
+            }
         }
 
         current = (current + 1) % US_COUNT;

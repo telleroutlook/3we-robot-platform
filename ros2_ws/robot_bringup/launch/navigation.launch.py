@@ -13,6 +13,9 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     pkg_bringup = FindPackageShare('robot_bringup')
 
+    default_nav2_params = PathJoinSubstitution([pkg_bringup, 'config', 'nav2_params.yaml'])
+    slam_params_file = PathJoinSubstitution([pkg_bringup, 'config', 'slam_params.yaml'])
+
     use_slam_arg = DeclareLaunchArgument(
         'use_slam', default_value='false',
         description='Run SLAM toolbox for mapping mode')
@@ -25,8 +28,9 @@ def generate_launch_description():
         'use_sim_time', default_value='false',
         description='Use simulation clock')
 
-    nav2_params_file = PathJoinSubstitution([pkg_bringup, 'config', 'nav2_params.yaml'])
-    slam_params_file = PathJoinSubstitution([pkg_bringup, 'config', 'slam_params.yaml'])
+    params_file_arg = DeclareLaunchArgument(
+        'params_file', default_value=default_nav2_params,
+        description='Path to Nav2 parameters file')
 
     # Nav2 bringup
     nav2_launch = IncludeLaunchDescription(
@@ -36,7 +40,7 @@ def generate_launch_description():
             ])
         ),
         launch_arguments={
-            'params_file': nav2_params_file,
+            'params_file': LaunchConfiguration('params_file'),
             'use_sim_time': LaunchConfiguration('use_sim_time'),
             'map': LaunchConfiguration('map'),
         }.items(),
@@ -56,6 +60,7 @@ def generate_launch_description():
         use_slam_arg,
         map_file_arg,
         use_sim_time_arg,
+        params_file_arg,
         nav2_launch,
         slam_node,
     ])

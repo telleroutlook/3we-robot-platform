@@ -16,7 +16,7 @@ typedef struct __attribute__((packed)) {
     uint32_t version;           // Semantic version packed: major.minor.patch
     uint32_t image_size;        // Size of firmware binary (excluding this header)
     uint8_t  sha256[OTA_HASH_SIZE];     // SHA-256 of firmware binary
-    uint8_t  signature[OTA_SIGNATURE_SIZE]; // Ed25519 signature over sha256
+    uint8_t  signature[OTA_SIGNATURE_SIZE]; // ECDSA P-256 signature (r || s) over sha256
     uint8_t  reserved[28];      // Future use, must be 0
 } ota_image_header_t;
 

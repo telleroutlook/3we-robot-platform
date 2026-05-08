@@ -114,15 +114,15 @@ class RobotConnection {
     }
 
     onRange(direction, msg) {
-        const dist = msg.range ? msg.range.toFixed(2) : '--';
+        const dist = msg.range != null ? msg.range.toFixed(2) : '--';
         document.getElementById('dist' + direction).textContent = dist;
 
         const bar = document.getElementById('dist' + direction + 'Bar');
-        const pct = Math.min(100, (msg.range / 4.0) * 100);
+        const pct = Math.min(100, ((msg.range ?? 0) / 4.0) * 100);
         bar.style.width = pct + '%';
         bar.className = 'distance-fill';
-        if (msg.range < 0.1) bar.classList.add('danger');
-        else if (msg.range < 0.3) bar.classList.add('warn');
+        if (msg.range != null && msg.range < 0.1) bar.classList.add('danger');
+        else if (msg.range != null && msg.range < 0.3) bar.classList.add('warn');
     }
 }
 
@@ -220,9 +220,6 @@ function toggleEstop() {
         }
     } else {
         if (!confirm('Reset Emergency Stop? Ensure the area is clear before resuming.')) return;
-        estopped = false;
-        btn.textContent = 'EMERGENCY STOP';
-        btn.classList.remove('active');
         if (robot.ws && robot.ws.readyState === WebSocket.OPEN) {
             robot.ws.send(JSON.stringify({
                 op: 'call_service',
@@ -232,6 +229,9 @@ function toggleEstop() {
                 id: 'estop_reset_' + Date.now()
             }));
         }
+        estopped = false;
+        btn.textContent = 'EMERGENCY STOP';
+        btn.classList.remove('active');
     }
 }
 

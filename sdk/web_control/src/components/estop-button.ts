@@ -256,8 +256,7 @@ export class RobotEstopButton extends HTMLElement {
         'std_srvs/SetBool',
         { data: false }
       );
-      this.estopped = false;
-      this.setVisualState('normal');
+      // State will be cleared by onEstopState when topic confirms
     } catch {
       // Remain in estopped state on failure
       this.setVisualState('estopped');

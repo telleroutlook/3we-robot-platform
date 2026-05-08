@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "imu.h"
 #include "i2c_bus.h"
-#include "pin_definitions.h"
 
 #include "driver/i2c.h"
 #include "esp_log.h"
@@ -45,17 +44,6 @@ static esp_err_t i2c_write_reg(uint8_t reg, uint8_t val)
 
 esp_err_t imu_init(void)
 {
-    i2c_config_t conf = {
-        .mode = I2C_MODE_MASTER,
-        .sda_io_num = I2C_SDA,
-        .scl_io_num = I2C_SCL,
-        .sda_pullup_en = GPIO_PULLUP_ENABLE,
-        .scl_pullup_en = GPIO_PULLUP_ENABLE,
-        .master.clk_speed = I2C_FREQ_HZ,
-    };
-    ESP_ERROR_CHECK(i2c_param_config(I2C_PORT, &conf));
-    ESP_ERROR_CHECK(i2c_driver_install(I2C_PORT, I2C_MODE_MASTER, 0, 0, 0));
-
     // Probe for BNO055
     uint8_t chip_id = 0;
     esp_err_t err = i2c_read_reg(BNO055_CHIP_ID_REG, &chip_id, 1);

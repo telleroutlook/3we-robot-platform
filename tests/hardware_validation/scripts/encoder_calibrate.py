@@ -26,10 +26,10 @@ class EncoderCalibrate(Node):
         self.samples.append(
             {
                 "time": time.time(),
-                "fl": msg.fl_rps,
-                "fr": msg.fr_rps,
-                "rl": msg.rl_rps,
-                "rr": msg.rr_rps,
+                "fl": msg.front_left,
+                "fr": msg.front_right,
+                "rl": msg.rear_left,
+                "rr": msg.rear_right,
             }
         )
 
