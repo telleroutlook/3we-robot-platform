@@ -8,7 +8,6 @@ and publishes it as a ROS2 topic.
 
 import sys
 import struct
-import time
 
 from payload_interface.payload_protocol import PayloadInterface
 
@@ -17,7 +16,9 @@ try:
     from rclpy.node import Node
     from sensor_msgs.msg import Temperature
 except ImportError:
-    print("ROS2 (rclpy) not available. Install ros-humble-desktop or source your workspace.")
+    print(
+        "ROS2 (rclpy) not available. Install ros-humble-desktop or source your workspace."
+    )
     sys.exit(1)
 
 
@@ -28,8 +29,8 @@ class SensorPayloadNode(Node):
     """ROS2 node that reads temperature from a PBC-34 sensor payload."""
 
     def __init__(self):
-        super().__init__('sensor_payload')
-        self.publisher = self.create_publisher(Temperature, '/payload/temperature', 10)
+        super().__init__("sensor_payload")
+        self.publisher = self.create_publisher(Temperature, "/payload/temperature", 10)
         self.timer = self.create_timer(1.0, self.timer_callback)
 
         self.interface = PayloadInterface(i2c_bus=1)
@@ -49,13 +50,13 @@ class SensorPayloadNode(Node):
             return
 
         # Parse response: [CMD_ACK, TEMP_INT (signed), TEMP_FRAC]
-        temp_int = struct.unpack('b', bytes([response[1]]))[0]
+        temp_int = struct.unpack("b", bytes([response[1]]))[0]
         temp_frac = response[2]
         temperature = float(temp_int) + float(temp_frac) / 100.0
 
         msg = Temperature()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'payload_mount_link'
+        msg.header.frame_id = "payload_mount_link"
         msg.temperature = temperature
         msg.variance = 0.5
 
@@ -82,5 +83,5 @@ def main():
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -23,12 +23,16 @@ def main():
     print(f"  Name:         {descriptor.name}")
     print(f"  Power (5V):   {descriptor.power_5v_ma} mA")
     print(f"  Power (12V):  {descriptor.power_12v_ma} mA")
-    print(f"  Interfaces:   ", end="")
+    print("  Interfaces:   ", end="")
     interfaces = []
-    if descriptor.uses_i2c:  interfaces.append("I2C")
-    if descriptor.uses_uart: interfaces.append("UART")
-    if descriptor.uses_gpio: interfaces.append("GPIO")
-    if descriptor.uses_can:  interfaces.append("CAN")
+    if descriptor.uses_i2c:
+        interfaces.append("I2C")
+    if descriptor.uses_uart:
+        interfaces.append("UART")
+    if descriptor.uses_gpio:
+        interfaces.append("GPIO")
+    if descriptor.uses_can:
+        interfaces.append("CAN")
     print(", ".join(interfaces) or "None")
 
     print("\nSending PING...")
@@ -48,5 +52,5 @@ def main():
     print("\nDone.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -18,19 +18,12 @@ import struct
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from payload_interface.capability_flags import (
-    CAP_ADC,
-    CAP_CAN,
     CAP_GPIO,
-    CAP_I2C,
-    CAP_PWM,
     CAP_RESERVED,
-    CAP_SPI,
-    CAP_UART,
     CAPABILITY_NAMES,
 )
 
@@ -71,11 +64,11 @@ class EepromDescriptor:
 
         # Offset 0x05: Payload ID (16 bytes, null-padded)
         pid = self.payload_id.encode("ascii", errors="replace")[:MAX_PAYLOAD_ID_LEN]
-        buf[5:5 + len(pid)] = pid
+        buf[5 : 5 + len(pid)] = pid
 
         # Offset 0x15: Name (32 bytes, null-padded)
         name = self.name.encode("ascii", errors="replace")[:MAX_NAME_LEN]
-        buf[0x15:0x15 + len(name)] = name
+        buf[0x15 : 0x15 + len(name)] = name
 
         # Offset 0x35: Power 5V (2 bytes, big-endian)
         struct.pack_into(">H", buf, 0x35, self.power_5v_ma)
@@ -150,17 +143,23 @@ def validate_descriptor(desc: EepromDescriptor) -> ValidationResult:
 
     # Magic check
     if desc.magic != DESCRIPTOR_MAGIC:
-        result.add_error(f"Invalid magic: {desc.magic!r} (expected {DESCRIPTOR_MAGIC!r})")
+        result.add_error(
+            f"Invalid magic: {desc.magic!r} (expected {DESCRIPTOR_MAGIC!r})"
+        )
 
     # Version check
     if desc.version != 1:
-        result.add_error(f"Unsupported version: {desc.version} (only version 1 is supported)")
+        result.add_error(
+            f"Unsupported version: {desc.version} (only version 1 is supported)"
+        )
 
     # Payload ID validation
     if not desc.payload_id:
         result.add_error("Payload ID is empty")
     elif len(desc.payload_id) > MAX_PAYLOAD_ID_LEN:
-        result.add_error(f"Payload ID too long: {len(desc.payload_id)} > {MAX_PAYLOAD_ID_LEN}")
+        result.add_error(
+            f"Payload ID too long: {len(desc.payload_id)} > {MAX_PAYLOAD_ID_LEN}"
+        )
     elif not desc.payload_id.isascii():
         result.add_error("Payload ID contains non-ASCII characters")
 
@@ -174,14 +173,22 @@ def validate_descriptor(desc: EepromDescriptor) -> ValidationResult:
 
     # Power budget validation
     if desc.power_5v_ma > MAX_5V_MA:
-        result.add_error(f"5V power exceeds limit: {desc.power_5v_ma}mA > {MAX_5V_MA}mA")
+        result.add_error(
+            f"5V power exceeds limit: {desc.power_5v_ma}mA > {MAX_5V_MA}mA"
+        )
     elif desc.power_5v_ma > 3000:
-        result.add_warning(f"5V power is high: {desc.power_5v_ma}mA (>60% of {MAX_5V_MA}mA budget)")
+        result.add_warning(
+            f"5V power is high: {desc.power_5v_ma}mA (>60% of {MAX_5V_MA}mA budget)"
+        )
 
     if desc.power_12v_ma > MAX_12V_MA:
-        result.add_error(f"12V power exceeds limit: {desc.power_12v_ma}mA > {MAX_12V_MA}mA")
+        result.add_error(
+            f"12V power exceeds limit: {desc.power_12v_ma}mA > {MAX_12V_MA}mA"
+        )
     elif desc.power_12v_ma > 2000:
-        result.add_warning(f"12V power is high: {desc.power_12v_ma}mA (>66% of {MAX_12V_MA}mA budget)")
+        result.add_warning(
+            f"12V power is high: {desc.power_12v_ma}mA (>66% of {MAX_12V_MA}mA budget)"
+        )
 
     # Total power budget
     total_power_w = (desc.power_5v_ma * 5.0 + desc.power_12v_ma * 12.0) / 1000.0
@@ -215,7 +222,9 @@ def print_descriptor(desc: EepromDescriptor):
     for bit, name in CAPABILITY_NAMES.items():
         if desc.capabilities & bit:
             caps.append(name)
-    print(f"  Capabilities: {', '.join(caps) if caps else 'None'} (0x{desc.capabilities:02X})")
+    print(
+        f"  Capabilities: {', '.join(caps) if caps else 'None'} (0x{desc.capabilities:02X})"
+    )
     print(f"  GPIO Mask:    0x{desc.gpio_mask:02X} ({bin(desc.gpio_mask)})")
 
 
@@ -316,7 +325,7 @@ def cmd_program(args):
         # Write in 16-byte pages (AT24C02 page size)
         page_size = 16
         for offset in range(0, len(data), page_size):
-            chunk = data[offset:offset + page_size]
+            chunk = data[offset : offset + page_size]
             msg = smbus2.i2c_msg.write(eeprom_addr, [offset] + list(chunk))
             bus.i2c_rdwr(msg)
             time.sleep(0.005)  # 5ms write cycle time
@@ -351,14 +360,24 @@ def main():
     p_generate = subparsers.add_parser("generate", help="Generate EEPROM binary")
     p_generate.add_argument("--id", required=True, help="Payload ID (max 16 chars)")
     p_generate.add_argument("--name", required=True, help="Payload name (max 32 chars)")
-    p_generate.add_argument("--power-5v", type=int, default=0, help="5V current draw (mA)")
-    p_generate.add_argument("--power-12v", type=int, default=0, help="12V current draw (mA)")
-    p_generate.add_argument("--caps", type=lambda x: int(x, 0), default=0,
-                            help="Capabilities bitmask (hex, e.g., 0x0F)")
-    p_generate.add_argument("--gpio", type=lambda x: int(x, 0), default=0,
-                            help="GPIO mask (hex)")
-    p_generate.add_argument("-o", "--output", default="payload_eeprom.bin",
-                            help="Output file path")
+    p_generate.add_argument(
+        "--power-5v", type=int, default=0, help="5V current draw (mA)"
+    )
+    p_generate.add_argument(
+        "--power-12v", type=int, default=0, help="12V current draw (mA)"
+    )
+    p_generate.add_argument(
+        "--caps",
+        type=lambda x: int(x, 0),
+        default=0,
+        help="Capabilities bitmask (hex, e.g., 0x0F)",
+    )
+    p_generate.add_argument(
+        "--gpio", type=lambda x: int(x, 0), default=0, help="GPIO mask (hex)"
+    )
+    p_generate.add_argument(
+        "-o", "--output", default="payload_eeprom.bin", help="Output file path"
+    )
 
     # program command
     p_program = subparsers.add_parser("program", help="Program EEPROM via I2C")

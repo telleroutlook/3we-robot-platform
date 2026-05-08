@@ -17,12 +17,13 @@ except ImportError:
 EEPROM_ADDR = 0x50
 PAYLOAD_DEFAULT_ADDR = 0x10
 FRAME_START = 0xAA
-DESCRIPTOR_MAGIC = b'PBC4'
+DESCRIPTOR_MAGIC = b"PBC4"
 
 
 @dataclass
 class PayloadDescriptor:
     """Parsed EEPROM payload descriptor."""
+
     payload_id: str
     name: str
     power_5v_ma: int
@@ -52,7 +53,7 @@ class PayloadDescriptor:
         return bool(self.capabilities & CAP_CAN)
 
     @classmethod
-    def from_eeprom(cls, data: bytes) -> Optional['PayloadDescriptor']:
+    def from_eeprom(cls, data: bytes) -> Optional["PayloadDescriptor"]:
         """Parse raw EEPROM data into a descriptor."""
         if len(data) < 64:
             return None
@@ -63,10 +64,10 @@ class PayloadDescriptor:
         if version != 0x01:
             return None
 
-        payload_id = data[5:21].rstrip(b'\x00').decode('ascii', errors='replace')
-        name = data[0x15:0x35].rstrip(b'\x00').decode('ascii', errors='replace')
-        power_5v = struct.unpack('>H', data[0x35:0x37])[0]
-        power_12v = struct.unpack('>H', data[0x37:0x39])[0]
+        payload_id = data[5:21].rstrip(b"\x00").decode("ascii", errors="replace")
+        name = data[0x15:0x35].rstrip(b"\x00").decode("ascii", errors="replace")
+        power_5v = struct.unpack(">H", data[0x35:0x37])[0]
+        power_12v = struct.unpack(">H", data[0x37:0x39])[0]
         capabilities = data[0x39]
         gpio_mask = data[0x3A]
         i2c_count = data[0x3B]
@@ -98,8 +99,12 @@ def crc16_modbus(data: bytes) -> int:
 class PayloadInterface:
     """Interface to communicate with a PBC-34 payload device."""
 
-    def __init__(self, i2c_bus: int = 1, eeprom_addr: int = EEPROM_ADDR,
-                 payload_addr: int = PAYLOAD_DEFAULT_ADDR):
+    def __init__(
+        self,
+        i2c_bus: int = 1,
+        eeprom_addr: int = EEPROM_ADDR,
+        payload_addr: int = PAYLOAD_DEFAULT_ADDR,
+    ):
         if smbus2 is None:
             raise ImportError("smbus2 is required: pip install smbus2")
         self.bus = smbus2.SMBus(i2c_bus)
@@ -116,15 +121,16 @@ class PayloadInterface:
         except OSError:
             return None
 
-    def send_command(self, cmd_id: int, data: bytes = b'',
-                     timeout_ms: int = 100) -> Optional[bytes]:
+    def send_command(
+        self, cmd_id: int, data: bytes = b"", timeout_ms: int = 100
+    ) -> Optional[bytes]:
         """Send a command frame and wait for response."""
         payload = bytes([cmd_id]) + data
         length = len(payload)
         if length > 255:
             return None
         crc = crc16_modbus(bytes([length]) + payload)
-        frame = bytes([FRAME_START, length]) + payload + struct.pack('>H', crc)
+        frame = bytes([FRAME_START, length]) + payload + struct.pack(">H", crc)
 
         try:
             self.bus.write_i2c_block_data(self.payload_addr, frame[0], list(frame[1:]))
@@ -143,8 +149,8 @@ class PayloadInterface:
             if len(resp) < 2 + resp_len + 2:
                 return None
 
-            resp_payload = resp[2:2 + resp_len]
-            resp_crc = struct.unpack('>H', resp[2 + resp_len:4 + resp_len])[0]
+            resp_payload = resp[2 : 2 + resp_len]
+            resp_crc = struct.unpack(">H", resp[2 + resp_len : 4 + resp_len])[0]
 
             expected_crc = crc16_modbus(bytes([resp_len]) + resp_payload)
             if resp_crc != expected_crc:
