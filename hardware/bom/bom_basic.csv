@@ -1,0 +1,24 @@
+Reference,Value,Package,Manufacturer,MPN,Quantity,Unit_Price_CNY,Supplier,Notes
+U1,ESP32-S3-WROOM-1-N8R8,Module,Espressif,ESP32-S3-WROOM-1-N8R8,1,28.00,LCSC,8MB Flash + 8MB PSRAM
+U2,DRV8833PWPR,HTSSOP-16,Texas Instruments,DRV8833PWPR,2,6.50,LCSC,Dual H-bridge motor driver
+U3,AMS1117-3.3,SOT-223,AMS,AMS1117-3.3,1,0.80,LCSC,3.3V LDO regulator
+U4,MT3608,SOT-23-6,XI'AN Aerosemi,MT3608,1,1.20,LCSC,5V boost converter (ESP32 rail)
+U5,MP1584EN,SOIC-8,MPS,MP1584EN-LF-Z,1,3.50,LCSC,5V/3A buck converter
+U6,MCP23017-E/SO,SOIC-28,Microchip,MCP23017-E/SO,1,8.50,LCSC,16-bit I2C GPIO expander
+U7,INA219BIDR,SOT-23-6,Texas Instruments,INA219BIDR,1,5.80,LCSC,Current/power monitor
+M1-M4,N20 Gear Motor 1:90,Through-hole,-,-,4,18.00,Taobao,6V rated with Hall encoder
+W1-W4,48mm Mecanum Wheel,-,-,-,4,25.00,Taobao,Aluminum hub with PU rollers
+S1-S4,HC-SR04,Through-hole,-,HC-SR04,4,4.50,LCSC,Ultrasonic distance sensor
+IMU1,BNO055,Module,Bosch,BNO055,1,45.00,LCSC,9-DOF IMU with fusion
+BAT1,2S 18650 Holder + BMS,-,-,-,1,35.00,Taobao,7.4V 3000mAh per pack
+SW1,E-Stop Button φ30mm NC,-,-,-,1,8.00,Taobao,ISO 13850 mushroom head
+RLY1,Safety Relay Dual-CH NO,-,-,-,1,15.00,Taobao,Dual-channel normally-open
+J1,PBC-34 Connector 2x17,-,Amphenol,-,2,5.00,LCSC,2.54mm keyed header pair
+J2,XT30 Connector,-,-,-,2,2.50,LCSC,Battery input
+J3,USB-C Receptacle,-,-,-,1,1.50,LCSC,Programming port
+C1-C10,100nF,0402,Various,-,10,0.02,LCSC,Bypass capacitors
+C11-C14,10uF,0805,Various,-,4,0.10,LCSC,Bulk decoupling
+R1-R8,10kΩ,0402,Various,-,8,0.01,LCSC,Pull-up/divider
+R9-R12,20kΩ,0402,Various,-,4,0.01,LCSC,Voltage divider (ultrasonic)
+D1-D4,PESD5V0S1BB,SOD-323,Nexperia,PESD5V0S1BB,4,0.30,LCSC,ESD protection
+L1,4.7uH,1210,Various,-,2,0.50,LCSC,Inductor for boost/buck

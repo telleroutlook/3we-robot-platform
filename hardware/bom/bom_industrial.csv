@@ -1,0 +1,14 @@
+Reference,Value,Package,Manufacturer,MPN,Quantity,Unit_Price_CNY,Supplier,Notes
+# Includes all Pro SKU components plus:
+5G1,RM520N-GL,M.2 3052,Quectel,RM520N-GL,1,680.00,LCSC,5G NR Sub-6GHz modem (replaces 4G)
+ANT2,5G MIMO Antenna x2,-,-,-,2,35.00,Taobao,600-6000MHz dual antenna
+LORA1,SX1276 LoRa Module,DIP,Semtech,SX1276,1,28.00,LCSC,868/915MHz long-range
+ANT3,LoRa Antenna SMA,-,-,-,1,8.00,Taobao,868/915MHz whip
+CAN1,MCP2515-I/SO,SOIC-18,Microchip,MCP2515-I/SO,1,12.00,LCSC,CAN bus controller
+CAN2,TJA1050T,SOIC-8,NXP,TJA1050T,1,4.50,LCSC,CAN transceiver
+MOT1-4,550 Gear Motor 1:30,-,-,-,4,45.00,Taobao,12V rated (replaces N20)
+DRV1-2,BTS7960,Module,-,BTS7960,2,18.00,Taobao,43A H-bridge (replaces DRV8833)
+ENC1,IP54 Enclosure 350x280x120,-,-,-,1,180.00,Taobao,Aluminum sealed chassis
+SEAL1,Cable Gland PG9,-,-,-,6,3.00,Taobao,IP68 rated cable entries
+CON1,XT60 Battery Connector,-,-,-,2,5.00,LCSC,High-current (replaces XT30)
+RLY2,Redundant Safety Relay,-,-,-,1,15.00,Taobao,Second safety channel

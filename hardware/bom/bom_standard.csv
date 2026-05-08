@@ -1,0 +1,12 @@
+Reference,Value,Package,Manufacturer,MPN,Quantity,Unit_Price_CNY,Supplier,Notes
+# Includes all Basic SKU components plus:
+SBC1,Raspberry Pi 5 8GB,SBC,Raspberry Pi,RPI5-8GB,1,595.00,Pimoroni,Main compute unit
+AI1,Hailo-8L M.2 Module,M.2 2242,Hailo,HAILO-8L-M2,1,580.00,Hailo,13 TOPS AI accelerator
+HAT1,Hailo AI HAT+,HAT,Raspberry Pi,SC1213,1,198.00,Pimoroni,M.2 carrier for Pi 5
+CAM1,USB Fisheye Camera 170°,USB,Various,-,1,85.00,Taobao,1080P global shutter
+PS1,TPS5430DDAR,SOIC-8,Texas Instruments,TPS5430DDAR,1,4.50,LCSC,5V/3A payload buck
+PS2,XL6009E1,SOP-8,XLSEMI,XL6009E1,1,2.80,LCSC,12V/3A boost converter
+BAT2,2S 18650 Pack (extra),Pack,-,-,1,35.00,Taobao,Extended runtime pack
+COOL1,5V Fan 30x30mm,-,-,-,1,8.00,Taobao,Pi 5 active cooling
+USB1,USB 3.0 Hub 4-port,Module,-,-,1,25.00,Taobao,Internal hub for peripherals
+CABLE1,UART to USB adapter,-,-,CP2102N,1,8.50,LCSC,Pi5 to ESP32 serial bridge
