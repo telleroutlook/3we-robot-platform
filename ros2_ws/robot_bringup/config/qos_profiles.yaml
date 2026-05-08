@@ -1,0 +1,103 @@
+# ROS2 QoS Profile Configuration for Robot Platform
+# Defines Quality of Service policies for all robot topics
+
+# Sensor data: BEST_EFFORT reliability for low-latency real-time data
+# Command data: RELIABLE to ensure delivery of control commands
+# State data: RELIABLE + TRANSIENT_LOCAL for late-joining subscribers
+
+qos_profiles:
+  # Motor velocity commands - must arrive reliably
+  cmd_vel:
+    reliability: reliable
+    durability: volatile
+    history: keep_last
+    depth: 1
+    deadline_ms: 100  # 10Hz minimum expected rate
+    lifespan_ms: 200  # stale after 200ms
+
+  # Odometry - real-time, drop if late
+  odom:
+    reliability: best_effort
+    durability: volatile
+    history: keep_last
+    depth: 5
+    deadline_ms: 25   # 40Hz expected
+
+  # Ultrasonic distances - tolerate drops
+  ultrasonic:
+    reliability: best_effort
+    durability: volatile
+    history: keep_last
+    depth: 1
+    deadline_ms: 120  # ~10Hz per sensor
+
+  # IMU data - high rate, tolerate drops
+  imu:
+    reliability: best_effort
+    durability: volatile
+    history: keep_last
+    depth: 5
+    deadline_ms: 10   # 100Hz expected
+
+  # Battery state - low rate, must be reliable
+  battery_state:
+    reliability: reliable
+    durability: transient_local
+    history: keep_last
+    depth: 1
+    deadline_ms: 2000  # 1Hz expected
+
+  # Payload state changes - must be reliable and persist
+  payload_state:
+    reliability: reliable
+    durability: transient_local
+    history: keep_last
+    depth: 1
+
+  # Emergency stop - highest priority, must arrive
+  emergency_stop:
+    reliability: reliable
+    durability: volatile
+    history: keep_last
+    depth: 10
+    deadline_ms: 50
+
+  # TF transforms - best effort for performance
+  tf:
+    reliability: best_effort
+    durability: volatile
+    history: keep_last
+    depth: 100
+
+  # Laser scan (if payload) - high bandwidth
+  scan:
+    reliability: best_effort
+    durability: volatile
+    history: keep_last
+    depth: 5
+    deadline_ms: 100  # 10Hz expected
+
+  # Diagnostics - periodic, reliable
+  diagnostics:
+    reliability: reliable
+    durability: transient_local
+    history: keep_last
+    depth: 5
+    deadline_ms: 1000
+
+# Topic-to-profile mapping
+topic_qos_map:
+  /cmd_vel: cmd_vel
+  /odom: odom
+  /ultrasonic/front: ultrasonic
+  /ultrasonic/back: ultrasonic
+  /ultrasonic/left: ultrasonic
+  /ultrasonic/right: ultrasonic
+  /imu/data: imu
+  /battery_state: battery_state
+  /payload/state: payload_state
+  /emergency_stop: emergency_stop
+  /tf: tf
+  /tf_static: tf
+  /scan: scan
+  /diagnostics: diagnostics

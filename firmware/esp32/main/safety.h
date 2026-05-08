@@ -22,4 +22,13 @@ void safety_register_callback(safety_callback_t cb);
 void safety_feed_watchdog(void);
 void safety_task(void *params);
 
+// Safety relay self-test (run at startup)
+esp_err_t safety_relay_selftest(void);
+
+// Speed limiter (persisted to NVS)
+#define SPEED_LIMIT_HARD_CAP_MS  1.2f
+esp_err_t safety_set_speed_limit(float limit_ms);
+float safety_get_speed_limit(void);
+float safety_clamp_speed(float requested_ms);
+
 #endif // SAFETY_H

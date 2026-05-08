@@ -7,14 +7,24 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "nvs_flash.h"
+#include "nvs.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include <math.h>
+#include <string.h>
+
 static const char *TAG = "safety";
+
+#define NVS_NAMESPACE       "safety"
+#define NVS_KEY_SPEED_LIM   "spd_lim"
+#define DEFAULT_SPEED_LIMIT 1.0f
 
 static volatile safety_state_t state = SAFETY_NORMAL;
 static volatile int64_t last_watchdog_feed = 0;
 static safety_callback_t user_callback = NULL;
+static float speed_limit_ms = DEFAULT_SPEED_LIMIT;
 
 static void notify_state_change(void)
 {
@@ -47,7 +57,23 @@ esp_err_t safety_init(void)
     }
 
     last_watchdog_feed = esp_timer_get_time();
-    ESP_LOGI(TAG, "Safety system initialized (E-stop GPIO=%d)", ESTOP_GPIO);
+
+    // Load persisted speed limit from NVS
+    nvs_handle_t nvs;
+    if (nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvs) == ESP_OK) {
+        uint32_t raw = 0;
+        if (nvs_get_u32(nvs, NVS_KEY_SPEED_LIM, &raw) == ESP_OK) {
+            float loaded;
+            memcpy(&loaded, &raw, sizeof(loaded));
+            if (loaded > 0.0f && loaded <= SPEED_LIMIT_HARD_CAP_MS) {
+                speed_limit_ms = loaded;
+            }
+        }
+        nvs_close(nvs);
+    }
+
+    ESP_LOGI(TAG, "Safety system initialized (E-stop GPIO=%d, speed_limit=%.2f m/s)",
+             ESTOP_GPIO, speed_limit_ms);
     return ESP_OK;
 }
 
@@ -124,3 +150,77 @@ void safety_task(void *params)
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
+
+esp_err_t safety_relay_selftest(void)
+{
+    // Configure feedback pin as input
+    gpio_config_t fb_cfg = {
+        .pin_bit_mask = (1ULL << SAFETY_RELAY_FB),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&fb_cfg);
+
+    // With E-stop NOT pressed (NC circuit closed), relay should be energized
+    // Feedback pin should read HIGH when relay is properly engaged
+    if (gpio_get_level(ESTOP_GPIO) != 0) {
+        vTaskDelay(pdMS_TO_TICKS(50));
+        int fb_level = gpio_get_level(SAFETY_RELAY_FB);
+        if (fb_level == 0) {
+            ESP_LOGE(TAG, "SELF-TEST FAILED: Relay not energized despite E-stop released");
+            state = SAFETY_ESTOPPED;
+            return ESP_ERR_INVALID_STATE;
+        }
+        ESP_LOGI(TAG, "Relay self-test PASSED (feedback=HIGH, relay energized)");
+    } else {
+        // E-stop is pressed at boot — relay should be de-energized
+        vTaskDelay(pdMS_TO_TICKS(50));
+        int fb_level = gpio_get_level(SAFETY_RELAY_FB);
+        if (fb_level != 0) {
+            ESP_LOGE(TAG, "SELF-TEST FAILED: Relay energized despite E-stop pressed");
+            return ESP_ERR_INVALID_STATE;
+        }
+        ESP_LOGI(TAG, "Relay self-test PASSED (feedback=LOW, E-stop active)");
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t safety_set_speed_limit(float limit_ms)
+{
+    if (limit_ms <= 0.0f || limit_ms > SPEED_LIMIT_HARD_CAP_MS) {
+        ESP_LOGW(TAG, "Speed limit %.2f out of range (0, %.1f]", limit_ms, SPEED_LIMIT_HARD_CAP_MS);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    speed_limit_ms = limit_ms;
+
+    // Persist to NVS
+    nvs_handle_t nvs;
+    esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs);
+    if (err == ESP_OK) {
+        uint32_t raw;
+        memcpy(&raw, &limit_ms, sizeof(raw));
+        nvs_set_u32(nvs, NVS_KEY_SPEED_LIM, raw);
+        nvs_commit(nvs);
+        nvs_close(nvs);
+    }
+
+    ESP_LOGI(TAG, "Speed limit set to %.2f m/s (persisted)", speed_limit_ms);
+    return ESP_OK;
+}
+
+float safety_get_speed_limit(void)
+{
+    return speed_limit_ms;
+}
+
+float safety_clamp_speed(float requested_ms)
+{
+    if (requested_ms > speed_limit_ms) return speed_limit_ms;
+    if (requested_ms < -speed_limit_ms) return -speed_limit_ms;
+    return requested_ms;
+}
+

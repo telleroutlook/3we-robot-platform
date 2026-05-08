@@ -6,7 +6,17 @@
 #include "battery.h"
 #include "safety.h"
 #include "microros_transport.h"
+#include "dtls_transport.h"
+#include "ota_signing.h"
+#include "payload_hotplug.h"
+#include "thermal_monitor.h"
+#include "udp_transport.h"
 #include "robot_params.h"
+#include "pin_definitions.h"
+
+#ifdef CONFIG_ROBOT_SKU_INDUSTRIAL
+#include "canbus.h"
+#endif
 
 #include "esp_log.h"
 #include "nvs_flash.h"
@@ -19,11 +29,21 @@ static const char *TAG = "main";
 #define TASK_STACK_SENSORS   3072
 #define TASK_STACK_BATTERY   2048
 #define TASK_STACK_MICROROS  16384
+#define TASK_STACK_DTLS      8192
+#define TASK_STACK_PAYLOAD   3072
+#define TASK_STACK_THERMAL   2048
+#define TASK_STACK_UDP       4096
+#define TASK_STACK_CANBUS    3072
 
 #define TASK_PRIO_SAFETY     (configMAX_PRIORITIES - 1)
 #define TASK_PRIO_MICROROS   5
 #define TASK_PRIO_SENSORS    4
+#define TASK_PRIO_DTLS       4
+#define TASK_PRIO_PAYLOAD    3
+#define TASK_PRIO_THERMAL    3
 #define TASK_PRIO_BATTERY    2
+#define TASK_PRIO_UDP        3
+#define TASK_PRIO_CANBUS     4
 
 void app_main(void)
 {
@@ -38,8 +58,9 @@ void app_main(void)
 
     // Safety first - must be operational before any motor activity
     ESP_ERROR_CHECK(safety_init());
+    ESP_ERROR_CHECK(safety_relay_selftest());
 
-    // Initialize subsystems
+    // Initialize motor subsystem
     ESP_ERROR_CHECK(motor_init());
     ESP_ERROR_CHECK(encoder_init());
     ESP_ERROR_CHECK(ultrasonic_init());
@@ -50,13 +71,88 @@ void app_main(void)
     }
 
     ESP_ERROR_CHECK(battery_init());
+
+    // Thermal monitoring (INA219)
+    esp_err_t thermal_ret = thermal_monitor_init();
+    if (thermal_ret != ESP_OK) {
+        ESP_LOGW(TAG, "Thermal monitor init failed - running without thermal protection");
+    }
+
+    // Payload hot-plug system
+    ESP_ERROR_CHECK(payload_hotplug_init());
+
+    // Communication: micro-ROS over UART
     ESP_ERROR_CHECK(microros_init());
 
-    // Create FreeRTOS tasks
+    // Communication: UDP fallback transport
+    udp_transport_config_t udp_cfg = {
+        .cmd_port = UDP_CMD_PORT,
+        .telemetry_port = UDP_TELEM_PORT,
+        .timeout_ms = 1000,
+    };
+    esp_err_t udp_ret = udp_transport_init(&udp_cfg);
+    if (udp_ret != ESP_OK) {
+        ESP_LOGW(TAG, "UDP transport init failed - DTLS only mode");
+    }
+
+    // Communication: DTLS encrypted control channel
+    dtls_config_t dtls_cfg = {
+        .listen_port = 5684,
+        .psk_identity = "robot-platform",
+        .psk_key = {0},  // Set via provisioning
+        .psk_key_len = 16,
+        .handshake_timeout_ms = 10000,
+        .session_timeout_ms = 60000,
+    };
+    esp_err_t dtls_ret = dtls_init(&dtls_cfg);
+    if (dtls_ret != ESP_OK) {
+        ESP_LOGW(TAG, "DTLS init failed - encrypted channel unavailable");
+    }
+
+#ifdef CONFIG_ROBOT_SKU_INDUSTRIAL
+    // CAN bus (industrial SKU only)
+    canbus_config_t can_cfg = {
+        .spi_host = SPI3_HOST,
+        .pin_mosi = 11,
+        .pin_miso = 13,
+        .pin_sclk = 12,
+        .pin_cs = 10,
+        .pin_int = 9,
+        .bitrate = CAN_BITRATE_500K,
+        .accept_mask = 0x7FF,
+        .accept_filter = 0x000,
+    };
+    esp_err_t can_ret = canbus_init(&can_cfg);
+    if (can_ret != ESP_OK) {
+        ESP_LOGW(TAG, "CAN bus init failed");
+    }
+#endif
+
+    // Create FreeRTOS tasks (highest priority first)
     xTaskCreate(safety_task, "safety", TASK_STACK_SAFETY, NULL, TASK_PRIO_SAFETY, NULL);
-    xTaskCreate(ultrasonic_task, "ultrasonic", TASK_STACK_SENSORS, NULL, TASK_PRIO_SENSORS, NULL);
-    xTaskCreate(battery_task, "battery", TASK_STACK_BATTERY, NULL, TASK_PRIO_BATTERY, NULL);
     xTaskCreate(microros_task, "microros", TASK_STACK_MICROROS, NULL, TASK_PRIO_MICROROS, NULL);
+    xTaskCreate(ultrasonic_task, "ultrasonic", TASK_STACK_SENSORS, NULL, TASK_PRIO_SENSORS, NULL);
+    xTaskCreate(payload_hotplug_task, "payload", TASK_STACK_PAYLOAD, NULL, TASK_PRIO_PAYLOAD, NULL);
+    xTaskCreate(battery_task, "battery", TASK_STACK_BATTERY, NULL, TASK_PRIO_BATTERY, NULL);
+
+    if (thermal_ret == ESP_OK) {
+        xTaskCreate(thermal_monitor_task, "thermal", TASK_STACK_THERMAL, NULL, TASK_PRIO_THERMAL, NULL);
+    }
+
+    if (udp_ret == ESP_OK) {
+        xTaskCreate(udp_transport_task, "udp_xport", TASK_STACK_UDP, NULL, TASK_PRIO_UDP, NULL);
+    }
+
+    if (dtls_ret == ESP_OK) {
+        dtls_start();
+        xTaskCreate(dtls_task, "dtls", TASK_STACK_DTLS, NULL, TASK_PRIO_DTLS, NULL);
+    }
+
+#ifdef CONFIG_ROBOT_SKU_INDUSTRIAL
+    if (can_ret == ESP_OK) {
+        xTaskCreate(canbus_task, "canbus", TASK_STACK_CANBUS, NULL, TASK_PRIO_CANBUS, NULL);
+    }
+#endif
 
     ESP_LOGI(TAG, "All systems initialized. Robot ready.");
 

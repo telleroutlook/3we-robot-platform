@@ -9,6 +9,12 @@ idf_component_register(
         "battery.c"
         "safety.c"
         "microros_transport.c"
+        "dtls_transport.c"
+        "ota_signing.c"
+        "payload_hotplug.c"
+        "canbus.c"
+        "thermal_monitor.c"
+        "udp_transport.c"
     INCLUDE_DIRS
         "."
         "../../config"
@@ -18,6 +24,12 @@ idf_component_register(
         esp_adc
         nvs_flash
         esp_event
+        esp_wifi
+        lwip
+        mbedtls
+        esp_ota_ops
+        esp_partition
+        app_update
     PRIV_REQUIRES
         micro_ros_espidf_component
 )

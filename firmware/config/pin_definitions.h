@@ -73,4 +73,12 @@
 #define PAYLOAD_VBAT_EN_BIT 2   // GPA2 on MCP23017
 #define PAYLOAD_DETECT_BIT  3   // GPA3 on MCP23017 (input)
 
+// CAN bus (MCP2515 + TJA1050, Industrial SKU only)
+#define CAN_SPI_HOST        SPI3_HOST
+#define CAN_MOSI            11
+#define CAN_MISO            13
+#define CAN_SCLK            12
+#define CAN_CS              10
+#define CAN_INT             9
+
 #endif // PIN_DEFINITIONS_H
