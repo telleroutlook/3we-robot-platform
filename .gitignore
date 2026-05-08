@@ -1,0 +1,57 @@
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# ESP-IDF
+firmware/esp32/build/
+firmware/esp32/managed_components/
+firmware/esp32/sdkconfig.old
+firmware/esp32/dependencies.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+.eggs/
+.venv/
+venv/
+env/
+
+# ROS2
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+ros2_ws/.colcon/
+
+# Compiled binaries
+*.bin
+*.elf
+*.hex
+*.o
+*.a
+*.so
+*.dylib
+
+# Logs
+*.log
+log/
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Secrets (should never be committed)
+.env
+.env.*
+secrets/
