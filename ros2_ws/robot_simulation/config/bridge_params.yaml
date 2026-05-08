@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: Apache-2.0
+# ros_gz_bridge configuration for robot platform simulation
+# Maps Gazebo Fortress topics to ROS2 topics
+
+# Velocity command — bidirectional for teleop and Nav2 control
+- ros_topic_name: "/cmd_vel"
+  gz_topic_name: "/model/robot_platform/cmd_vel"
+  ros_type_name: "geometry_msgs/msg/Twist"
+  gz_type_name: "ignition.msgs.Twist"
+  direction: BIDIRECTIONAL
+
+# Odometry — from Gazebo to ROS2
+- ros_topic_name: "/odom"
+  gz_topic_name: "/model/robot_platform/odometry"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "ignition.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+# IMU sensor data — from Gazebo to ROS2
+- ros_topic_name: "/imu/data"
+  gz_topic_name: "/world/empty_world/model/robot_platform/link/base_link/sensor/imu_sensor/imu"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "ignition.msgs.IMU"
+  direction: GZ_TO_ROS
+
+# Ultrasonic front — ray sensor (LaserScan) from Gazebo to ROS2
+- ros_topic_name: "/ultrasonic/front"
+  gz_topic_name: "/world/empty_world/model/robot_platform/link/ultrasonic_front_link/sensor/ultrasonic_front_sensor/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "ignition.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+# Ultrasonic back — ray sensor from Gazebo to ROS2
+- ros_topic_name: "/ultrasonic/back"
+  gz_topic_name: "/world/empty_world/model/robot_platform/link/ultrasonic_back_link/sensor/ultrasonic_back_sensor/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "ignition.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+# Ultrasonic left — ray sensor from Gazebo to ROS2
+- ros_topic_name: "/ultrasonic/left"
+  gz_topic_name: "/world/empty_world/model/robot_platform/link/ultrasonic_left_link/sensor/ultrasonic_left_sensor/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "ignition.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+# Ultrasonic right — ray sensor from Gazebo to ROS2
+- ros_topic_name: "/ultrasonic/right"
+  gz_topic_name: "/world/empty_world/model/robot_platform/link/ultrasonic_right_link/sensor/ultrasonic_right_sensor/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "ignition.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+# Clock — simulation time from Gazebo to ROS2
+- ros_topic_name: "/clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "ignition.msgs.Clock"
+  direction: GZ_TO_ROS
+
+# Joint states — from Gazebo to ROS2
+- ros_topic_name: "/joint_states"
+  gz_topic_name: "/world/empty_world/model/robot_platform/joint_state"
+  ros_type_name: "sensor_msgs/msg/JointState"
+  gz_type_name: "ignition.msgs.Model"
+  direction: GZ_TO_ROS
+
+# TF — from Gazebo to ROS2 (odom -> base_link)
+- ros_topic_name: "/tf"
+  gz_topic_name: "/model/robot_platform/tf"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "ignition.msgs.Pose_V"
+  direction: GZ_TO_ROS

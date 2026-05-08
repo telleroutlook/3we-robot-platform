@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Robot Platform — Control Panel</title>
+    <link rel="stylesheet" href="/src/styles/variables.css">
+    <link rel="stylesheet" href="/src/styles/layout.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-left">
+            <div class="connection-indicator" id="connectionIndicator">
+                <span class="indicator-dot"></span>
+                <span class="indicator-label">Disconnected</span>
+            </div>
+            <h1 class="app-title">Robot Platform</h1>
+        </div>
+        <div class="header-right">
+            <label class="url-field">
+                <input type="text" id="wsUrlInput" placeholder="ws://hostname:9090" value="ws://localhost:9090">
+            </label>
+            <button class="btn btn--connect" id="connectBtn">Connect</button>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <section class="dashboard__estop" aria-label="Emergency Stop">
+            <robot-estop-button></robot-estop-button>
+        </section>
+
+        <section class="dashboard__joystick" aria-label="Teleop Joystick">
+            <robot-joystick></robot-joystick>
+        </section>
+
+        <section class="dashboard__battery" aria-label="Battery Status">
+            <robot-battery-gauge></robot-battery-gauge>
+        </section>
+
+        <section class="dashboard__sensors" aria-label="Sensor Visualization">
+            <robot-sensor-radar></robot-sensor-radar>
+        </section>
+
+        <section class="dashboard__wheels" aria-label="Wheel Speeds">
+            <robot-wheel-speeds></robot-wheel-speeds>
+        </section>
+
+        <section class="dashboard__imu" aria-label="IMU Attitude">
+            <robot-imu-attitude></robot-imu-attitude>
+        </section>
+
+        <section class="dashboard__payload" aria-label="Payload Management">
+            <robot-payload-panel></robot-payload-panel>
+        </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

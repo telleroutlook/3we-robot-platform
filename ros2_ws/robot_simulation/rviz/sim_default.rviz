@@ -1,0 +1,254 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 85
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+        - /TF1
+        - /RobotModel1
+        - /LaserScan1
+      Splitter Ratio: 0.5
+    Tree Height: 700
+    Displays:
+      - Class: rviz_default_plugins/Grid
+        Name: Grid
+        Enabled: true
+        Value: true
+        Cell Size: 1
+        Color: 160; 160; 164
+        Line Style:
+          Line Width: 0.03
+          Value: Lines
+        Normal Cell Count: 0
+        Offset:
+          X: 0
+          Y: 0
+          Z: 0
+        Plane: XY
+        Plane Cell Count: 20
+        Reference Frame: <Fixed Frame>
+
+      - Class: rviz_default_plugins/TF
+        Name: TF
+        Enabled: true
+        Value: true
+        Show Arrows: true
+        Show Axes: true
+        Show Names: true
+        Frame Timeout: 15
+        Frames:
+          All Enabled: true
+        Marker Scale: 0.3
+        Update Interval: 0
+
+      - Class: rviz_default_plugins/RobotModel
+        Name: RobotModel
+        Enabled: true
+        Value: true
+        Description Source: Topic
+        Description Topic:
+          Depth: 5
+          Durability Policy: Volatile
+          History Policy: Keep Last
+          Reliability Policy: Reliable
+          Value: /robot_description
+        Alpha: 1
+        Links:
+          All Links Enabled: true
+        Visual Enabled: true
+        Collision Enabled: false
+
+      - Class: rviz_default_plugins/LaserScan
+        Name: LaserScan Front
+        Enabled: true
+        Value: true
+        Topic:
+          Depth: 5
+          Durability Policy: Volatile
+          History Policy: Keep Last
+          Reliability Policy: Best Effort
+          Value: /ultrasonic/front
+        Color: 255; 0; 0
+        Size (m): 0.02
+        Style: Flat Squares
+        Alpha: 1
+        Decay Time: 0.5
+        Max Color: 255; 255; 255
+        Min Color: 0; 0; 0
+        Use Fixed Frame: true
+
+      - Class: rviz_default_plugins/LaserScan
+        Name: LaserScan Back
+        Enabled: true
+        Value: true
+        Topic:
+          Depth: 5
+          Durability Policy: Volatile
+          History Policy: Keep Last
+          Reliability Policy: Best Effort
+          Value: /ultrasonic/back
+        Color: 0; 255; 0
+        Size (m): 0.02
+        Style: Flat Squares
+        Alpha: 1
+        Decay Time: 0.5
+        Use Fixed Frame: true
+
+      - Class: rviz_default_plugins/LaserScan
+        Name: LaserScan Left
+        Enabled: true
+        Value: true
+        Topic:
+          Depth: 5
+          Durability Policy: Volatile
+          History Policy: Keep Last
+          Reliability Policy: Best Effort
+          Value: /ultrasonic/left
+        Color: 0; 0; 255
+        Size (m): 0.02
+        Style: Flat Squares
+        Alpha: 1
+        Decay Time: 0.5
+        Use Fixed Frame: true
+
+      - Class: rviz_default_plugins/LaserScan
+        Name: LaserScan Right
+        Enabled: true
+        Value: true
+        Topic:
+          Depth: 5
+          Durability Policy: Volatile
+          History Policy: Keep Last
+          Reliability Policy: Best Effort
+          Value: /ultrasonic/right
+        Color: 255; 255; 0
+        Size (m): 0.02
+        Style: Flat Squares
+        Alpha: 1
+        Decay Time: 0.5
+        Use Fixed Frame: true
+
+      - Class: rviz_default_plugins/Map
+        Name: Map
+        Enabled: true
+        Value: true
+        Topic:
+          Depth: 5
+          Durability Policy: Volatile
+          History Policy: Keep Last
+          Reliability Policy: Reliable
+          Value: /map
+        Alpha: 0.7
+        Color Scheme: map
+        Draw Behind: false
+        Update Topic:
+          Depth: 5
+          Durability Policy: Volatile
+          History Policy: Keep Last
+          Reliability Policy: Reliable
+          Value: /map_updates
+
+      - Class: rviz_default_plugins/Odometry
+        Name: Odometry
+        Enabled: false
+        Value: false
+        Topic:
+          Depth: 5
+          Durability Policy: Volatile
+          History Policy: Keep Last
+          Reliability Policy: Reliable
+          Value: /odom
+        Angle Tolerance: 0.1
+        Arrows:
+          Color: 255; 25; 0
+        Axes:
+          Axes Length: 0.3
+          Axes Radius: 0.01
+        Keep: 10
+        Position Tolerance: 0.1
+        Shape:
+          Color: 255; 25; 0
+          Head Length: 0.03
+          Head Radius: 0.015
+          Shaft Length: 0.08
+          Shaft Radius: 0.005
+          Value: Arrow
+
+  - Class: rviz_common/Views
+    Name: Views
+    Current:
+      Class: rviz_default_plugins/ThirdPersonFollower
+      Name: ThirdPersonFollower
+      Distance: 3.5
+      Enable Stereo Rendering:
+        Value: false
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05
+      Invert Z Axis: false
+      Near Clip Distance: 0.01
+      Pitch: 0.6
+      Target Frame: base_link
+      Value: ThirdPersonFollower
+      Yaw: 3.14
+
+  - Class: rviz_common/Time
+    Name: Time
+    SyncMode: 0
+    SyncSource: LaserScan Front
+
+Visualization Manager:
+  Class: ""
+  Displays:
+    - {}
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: odom
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+      Line color: 128; 128; 0
+    - Class: rviz_default_plugins/SetInitialPose
+      Covariance x: 0.25
+      Covariance y: 0.25
+      Covariance yaw: 0.07
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /initialpose
+    - Class: rviz_default_plugins/SetGoal
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /goal_pose
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/ThirdPersonFollower
+      Distance: 3.5
+      Pitch: 0.6
+      Target Frame: base_link
+      Yaw: 3.14
+
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 900
+  Width: 1400
+  X: 100
+  Y: 100

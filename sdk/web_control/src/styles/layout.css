@@ -1,0 +1,235 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* ===================================================
+   Layout — Robot Platform Control Panel
+   Responsive dashboard grid
+   =================================================== */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Header --- */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-app);
+  border-bottom: 1px solid var(--color-border-subtle);
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.app-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  transition: background var(--duration-normal) ease, box-shadow var(--duration-normal) ease;
+}
+
+.indicator-dot.connected {
+  background: var(--color-success);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.indicator-label {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.url-field input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  width: 200px;
+  outline: none;
+  transition: border-color var(--duration-fast) ease;
+}
+
+.url-field input:focus {
+  border-color: var(--color-accent);
+}
+
+.btn {
+  padding: 4px 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background var(--duration-fast) ease, border-color var(--duration-fast) ease;
+  font-family: inherit;
+}
+
+.btn--connect {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.btn--connect:hover {
+  background: var(--color-surface-elevated);
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.btn--connect.active {
+  background: var(--color-accent-muted);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* --- Dashboard Grid --- */
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto 1fr 1fr 1fr;
+  grid-template-areas:
+    "estop    estop    estop"
+    "joystick joystick battery"
+    "sensors  sensors  wheels"
+    "sensors  sensors  imu"
+    "payload  payload  payload";
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  height: calc(100vh - 48px);
+  overflow: hidden;
+}
+
+.dashboard > section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.dashboard__estop {
+  grid-area: estop;
+}
+
+.dashboard__joystick {
+  grid-area: joystick;
+}
+
+.dashboard__battery {
+  grid-area: battery;
+}
+
+.dashboard__sensors {
+  grid-area: sensors;
+}
+
+.dashboard__wheels {
+  grid-area: wheels;
+}
+
+.dashboard__imu {
+  grid-area: imu;
+}
+
+.dashboard__payload {
+  grid-area: payload;
+}
+
+/* --- Tablet (primary teleop use case: joystick dominant) --- */
+
+@media (max-width: 1024px) {
+  .dashboard {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1.5fr auto auto auto;
+    grid-template-areas:
+      "estop    estop"
+      "joystick joystick"
+      "battery  sensors"
+      "wheels   imu"
+      "payload  payload";
+    overflow-y: auto;
+  }
+}
+
+/* --- Mobile (single column stack) --- */
+
+@media (max-width: 600px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto auto auto auto;
+    grid-template-areas:
+      "estop"
+      "joystick"
+      "battery"
+      "sensors"
+      "wheels"
+      "imu"
+      "payload";
+    overflow-y: auto;
+    height: calc(100vh - 48px);
+  }
+
+  .header-right {
+    display: none;
+  }
+
+  .app-header {
+    justify-content: center;
+  }
+}
+
+/* --- Utility --- */
+
+.hidden {
+  display: none !important;
+}

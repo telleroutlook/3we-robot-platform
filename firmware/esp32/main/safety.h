@@ -26,9 +26,9 @@ void safety_task(void *params);
 esp_err_t safety_relay_selftest(void);
 
 // Speed limiter (persisted to NVS)
-#define SPEED_LIMIT_HARD_CAP_MS  1.2f
-esp_err_t safety_set_speed_limit(float limit_ms);
+#define SPEED_LIMIT_HARD_CAP_MPS  1.2f  // meters per second
+esp_err_t safety_set_speed_limit(float limit_mps);
 float safety_get_speed_limit(void);
-float safety_clamp_speed(float requested_ms);
+float safety_clamp_speed(float requested_mps);
 
 #endif // SAFETY_H

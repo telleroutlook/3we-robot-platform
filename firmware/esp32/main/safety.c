@@ -24,7 +24,7 @@ static const char *TAG = "safety";
 static volatile safety_state_t state = SAFETY_NORMAL;
 static volatile int64_t last_watchdog_feed = 0;
 static safety_callback_t user_callback = NULL;
-static float speed_limit_ms = DEFAULT_SPEED_LIMIT;
+static float speed_limit_mps = DEFAULT_SPEED_LIMIT;
 
 static void notify_state_change(void)
 {
@@ -65,15 +65,15 @@ esp_err_t safety_init(void)
         if (nvs_get_u32(nvs, NVS_KEY_SPEED_LIM, &raw) == ESP_OK) {
             float loaded;
             memcpy(&loaded, &raw, sizeof(loaded));
-            if (loaded > 0.0f && loaded <= SPEED_LIMIT_HARD_CAP_MS) {
-                speed_limit_ms = loaded;
+            if (loaded > 0.0f && loaded <= SPEED_LIMIT_HARD_CAP_MPS) {
+                speed_limit_mps = loaded;
             }
         }
         nvs_close(nvs);
     }
 
     ESP_LOGI(TAG, "Safety system initialized (E-stop GPIO=%d, speed_limit=%.2f m/s)",
-             ESTOP_GPIO, speed_limit_ms);
+             ESTOP_GPIO, speed_limit_mps);
     return ESP_OK;
 }
 
@@ -188,39 +188,39 @@ esp_err_t safety_relay_selftest(void)
     return ESP_OK;
 }
 
-esp_err_t safety_set_speed_limit(float limit_ms)
+esp_err_t safety_set_speed_limit(float limit_mps)
 {
-    if (limit_ms <= 0.0f || limit_ms > SPEED_LIMIT_HARD_CAP_MS) {
-        ESP_LOGW(TAG, "Speed limit %.2f out of range (0, %.1f]", limit_ms, SPEED_LIMIT_HARD_CAP_MS);
+    if (limit_mps <= 0.0f || limit_mps > SPEED_LIMIT_HARD_CAP_MPS) {
+        ESP_LOGW(TAG, "Speed limit %.2f out of range (0, %.1f]", limit_mps, SPEED_LIMIT_HARD_CAP_MPS);
         return ESP_ERR_INVALID_ARG;
     }
 
-    speed_limit_ms = limit_ms;
+    speed_limit_mps = limit_mps;
 
     // Persist to NVS
     nvs_handle_t nvs;
     esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs);
     if (err == ESP_OK) {
         uint32_t raw;
-        memcpy(&raw, &limit_ms, sizeof(raw));
+        memcpy(&raw, &limit_mps, sizeof(raw));
         nvs_set_u32(nvs, NVS_KEY_SPEED_LIM, raw);
         nvs_commit(nvs);
         nvs_close(nvs);
     }
 
-    ESP_LOGI(TAG, "Speed limit set to %.2f m/s (persisted)", speed_limit_ms);
+    ESP_LOGI(TAG, "Speed limit set to %.2f m/s (persisted)", speed_limit_mps);
     return ESP_OK;
 }
 
 float safety_get_speed_limit(void)
 {
-    return speed_limit_ms;
+    return speed_limit_mps;
 }
 
-float safety_clamp_speed(float requested_ms)
+float safety_clamp_speed(float requested_mps)
 {
-    if (requested_ms > speed_limit_ms) return speed_limit_ms;
-    if (requested_ms < -speed_limit_ms) return -speed_limit_ms;
-    return requested_ms;
+    if (requested_mps > speed_limit_mps) return speed_limit_mps;
+    if (requested_mps < -speed_limit_mps) return -speed_limit_mps;
+    return requested_mps;
 }
 
