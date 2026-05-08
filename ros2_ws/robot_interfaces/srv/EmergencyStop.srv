@@ -1,0 +1,11 @@
+# Software emergency stop control
+bool activate               # true=stop, false=reset (recovery)
+string reason               # Human-readable reason for E-stop
+---
+bool success
+uint8 current_state         # 0=normal, 1=estopped, 2=recovery_pending
+string message
+
+uint8 STATE_NORMAL=0
+uint8 STATE_ESTOPPED=1
+uint8 STATE_RECOVERY=2

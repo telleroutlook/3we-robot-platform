@@ -1,0 +1,7 @@
+# Control payload power rails
+string payload_id
+bool enable_5v
+bool enable_12v
+---
+bool success
+string message

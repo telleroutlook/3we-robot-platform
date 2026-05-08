@@ -1,0 +1,184 @@
+<?xml version="1.0"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot_platform">
+
+  <!-- Parameters -->
+  <xacro:property name="chassis_length" value="0.300"/>
+  <xacro:property name="chassis_width" value="0.250"/>
+  <xacro:property name="chassis_height" value="0.080"/>
+  <xacro:property name="chassis_mass" value="2.5"/>
+
+  <xacro:property name="wheel_radius" value="0.024"/>
+  <xacro:property name="wheel_width" value="0.040"/>
+  <xacro:property name="wheel_mass" value="0.15"/>
+
+  <xacro:property name="wheelbase" value="0.180"/>
+  <xacro:property name="track_width" value="0.200"/>
+
+  <xacro:property name="ground_clearance" value="0.025"/>
+
+  <!-- Materials -->
+  <material name="dark_grey">
+    <color rgba="0.2 0.2 0.2 1.0"/>
+  </material>
+  <material name="orange">
+    <color rgba="1.0 0.4 0.0 1.0"/>
+  </material>
+  <material name="light_grey">
+    <color rgba="0.8 0.8 0.8 1.0"/>
+  </material>
+
+  <!-- Inertia macros -->
+  <xacro:macro name="box_inertia" params="m x y z">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(y*y+z*z)/12}" ixy="0" ixz="0"
+               iyy="${m*(x*x+z*z)/12}" iyz="0"
+               izz="${m*(x*x+y*y)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_inertia" params="m r h">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(3*r*r+h*h)/12}" ixy="0" ixz="0"
+               iyy="${m*(3*r*r+h*h)/12}" iyz="0"
+               izz="${m*r*r/2}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Wheel macro -->
+  <xacro:macro name="mecanum_wheel" params="name x_offset y_offset">
+    <link name="${name}_wheel_link">
+      <visual>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <material name="orange"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      </collision>
+      <xacro:cylinder_inertia m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+    </link>
+
+    <joint name="${name}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${name}_wheel_link"/>
+      <origin xyz="${x_offset} ${y_offset} 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Ultrasonic sensor macro -->
+  <xacro:macro name="ultrasonic_sensor" params="name x y yaw">
+    <link name="${name}_link">
+      <visual>
+        <geometry>
+          <box size="0.045 0.020 0.015"/>
+        </geometry>
+        <material name="light_grey"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.045 0.020 0.015"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.01"/>
+        <inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}_link"/>
+      <origin xyz="${x} ${y} 0.0" rpy="0 0 ${yaw}"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Base footprint (ground plane reference) -->
+  <link name="base_footprint"/>
+
+  <!-- Base link (chassis) -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+      </geometry>
+      <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+      </geometry>
+      <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+    </collision>
+    <xacro:box_inertia m="${chassis_mass}" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}"/>
+  </link>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${ground_clearance + wheel_radius}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Wheels -->
+  <xacro:mecanum_wheel name="front_left"  x_offset="${wheelbase/2}"  y_offset="${track_width/2 + wheel_width/2}"/>
+  <xacro:mecanum_wheel name="front_right" x_offset="${wheelbase/2}"  y_offset="${-(track_width/2 + wheel_width/2)}"/>
+  <xacro:mecanum_wheel name="rear_left"   x_offset="${-wheelbase/2}" y_offset="${track_width/2 + wheel_width/2}"/>
+  <xacro:mecanum_wheel name="rear_right"  x_offset="${-wheelbase/2}" y_offset="${-(track_width/2 + wheel_width/2)}"/>
+
+  <!-- IMU -->
+  <link name="imu_link">
+    <visual>
+      <geometry>
+        <box size="0.020 0.020 0.003"/>
+      </geometry>
+      <material name="light_grey"/>
+    </visual>
+    <inertial>
+      <mass value="0.005"/>
+      <inertia ixx="0.0000001" ixy="0" ixz="0" iyy="0.0000001" iyz="0" izz="0.0000001"/>
+    </inertial>
+  </link>
+
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 ${chassis_height}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Ultrasonic sensors -->
+  <xacro:ultrasonic_sensor name="ultrasonic_front" x="${chassis_length/2}" y="0" yaw="0"/>
+  <xacro:ultrasonic_sensor name="ultrasonic_back"  x="${-chassis_length/2}" y="0" yaw="${pi}"/>
+  <xacro:ultrasonic_sensor name="ultrasonic_left"  x="0" y="${chassis_width/2}" yaw="${pi/2}"/>
+  <xacro:ultrasonic_sensor name="ultrasonic_right" x="0" y="${-chassis_width/2}" yaw="${-pi/2}"/>
+
+  <!-- Payload mount point -->
+  <link name="payload_mount_link">
+    <visual>
+      <geometry>
+        <box size="0.100 0.100 0.005"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="orange"/>
+    </visual>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.000004" ixy="0" ixz="0" iyy="0.000004" iyz="0" izz="0.000008"/>
+    </inertial>
+  </link>
+
+  <joint name="payload_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="payload_mount_link"/>
+    <origin xyz="0 0 ${chassis_height + 0.005}" rpy="0 0 0"/>
+  </joint>
+
+</robot>
