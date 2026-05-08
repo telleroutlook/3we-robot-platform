@@ -208,6 +208,7 @@ if (existsSync(SAFETY_H)) {
     ['SAFETY_NORMAL', 'STATE_NORMAL'],
     ['SAFETY_ESTOPPED', 'STATE_ESTOPPED'],
     ['SAFETY_RECOVERY_PENDING', 'STATE_RECOVERY'],
+    ['SAFETY_RELAY_FAULT', 'STATE_RELAY_FAULT'],
   ];
 
   let enumOk = true;
