@@ -20,7 +20,7 @@ FRAME_START = 0xAA
 DESCRIPTOR_MAGIC = b"PBC4"
 
 
-@dataclass
+@dataclass(frozen=True)
 class PayloadDescriptor:
     """Parsed EEPROM payload descriptor."""
 
@@ -177,3 +177,9 @@ class PayloadInterface:
     def close(self):
         """Close I2C bus."""
         self.bus.close()
+
+    def __enter__(self) -> "PayloadInterface":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.close()
