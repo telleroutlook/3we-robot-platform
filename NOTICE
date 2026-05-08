@@ -16,7 +16,7 @@ This project uses the following third-party components:
 |-----------|---------|-----|
 | ROS 2 (Humble/Jazzy) | Apache 2.0 | https://github.com/ros2 |
 | Nav2 | Apache 2.0 | https://github.com/ros-planning/navigation2 |
-| slam_toolbox | LGPL-2.1 | https://github.com/SteveMacenski/slam_toolbox |
+| slam_toolbox (**optional**) | LGPL-2.1 | https://github.com/SteveMacenski/slam_toolbox |
 
 ## AI / Vision
 

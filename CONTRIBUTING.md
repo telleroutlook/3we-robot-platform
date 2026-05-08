@@ -152,23 +152,49 @@ Changes to the following areas require extra scrutiny:
 
 These changes require review from at least two maintainers.
 
-## Licensing
+## Licensing & Contributor Agreements
+
+### License Terms
 
 - **Code contributions** are licensed under Apache 2.0 (see `LICENSE`)
 - **Hardware contributions** are licensed under CERN-OHL-P v2 (see `LICENSE-HARDWARE`)
 - **Documentation contributions** are licensed under CC BY-SA 4.0 (see `LICENSE-DOCS`)
 
-By submitting a pull request, you agree that your contributions will be licensed under the same terms as the respective component.
+### Contributor License Agreement (CLA)
+
+**First-time contributors must sign the CLA before their first PR can be merged.**
+
+The CLA grants the project maintainers the right to relicense your contributions
+(e.g., for commercial offerings) while you retain full ownership of your work.
+
+- **Individual contributors**: Sign the [Individual CLA](CLA-INDIVIDUAL.md)
+- **Corporate contributors** (contributing on behalf of an employer): Sign the
+  [Corporate CLA](CLA-CORPORATE.md)
+
+**How to sign**: The CLA Assistant bot will automatically comment on your PR. Simply
+reply with:
+
+> I have read the CLA Document and I hereby sign the CLA
+
+You only need to sign once — it covers all future contributions.
+
+**Why we require a CLA**: This project uses an Open Core model. The CLA ensures that
+the maintainers can offer commercial licenses alongside the open-source version
+without needing to contact every contributor individually. Your code remains available
+under Apache 2.0 regardless.
 
 ### Developer Certificate of Origin (DCO)
 
-We use the [DCO](https://developercertificate.org/) to certify that contributors have the right to submit their work. Sign off your commits:
+In addition to the CLA, we use the [DCO](https://developercertificate.org/) to
+certify that contributors have the right to submit their work. Sign off **every**
+commit:
 
 ```bash
 git commit -s -m "feat(firmware): add battery SOC estimation"
 ```
 
-This adds a `Signed-off-by` line to your commit message.
+This adds a `Signed-off-by` line to your commit message. The DCO check is enforced
+automatically in CI — unsigned commits will fail the check.
 
 ## Community
 

@@ -1,0 +1,52 @@
+name: DCO Check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  dco:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify DCO sign-off
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+
+            const base = context.payload.pull_request.base.sha;
+            const head = context.payload.pull_request.head.sha;
+
+            const commits = execSync(
+              `git log --format='%H|%s|%b%n---END---' ${base}..${head}`,
+              { encoding: 'utf-8' }
+            );
+
+            const entries = commits.split('---END---').filter(e => e.trim());
+            const failures = [];
+
+            for (const entry of entries) {
+              const lines = entry.trim().split('\n');
+              const [sha, ...rest] = lines[0].split('|');
+              const subject = rest.join('|');
+              const body = lines.slice(1).join('\n');
+              const fullMessage = subject + '\n' + body;
+
+              if (!fullMessage.includes('Signed-off-by:')) {
+                failures.push(sha.substring(0, 8));
+              }
+            }
+
+            if (failures.length > 0) {
+              core.setFailed(
+                `The following commits are missing a DCO sign-off (Signed-off-by line):\n` +
+                failures.map(s => `  - ${s}`).join('\n') +
+                `\n\nPlease amend your commits with: git commit --amend -s`
+              );
+            } else {
+              core.info('All commits have DCO sign-off.');
+            }

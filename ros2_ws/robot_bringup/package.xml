@@ -16,7 +16,9 @@
   <exec_depend>xacro</exec_depend>
   <exec_depend>micro_ros_agent</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
-  <exec_depend>slam_toolbox</exec_depend>
+  <!-- Optional: slam_toolbox is LGPL-2.1. Install separately if SLAM is needed.
+       See docs/slam-alternatives.md for permissively-licensed alternatives. -->
+  <!-- <exec_depend>slam_toolbox</exec_depend> -->
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
