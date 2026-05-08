@@ -59,15 +59,9 @@ void test_ota_verify_accepts_valid_image(void) {
 }
 
 void test_ota_verify_rejects_before_init(void) {
-    // Fresh process — init was never called.
-    // We need to test uninitialized state. Since static state persists,
-    // this test relies on being run before init in a fresh build.
-    // For robustness, we test the "wrong magic" path instead which doesn't
-    // depend on init ordering.
     setUp_ota();
-    ota_signing_init(test_pubkey);
+    ota_signing_reset_for_test();
 
-    test_header.magic = 0xDEADBEEF;
     bool result = ota_verify_image(test_firmware, sizeof(test_firmware), &test_header);
     TEST_ASSERT_FALSE(result);
 }

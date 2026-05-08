@@ -25,6 +25,7 @@ static const uint8_t echo_pins[US_COUNT] = {
 };
 
 static float last_distance[US_COUNT];
+static portMUX_TYPE distance_spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 static rmt_channel_handle_t rx_channels[US_COUNT];
 static rmt_receive_config_t rx_config;
@@ -126,7 +127,10 @@ esp_err_t ultrasonic_read(ultrasonic_id_t id, float *distance_m)
 float ultrasonic_get_last(ultrasonic_id_t id)
 {
     if (id >= US_COUNT) return US_MAX_RANGE_M;
-    return last_distance[id];
+    portENTER_CRITICAL(&distance_spinlock);
+    float val = last_distance[id];
+    portEXIT_CRITICAL(&distance_spinlock);
+    return val;
 }
 
 void ultrasonic_task(void *params)
@@ -137,7 +141,9 @@ void ultrasonic_task(void *params)
     while (1) {
         float dist;
         if (ultrasonic_read(current, &dist) == ESP_OK) {
+            portENTER_CRITICAL(&distance_spinlock);
             last_distance[current] = dist;
+            portEXIT_CRITICAL(&distance_spinlock);
             if (dist < US_SAFETY_THRESHOLD_M && !safety_is_estopped()) {
                 ESP_LOGW(TAG, "Obstacle at %.3fm on sensor %d - triggering estop",
                          dist, current);

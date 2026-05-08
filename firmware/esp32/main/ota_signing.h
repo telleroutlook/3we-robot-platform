@@ -28,4 +28,8 @@ bool ota_verify_image(const uint8_t *image_data, size_t image_size,
 esp_err_t ota_apply_update(const uint8_t *image_data, size_t total_size);
 uint32_t ota_get_current_version(void);
 
+#ifdef UNIT_TEST_BUILD
+void ota_signing_reset_for_test(void);
+#endif
+
 #endif // OTA_SIGNING_H

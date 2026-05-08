@@ -3,12 +3,12 @@
 import type {
   ConnectionState,
   ConnectionEvent,
-  RosbridgeMessage,
   RosbridgeSubscribe,
   RosbridgePublish,
   RosbridgeCallService,
-  RosbridgeServiceResponse,
 } from './types';
+
+import { rosbridgeMessageSchema } from './schemas';
 
 type TopicCallback = (msg: unknown) => void;
 
@@ -164,14 +164,21 @@ export class RosbridgeConnection extends EventTarget {
   }
 
   private handleMessage(raw: string): void {
-    let msg: RosbridgeMessage;
+    let json: unknown;
     try {
-      msg = JSON.parse(raw) as RosbridgeMessage;
+      json = JSON.parse(raw);
     } catch {
       return;
     }
 
-    if (msg.op === 'publish' && msg.topic) {
+    const result = rosbridgeMessageSchema.safeParse(json);
+    if (!result.success) {
+      return;
+    }
+
+    const msg = result.data;
+
+    if (msg.op === 'publish') {
       const entry = this.subscribers.get(msg.topic);
       if (entry) {
         for (const cb of entry.callbacks) {
@@ -179,14 +186,13 @@ export class RosbridgeConnection extends EventTarget {
         }
       }
     } else if (msg.op === 'service_response') {
-      const resp = msg as unknown as RosbridgeServiceResponse;
-      const pending = this.pendingServices.get(resp.id ?? '');
+      const pending = this.pendingServices.get(msg.id ?? '');
       if (pending) {
-        this.pendingServices.delete(resp.id ?? '');
-        if (resp.result) {
-          pending.resolve(resp.values);
+        this.pendingServices.delete(msg.id ?? '');
+        if (msg.result) {
+          pending.resolve(msg.values);
         } else {
-          pending.reject(new Error(`Service call failed: ${JSON.stringify(resp.values)}`));
+          pending.reject(new Error(`Service call failed: ${JSON.stringify(msg.values)}`));
         }
       }
     }

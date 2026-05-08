@@ -38,6 +38,7 @@ add_executable(test_runner
     test_battery_pct.c
     test_ota_signing.c
     test_dtls_transport.c
+    test_dtls_integration.c
     test_ultrasonic_estop.c
     ${FIRMWARE_SRC}/motor_control.c
     ${FIRMWARE_SRC}/safety.c
@@ -61,4 +62,4 @@ target_compile_definitions(test_runner PRIVATE
 # Force-include stubs so firmware sees ESP-IDF types without modification
 target_compile_options(test_runner PRIVATE -include ${CMAKE_SOURCE_DIR}/mocks/esp_stubs.h)
 
-target_link_libraries(test_runner PRIVATE unity esp_stubs mbedtls_stubs m)
+target_link_libraries(test_runner PRIVATE unity esp_stubs mbedtls_stubs m pthread)

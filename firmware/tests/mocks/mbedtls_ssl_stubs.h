@@ -102,4 +102,13 @@ int mbedtls_net_send(void *ctx, const unsigned char *buf, size_t len);
 int mbedtls_net_recv(void *ctx, unsigned char *buf, size_t len);
 int mbedtls_net_recv_timeout(void *ctx, unsigned char *buf, size_t len, uint32_t timeout);
 
+// --- Test control API ---
+void mock_ssl_reset(void);
+void mock_ssl_set_handshake_result(int result);
+void mock_ssl_set_read_data(const unsigned char *data, size_t len);
+void mock_ssl_set_read_result(int result);
+void mock_ssl_set_psk_cb_capture(int enable);
+int mock_ssl_get_psk_cb_called(void);
+void mock_ssl_set_accept_max_calls(int max_calls);
+
 #endif // MBEDTLS_SSL_STUBS_H

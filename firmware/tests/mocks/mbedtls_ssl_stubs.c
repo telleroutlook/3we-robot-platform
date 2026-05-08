@@ -3,6 +3,49 @@
 #include "mbedtls_ssl_stubs.h"
 #include <string.h>
 
+// --- Configurable mock state ---
+static int mock_handshake_result = 0;
+static int mock_read_result = MBEDTLS_ERR_SSL_WANT_READ;
+static const unsigned char *mock_read_data = NULL;
+static size_t mock_read_data_len = 0;
+static size_t mock_read_data_offset = 0;
+static int mock_psk_cb_capture = 0;
+static int mock_psk_cb_called = 0;
+static int mock_accept_max_calls = 1;
+static int mock_accept_call_count = 0;
+
+// PSK callback pointer captured from conf_psk_cb
+static int (*captured_psk_cb)(void *, mbedtls_ssl_context *, const unsigned char *, size_t) = NULL;
+static void *captured_psk_cb_param = NULL;
+
+void mock_ssl_reset(void) {
+    mock_handshake_result = 0;
+    mock_read_result = MBEDTLS_ERR_SSL_WANT_READ;
+    mock_read_data = NULL;
+    mock_read_data_len = 0;
+    mock_read_data_offset = 0;
+    mock_psk_cb_capture = 0;
+    mock_psk_cb_called = 0;
+    mock_accept_max_calls = 1;
+    mock_accept_call_count = 0;
+    captured_psk_cb = NULL;
+    captured_psk_cb_param = NULL;
+}
+
+void mock_ssl_set_handshake_result(int result) { mock_handshake_result = result; }
+
+void mock_ssl_set_read_data(const unsigned char *data, size_t len) {
+    mock_read_data = data;
+    mock_read_data_len = len;
+    mock_read_data_offset = 0;
+    mock_read_result = 0;
+}
+
+void mock_ssl_set_read_result(int result) { mock_read_result = result; }
+void mock_ssl_set_psk_cb_capture(int enable) { mock_psk_cb_capture = enable; }
+int mock_ssl_get_psk_cb_called(void) { return mock_psk_cb_called; }
+void mock_ssl_set_accept_max_calls(int max_calls) { mock_accept_max_calls = max_calls; }
+
 void mbedtls_ssl_init(mbedtls_ssl_context *ssl) { memset(ssl, 0, sizeof(*ssl)); }
 void mbedtls_ssl_config_init(mbedtls_ssl_config *conf) { memset(conf, 0, sizeof(*conf)); }
 void mbedtls_entropy_init(mbedtls_entropy_context *ctx) { memset(ctx, 0, sizeof(*ctx)); }
@@ -41,7 +84,9 @@ void mbedtls_ssl_conf_rng(mbedtls_ssl_config *conf,
 void mbedtls_ssl_conf_psk_cb(mbedtls_ssl_config *conf,
                               int (*f_psk)(void *, mbedtls_ssl_context *, const unsigned char *, size_t),
                               void *p_psk) {
-    (void)conf; (void)f_psk; (void)p_psk;
+    (void)conf;
+    captured_psk_cb = f_psk;
+    captured_psk_cb_param = p_psk;
 }
 int mbedtls_ssl_cookie_setup(mbedtls_ssl_cookie_ctx *ctx,
                               int (*f_rng)(void *, unsigned char *, size_t), void *p_rng) {
@@ -91,6 +136,10 @@ int mbedtls_net_bind(mbedtls_net_context *ctx, const char *bind_ip, const char *
 int mbedtls_net_accept(mbedtls_net_context *bind_ctx, mbedtls_net_context *client_ctx,
                         void *client_ip, size_t buf_size, size_t *ip_len) {
     (void)bind_ctx; (void)client_ip; (void)buf_size;
+    mock_accept_call_count++;
+    if (mock_accept_call_count > mock_accept_max_calls) {
+        return -1;
+    }
     client_ctx->fd = 43;
     if (ip_len) *ip_len = 0;
     return 0;
@@ -101,10 +150,24 @@ void mbedtls_ssl_set_bio(mbedtls_ssl_context *ssl, void *p_bio,
                           int (*f_recv_timeout)(void *, unsigned char *, size_t, uint32_t)) {
     (void)ssl; (void)p_bio; (void)f_send; (void)f_recv; (void)f_recv_timeout;
 }
-int mbedtls_ssl_handshake(mbedtls_ssl_context *ssl) { (void)ssl; return 0; }
+int mbedtls_ssl_handshake(mbedtls_ssl_context *ssl) {
+    if (mock_psk_cb_capture && captured_psk_cb) {
+        const unsigned char *id = (const unsigned char *)"robot-client";
+        captured_psk_cb(captured_psk_cb_param, ssl, id, 12);
+        mock_psk_cb_called = 1;
+    }
+    return mock_handshake_result;
+}
 int mbedtls_ssl_read(mbedtls_ssl_context *ssl, unsigned char *buf, size_t len) {
-    (void)ssl; (void)buf; (void)len;
-    return MBEDTLS_ERR_SSL_WANT_READ;
+    (void)ssl;
+    if (mock_read_data && mock_read_data_offset < mock_read_data_len) {
+        size_t remaining = mock_read_data_len - mock_read_data_offset;
+        size_t to_copy = remaining < len ? remaining : len;
+        memcpy(buf, mock_read_data + mock_read_data_offset, to_copy);
+        mock_read_data_offset += to_copy;
+        return (int)to_copy;
+    }
+    return mock_read_result;
 }
 int mbedtls_ssl_write(mbedtls_ssl_context *ssl, const unsigned char *buf, size_t len) {
     (void)ssl; (void)buf;

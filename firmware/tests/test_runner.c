@@ -70,6 +70,12 @@ extern void test_dtls_callback_registration(void);
 extern void test_dtls_default_ports(void);
 extern void test_dtls_default_timeouts(void);
 
+// test_dtls_integration.c
+extern void test_dtls_handshake_success_sets_connected(void);
+extern void test_dtls_handshake_failure_stays_disconnected(void);
+extern void test_dtls_recv_callback_dispatches_data(void);
+extern void test_dtls_psk_callback_rejects_wrong_identity(void);
+
 // test_ultrasonic_estop.c
 extern void test_ultrasonic_below_threshold_triggers_estop(void);
 extern void test_ultrasonic_at_threshold_does_not_trigger(void);
@@ -147,6 +153,12 @@ int main(void)
     RUN_TEST(test_dtls_callback_registration);
     RUN_TEST(test_dtls_default_ports);
     RUN_TEST(test_dtls_default_timeouts);
+
+    // DTLS integration (handshake + PSK + recv dispatch)
+    RUN_TEST(test_dtls_handshake_success_sets_connected);
+    RUN_TEST(test_dtls_handshake_failure_stays_disconnected);
+    RUN_TEST(test_dtls_recv_callback_dispatches_data);
+    RUN_TEST(test_dtls_psk_callback_rejects_wrong_identity);
 
     // Ultrasonic safety estop path
     RUN_TEST(test_ultrasonic_below_threshold_triggers_estop);

@@ -209,3 +209,11 @@ uint32_t ota_get_current_version(void)
     }
     return ((uint32_t)major << 16) | ((uint32_t)minor << 8) | (uint32_t)patch;
 }
+
+#ifdef UNIT_TEST_BUILD
+void ota_signing_reset_for_test(void)
+{
+    initialized = false;
+    memset(stored_pubkey, 0, OTA_PUBKEY_SIZE);
+}
+#endif
