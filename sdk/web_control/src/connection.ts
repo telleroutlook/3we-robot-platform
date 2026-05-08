@@ -64,9 +64,7 @@ export class RosbridgeConnection extends EventTarget {
     this.ws.onclose = () => {
       this.ws = null;
       if (!this.intentionalClose) {
-        if (this.state !== 'error') {
-          this.setState('disconnected');
-        }
+        this.setState('connecting');
         this.scheduleReconnect();
       } else {
         this.setState('disconnected');

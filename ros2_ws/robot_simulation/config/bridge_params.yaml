@@ -23,31 +23,31 @@
   gz_type_name: "ignition.msgs.IMU"
   direction: GZ_TO_ROS
 
-# Ultrasonic front — sonar sensor (Range) from Gazebo to ROS2
+# Ultrasonic front — sonar sensor (LaserScan) from Gazebo to ROS2
 - ros_topic_name: "/ultrasonic/front"
   gz_topic_name: "/world/empty_world/model/robot_platform/link/ultrasonic_front_link/sensor/ultrasonic_front_sensor/scan"
-  ros_type_name: "sensor_msgs/msg/Range"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
   gz_type_name: "ignition.msgs.LaserScan"
   direction: GZ_TO_ROS
 
 # Ultrasonic back — sonar sensor from Gazebo to ROS2
 - ros_topic_name: "/ultrasonic/back"
   gz_topic_name: "/world/empty_world/model/robot_platform/link/ultrasonic_back_link/sensor/ultrasonic_back_sensor/scan"
-  ros_type_name: "sensor_msgs/msg/Range"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
   gz_type_name: "ignition.msgs.LaserScan"
   direction: GZ_TO_ROS
 
 # Ultrasonic left — sonar sensor from Gazebo to ROS2
 - ros_topic_name: "/ultrasonic/left"
   gz_topic_name: "/world/empty_world/model/robot_platform/link/ultrasonic_left_link/sensor/ultrasonic_left_sensor/scan"
-  ros_type_name: "sensor_msgs/msg/Range"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
   gz_type_name: "ignition.msgs.LaserScan"
   direction: GZ_TO_ROS
 
 # Ultrasonic right — sonar sensor from Gazebo to ROS2
 - ros_topic_name: "/ultrasonic/right"
   gz_topic_name: "/world/empty_world/model/robot_platform/link/ultrasonic_right_link/sensor/ultrasonic_right_sensor/scan"
-  ros_type_name: "sensor_msgs/msg/Range"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
   gz_type_name: "ignition.msgs.LaserScan"
   direction: GZ_TO_ROS
 

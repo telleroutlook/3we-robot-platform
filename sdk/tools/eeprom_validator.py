@@ -57,7 +57,7 @@ class EepromDescriptor:
         self.power_12v_ma: int = 0
         self.capabilities: int = 0
         self.gpio_mask: int = 0
-        self.reserved: bytes = b"\x00" * 21
+        self.reserved: bytes = b"\x00" * 5
 
     def to_bytes(self) -> bytes:
         """Serialize descriptor to 64-byte binary."""
@@ -70,11 +70,11 @@ class EepromDescriptor:
         buf[4] = self.version
 
         # Offset 0x05: Payload ID (16 bytes, null-padded)
-        pid = self.payload_id.encode("ascii")[:MAX_PAYLOAD_ID_LEN]
+        pid = self.payload_id.encode("ascii", errors="replace")[:MAX_PAYLOAD_ID_LEN]
         buf[5:5 + len(pid)] = pid
 
         # Offset 0x15: Name (32 bytes, null-padded)
-        name = self.name.encode("ascii")[:MAX_NAME_LEN]
+        name = self.name.encode("ascii", errors="replace")[:MAX_NAME_LEN]
         buf[0x15:0x15 + len(name)] = name
 
         # Offset 0x35: Power 5V (2 bytes, big-endian)
@@ -169,6 +169,8 @@ def validate_descriptor(desc: EepromDescriptor) -> ValidationResult:
         result.add_warning("Payload name is empty")
     elif len(desc.name) > MAX_NAME_LEN:
         result.add_error(f"Payload name too long: {len(desc.name)} > {MAX_NAME_LEN}")
+    elif not desc.name.isascii():
+        result.add_error("Payload name contains non-ASCII characters")
 
     # Power budget validation
     if desc.power_5v_ma > MAX_5V_MA:

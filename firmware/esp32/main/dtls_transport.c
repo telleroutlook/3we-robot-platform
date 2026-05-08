@@ -47,6 +47,11 @@ static int dtls_psk_callback(void *parameter, mbedtls_ssl_context *ssl_ctx,
         return -1;
     }
 
+    if (current_config.psk_key_len > sizeof(current_config.psk_key)) {
+        ESP_LOGE(TAG, "PSK key length exceeds buffer size");
+        return -1;
+    }
+
     return mbedtls_ssl_set_hs_psk(ssl_ctx, current_config.psk_key,
                                    current_config.psk_key_len);
 }
@@ -113,7 +118,6 @@ esp_err_t dtls_init(const dtls_config_t *config)
         MBEDTLS_TLS_PSK_WITH_AES_128_GCM_SHA256,
         MBEDTLS_TLS_PSK_WITH_AES_256_GCM_SHA384,
         MBEDTLS_TLS_PSK_WITH_AES_128_CCM,
-        MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
         0
     };
     mbedtls_ssl_conf_ciphersuites(&conf, ciphersuites);

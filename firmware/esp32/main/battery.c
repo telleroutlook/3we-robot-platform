@@ -79,7 +79,10 @@ float battery_read_voltage(void)
 
 uint8_t battery_get_percentage(void)
 {
-    float cell_v = voltage_avg / BATT_CELLS_SERIES;
+    portENTER_CRITICAL(&batt_spinlock);
+    float v = voltage_avg;
+    portEXIT_CRITICAL(&batt_spinlock);
+    float cell_v = v / BATT_CELLS_SERIES;
     if (cell_v >= BATT_CELL_FULL_V) return 100;
     if (cell_v <= BATT_CELL_CRITICAL_V) return 0;
 
@@ -89,7 +92,10 @@ uint8_t battery_get_percentage(void)
 
 battery_state_t battery_get_state(void)
 {
-    float cell_v = voltage_avg / BATT_CELLS_SERIES;
+    portENTER_CRITICAL(&batt_spinlock);
+    float v = voltage_avg;
+    portEXIT_CRITICAL(&batt_spinlock);
+    float cell_v = v / BATT_CELLS_SERIES;
     if (cell_v <= BATT_CELL_CRITICAL_V) return BATT_CRITICAL;
     if (cell_v <= BATT_CELL_LOW_V) return BATT_LOW;
     return BATT_OK;

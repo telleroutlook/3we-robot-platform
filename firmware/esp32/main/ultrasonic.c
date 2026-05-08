@@ -152,6 +152,10 @@ void ultrasonic_task(void *params)
         }
 
         current = (current + 1) % US_COUNT;
-        vTaskDelay(period / US_COUNT);
+
+        // Guard delay between sensors: shared trigger pin means all sensors
+        // echo simultaneously. Wait for max echo return time before next trigger
+        // to prevent stale echo capture on the next sensor's RMT channel.
+        vTaskDelay(pdMS_TO_TICKS(30));
     }
 }

@@ -141,7 +141,9 @@ export class RobotSensorRadar extends HTMLElement {
     if (!cone || !label) return;
 
     const data = this.sensors[direction];
-    const normalized = Math.min(data.range / data.maxRange, 1.0);
+    const normalized = Number.isFinite(data.range)
+      ? Math.min(data.range / data.maxRange, 1.0)
+      : 0;
     const length = normalized * 55; // max visual range in SVG units
 
     const cx = 100;

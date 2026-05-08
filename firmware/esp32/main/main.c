@@ -231,9 +231,8 @@ void app_main(void)
 
     ESP_LOGI(TAG, "All systems initialized. Robot ready.");
 
-    // Main loop: watchdog feed and status monitoring
+    // Main loop: status monitoring only (watchdog is fed from cmd_vel_callback)
     while (1) {
-        safety_feed_watchdog();
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

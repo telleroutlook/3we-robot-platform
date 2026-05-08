@@ -7,6 +7,7 @@ and publishes it as a ROS2 topic.
 """
 
 import sys
+import struct
 import time
 
 from payload_interface.payload_protocol import PayloadInterface
@@ -47,8 +48,8 @@ class SensorPayloadNode(Node):
             self.get_logger().warning("Failed to read temperature from payload")
             return
 
-        # Parse response: [CMD_ACK, TEMP_INT, TEMP_FRAC]
-        temp_int = response[1]
+        # Parse response: [CMD_ACK, TEMP_INT (signed), TEMP_FRAC]
+        temp_int = struct.unpack('b', bytes([response[1]]))[0]
         temp_frac = response[2]
         temperature = float(temp_int) + float(temp_frac) / 100.0
 

@@ -181,6 +181,7 @@ export class RobotPayloadPanel extends HTMLElement {
   private toggle12v!: HTMLElement;
   private toggleVbat!: HTMLElement;
   private unsubscribe: (() => void) | null = null;
+  private currentPayloadId = '';
 
   constructor() {
     super();
@@ -228,6 +229,7 @@ export class RobotPayloadPanel extends HTMLElement {
   }
 
   private onPayloadState(msg: PayloadState): void {
+    this.currentPayloadId = msg.payload_id || '';
     if (msg.connected) {
       this.connectionDot.classList.add('connected');
       this.noPayload.classList.add('hidden');
@@ -273,7 +275,7 @@ export class RobotPayloadPanel extends HTMLElement {
       await connection.callService<PayloadPowerRequest, PayloadPowerResponse>(
         '/payload_power',
         'robot_interfaces/PayloadPower',
-        { payload_id: '', rail, enable }
+        { payload_id: this.currentPayloadId, rail, enable }
       );
     } catch {
       // Revert on failure

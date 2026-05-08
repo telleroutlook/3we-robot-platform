@@ -22,6 +22,10 @@ def generate_launch_description():
         'use_slam', default_value='false',
         description='Launch SLAM toolbox for mapping')
 
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time', default_value='false',
+        description='Use simulation clock')
+
     serial_port_arg = DeclareLaunchArgument(
         'serial_port', default_value='/dev/ttyUSB0',
         description='Serial port for micro-ROS agent')
@@ -35,7 +39,10 @@ def generate_launch_description():
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        parameters=[{'robot_description': robot_description_content}],
+        parameters=[{
+            'robot_description': robot_description_content,
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+        }],
     )
 
     # Hardware launch
@@ -51,13 +58,17 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([pkg_bringup, 'launch', 'navigation.launch.py'])
         ),
-        launch_arguments={'use_slam': LaunchConfiguration('use_slam')}.items(),
+        launch_arguments={
+            'use_slam': LaunchConfiguration('use_slam'),
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+        }.items(),
         condition=IfCondition(LaunchConfiguration('use_nav')),
     )
 
     return LaunchDescription([
         use_nav_arg,
         use_slam_arg,
+        use_sim_time_arg,
         serial_port_arg,
         robot_state_publisher,
         hardware_launch,

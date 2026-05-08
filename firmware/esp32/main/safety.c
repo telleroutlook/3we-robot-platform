@@ -82,7 +82,10 @@ esp_err_t safety_init(void)
 
 safety_state_t safety_get_state(void)
 {
-    return state;
+    portENTER_CRITICAL(&safety_spinlock);
+    safety_state_t s = state;
+    portEXIT_CRITICAL(&safety_spinlock);
+    return s;
 }
 
 bool safety_is_estopped(void)
@@ -137,13 +140,14 @@ esp_err_t safety_confirm_reset(void)
         return ESP_ERR_INVALID_STATE;
     }
 
+    int64_t now = esp_timer_get_time();
     portENTER_CRITICAL(&safety_spinlock);
     if (state != SAFETY_RECOVERY_PENDING) {
         portEXIT_CRITICAL(&safety_spinlock);
         return ESP_ERR_INVALID_STATE;
     }
     state = SAFETY_NORMAL;
-    last_watchdog_feed = esp_timer_get_time();
+    last_watchdog_feed = now;
     portEXIT_CRITICAL(&safety_spinlock);
     notify_state_change();
     ESP_LOGI(TAG, "Safety reset confirmed - returning to normal operation");
@@ -157,8 +161,9 @@ void safety_register_callback(safety_callback_t cb)
 
 void safety_feed_watchdog(void)
 {
+    int64_t now = esp_timer_get_time();
     portENTER_CRITICAL(&safety_spinlock);
-    last_watchdog_feed = esp_timer_get_time();
+    last_watchdog_feed = now;
     portEXIT_CRITICAL(&safety_spinlock);
 }
 
@@ -180,6 +185,19 @@ void safety_task(void *params)
                 notify_state_change();
                 ESP_LOGW(TAG, "Hardware E-stop detected");
             }
+        }
+
+        // Continuous relay feedback monitoring
+        int relay_fb = gpio_get_level(SAFETY_RELAY_FB);
+        if (current_state == SAFETY_NORMAL && relay_fb == 0) {
+            portENTER_CRITICAL(&safety_spinlock);
+            state = SAFETY_ESTOPPED;
+            portEXIT_CRITICAL(&safety_spinlock);
+            motor_stop_all();
+            notify_state_change();
+            ESP_LOGE(TAG, "RELAY FAULT: relay unexpectedly de-energized in NORMAL state");
+        } else if (current_state == SAFETY_ESTOPPED && relay_fb != 0) {
+            ESP_LOGE(TAG, "RELAY FAULT: relay energized while E-stopped - possible welded contact");
         }
 
         // Watchdog: if control loop stalls, stop motors

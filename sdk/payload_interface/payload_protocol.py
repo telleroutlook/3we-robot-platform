@@ -121,6 +121,8 @@ class PayloadInterface:
         """Send a command frame and wait for response."""
         payload = bytes([cmd_id]) + data
         length = len(payload)
+        if length > 255:
+            return None
         crc = crc16_modbus(bytes([length]) + payload)
         frame = bytes([FRAME_START, length]) + payload + struct.pack('>H', crc)
 

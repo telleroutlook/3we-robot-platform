@@ -14,6 +14,7 @@ SemaphoreHandle_t i2c_bus_get_mutex(void);
 static inline bool i2c_bus_lock(void)
 {
     SemaphoreHandle_t mtx = i2c_bus_get_mutex();
+    if (mtx == NULL) return false;
     return xSemaphoreTake(mtx, I2C_BUS_LOCK_TIMEOUT) == pdTRUE;
 }
 

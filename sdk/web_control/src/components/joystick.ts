@@ -115,6 +115,15 @@ export class RobotJoystick extends HTMLElement {
     this.draw();
   }
 
+  public stop(): void {
+    this.active = false;
+    this.knobX = 0;
+    this.knobY = 0;
+    this.currentVx = 0;
+    this.currentOmega = 0;
+    this.updateReadout();
+  }
+
   disconnectedCallback(): void {
     this.stopPublishing();
     if (this.animFrame !== null) {

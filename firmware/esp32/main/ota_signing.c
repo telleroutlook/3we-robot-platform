@@ -114,8 +114,21 @@ bool ota_verify_image(const uint8_t *image_data, size_t image_size,
         return false;
     }
 
-    // Verify ECDSA P-256 signature over the hash
-    if (!ecdsa_p256_verify(computed_hash, OTA_HASH_SIZE,
+    // Compute signed digest: SHA-256(magic || version || image_size || firmware_hash)
+    // This binds the header fields to the signature, preventing replay/manipulation
+    uint8_t signed_digest[OTA_HASH_SIZE];
+    mbedtls_sha256_context sha_ctx;
+    mbedtls_sha256_init(&sha_ctx);
+    mbedtls_sha256_starts(&sha_ctx, 0);
+    mbedtls_sha256_update(&sha_ctx, (const uint8_t *)&header->magic, sizeof(header->magic));
+    mbedtls_sha256_update(&sha_ctx, (const uint8_t *)&header->version, sizeof(header->version));
+    mbedtls_sha256_update(&sha_ctx, (const uint8_t *)&header->image_size, sizeof(header->image_size));
+    mbedtls_sha256_update(&sha_ctx, computed_hash, OTA_HASH_SIZE);
+    mbedtls_sha256_finish(&sha_ctx, signed_digest);
+    mbedtls_sha256_free(&sha_ctx);
+
+    // Verify ECDSA P-256 signature over the bound digest
+    if (!ecdsa_p256_verify(signed_digest, OTA_HASH_SIZE,
                         header->signature, stored_pubkey)) {
         ESP_LOGE(TAG, "ECDSA P-256 signature verification FAILED - rejecting image");
         return false;

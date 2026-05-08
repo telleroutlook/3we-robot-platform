@@ -227,6 +227,10 @@ export class RobotEstopButton extends HTMLElement {
     this.estopped = true;
     this.setVisualState('estopped');
 
+    // Zero joystick velocities immediately
+    const joystick = document.querySelector('robot-joystick') as HTMLElement & { stop?: () => void } | null;
+    if (joystick?.stop) joystick.stop();
+
     try {
       await connection.callService(
         '/emergency_stop',

@@ -81,6 +81,16 @@ void motor_set_speed(motor_id_t id, float speed_pct)
         ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch, 0);
         ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch, duty);
     }
+
+    // Re-check E-stop before committing PWM to prevent race with motor_stop_all()
+    if (safety_is_estopped()) {
+        ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch, 0);
+        ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch, 0);
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch);
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch);
+        return;
+    }
+
     ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch);
 
