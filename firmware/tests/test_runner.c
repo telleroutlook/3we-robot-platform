@@ -45,6 +45,31 @@ extern void test_battery_ok_state(void);
 extern void test_battery_critical_state(void);
 extern void test_battery_not_initialized_returns_zero(void);
 
+// test_ota_signing.c
+extern void test_ota_init_accepts_valid_pubkey(void);
+extern void test_ota_init_rejects_null_pubkey(void);
+extern void test_ota_verify_accepts_valid_image(void);
+extern void test_ota_verify_rejects_before_init(void);
+extern void test_ota_verify_rejects_wrong_magic(void);
+extern void test_ota_verify_rejects_size_mismatch(void);
+extern void test_ota_verify_rejects_hash_mismatch(void);
+extern void test_ota_verify_rejects_invalid_signature(void);
+extern void test_ota_apply_rejects_too_small(void);
+extern void test_ota_apply_rejects_too_large(void);
+extern void test_ota_apply_rejects_version_rollback(void);
+extern void test_ota_apply_rejects_same_version(void);
+extern void test_ota_apply_succeeds_with_valid_upgrade(void);
+extern void test_ota_apply_rejects_when_no_partition(void);
+
+// test_dtls_transport.c
+extern void test_dtls_init_rejects_null_config(void);
+extern void test_dtls_init_accepts_valid_config(void);
+extern void test_dtls_not_connected_initially(void);
+extern void test_dtls_send_rejects_when_not_connected(void);
+extern void test_dtls_callback_registration(void);
+extern void test_dtls_default_ports(void);
+extern void test_dtls_default_timeouts(void);
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -91,6 +116,31 @@ int main(void)
     RUN_TEST(test_battery_ok_state);
     RUN_TEST(test_battery_critical_state);
     RUN_TEST(test_battery_not_initialized_returns_zero);
+
+    // OTA signing
+    RUN_TEST(test_ota_init_accepts_valid_pubkey);
+    RUN_TEST(test_ota_init_rejects_null_pubkey);
+    RUN_TEST(test_ota_verify_accepts_valid_image);
+    RUN_TEST(test_ota_verify_rejects_before_init);
+    RUN_TEST(test_ota_verify_rejects_wrong_magic);
+    RUN_TEST(test_ota_verify_rejects_size_mismatch);
+    RUN_TEST(test_ota_verify_rejects_hash_mismatch);
+    RUN_TEST(test_ota_verify_rejects_invalid_signature);
+    RUN_TEST(test_ota_apply_rejects_too_small);
+    RUN_TEST(test_ota_apply_rejects_too_large);
+    RUN_TEST(test_ota_apply_rejects_version_rollback);
+    RUN_TEST(test_ota_apply_rejects_same_version);
+    RUN_TEST(test_ota_apply_succeeds_with_valid_upgrade);
+    RUN_TEST(test_ota_apply_rejects_when_no_partition);
+
+    // DTLS transport
+    RUN_TEST(test_dtls_init_rejects_null_config);
+    RUN_TEST(test_dtls_init_accepts_valid_config);
+    RUN_TEST(test_dtls_not_connected_initially);
+    RUN_TEST(test_dtls_send_rejects_when_not_connected);
+    RUN_TEST(test_dtls_callback_registration);
+    RUN_TEST(test_dtls_default_ports);
+    RUN_TEST(test_dtls_default_timeouts);
 
     return UNITY_END();
 }

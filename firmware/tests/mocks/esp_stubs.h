@@ -140,6 +140,15 @@ void mock_set_adc_voltage_mv(int mv);
 #define pdMS_TO_TICKS(x) (x)
 typedef int TickType_t;
 void vTaskDelay(int ticks);
+static inline void vTaskDelete(void *handle) { (void)handle; }
+
+// FreeRTOS spinlock stubs
+typedef int portMUX_TYPE;
+#define portMUX_INITIALIZER_UNLOCKED 0
+#define portENTER_CRITICAL(mux)      ((void)(mux))
+#define portEXIT_CRITICAL(mux)       ((void)(mux))
+#define portENTER_CRITICAL_ISR(mux)  ((void)(mux))
+#define portEXIT_CRITICAL_ISR(mux)   ((void)(mux))
 
 // UART stub
 #define UART_NUM_1 1

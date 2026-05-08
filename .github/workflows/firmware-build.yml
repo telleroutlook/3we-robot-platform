@@ -10,18 +10,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: espressif/idf:v5.2
+    # espressif/idf v5.2
+    container: espressif/idf@sha256:86ca6a0e0accdbab757be5e99a4aa1e7c5de50a52ea925bea02c9bd2d88f0c1d
     strategy:
       matrix:
-        sku: [ROBOT_SKU_BASIC, ROBOT_SKU_STANDARD, ROBOT_SKU_PRO, ROBOT_SKU_INDUSTRIAL]
+        include:
+          - sku: ROBOT_SKU_BASIC
+            sku_suffix: basic
+          - sku: ROBOT_SKU_STANDARD
+            sku_suffix: standard
+          - sku: ROBOT_SKU_PRO
+            sku_suffix: pro
+          - sku: ROBOT_SKU_INDUSTRIAL
+            sku_suffix: industrial
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Build firmware (${{ matrix.sku }})
         working-directory: firmware/esp32
         run: |
           . $IDF_PATH/export.sh
-          idf.py set-target esp32s3
+          idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.${{ matrix.sku_suffix }}" set-target esp32s3
           idf.py build
-        env:
-          ROBOT_SKU: ${{ matrix.sku }}
