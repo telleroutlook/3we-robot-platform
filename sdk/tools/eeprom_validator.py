@@ -10,7 +10,7 @@ Usage:
     python eeprom_validator.py validate <binary_file>
     python eeprom_validator.py generate --id "PAYLOAD_001" --name "Lidar Module" \
         --power-5v 800 --power-12v 0 --caps 0x03 --gpio 0x0F -o payload.bin
-    python eeprom_validator.py program --port /dev/ttyUSB0 <binary_file>
+    python eeprom_validator.py program --bus 1 --address 0x50 <binary_file>
 """
 
 import argparse
@@ -18,6 +18,19 @@ import struct
 import sys
 from pathlib import Path
 from typing import Optional
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from payload_interface.capability_flags import (
+    CAP_ADC,
+    CAP_CAN,
+    CAP_GPIO,
+    CAP_I2C,
+    CAP_PWM,
+    CAP_RESERVED,
+    CAP_SPI,
+    CAP_UART,
+    CAPABILITY_NAMES,
+)
 
 
 DESCRIPTOR_MAGIC = b"PBC4"
@@ -28,26 +41,6 @@ MAX_NAME_LEN = 32
 # Power limits per rail
 MAX_5V_MA = 5000
 MAX_12V_MA = 3000
-
-# Capability bits
-CAP_I2C_SLAVE = 0x01
-CAP_SPI_SLAVE = 0x02
-CAP_UART = 0x04
-CAP_GPIO = 0x08
-CAP_ADC = 0x10
-CAP_PWM = 0x20
-CAP_CAN = 0x40
-CAP_RESERVED = 0x80
-
-CAPABILITY_NAMES = {
-    CAP_I2C_SLAVE: "I2C Slave",
-    CAP_SPI_SLAVE: "SPI Slave",
-    CAP_UART: "UART",
-    CAP_GPIO: "GPIO",
-    CAP_ADC: "ADC",
-    CAP_PWM: "PWM",
-    CAP_CAN: "CAN",
-}
 
 
 class EepromDescriptor:

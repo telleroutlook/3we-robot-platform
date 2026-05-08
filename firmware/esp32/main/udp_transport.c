@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "udp_transport.h"
+#include "safety.h"
 
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -109,9 +110,15 @@ void udp_transport_task(void *params)
             char ip_str[INET_ADDRSTRLEN];
             inet_ntoa_r(src_addr.sin_addr, ip_str, sizeof(ip_str));
 
+#ifndef CONFIG_ROBOT_ALLOW_PLAINTEXT_CTRL
+            // Without plaintext control enabled, UDP is telemetry-only.
+            // Drop all received data to prevent unauthenticated command dispatch.
+            ESP_LOGD(TAG, "UDP rx %d bytes from %s (dropped: plaintext ctrl disabled)", len, ip_str);
+#else
             if (recv_callback) {
                 recv_callback(buf, (size_t)len, ip_str, ntohs(src_addr.sin_port));
             }
+#endif
         }
 
         vTaskDelay(pdMS_TO_TICKS(1));

@@ -54,10 +54,10 @@ qos_profiles:
     history: keep_last
     depth: 1
 
-  # Emergency stop - highest priority, must arrive
+  # Emergency stop - highest priority, must arrive and persist for late joiners
   emergency_stop:
     reliability: reliable
-    durability: volatile
+    durability: transient_local
     history: keep_last
     depth: 10
     deadline_ms: 50
@@ -66,6 +66,13 @@ qos_profiles:
   tf:
     reliability: best_effort
     durability: volatile
+    history: keep_last
+    depth: 100
+
+  # TF static transforms - must persist for late-joining subscribers
+  tf_static:
+    reliability: reliable
+    durability: transient_local
     history: keep_last
     depth: 100
 
@@ -98,6 +105,6 @@ topic_qos_map:
   /payload/state: payload_state
   /emergency_stop: emergency_stop
   /tf: tf
-  /tf_static: tf
+  /tf_static: tf_static
   /scan: scan
   /diagnostics: diagnostics

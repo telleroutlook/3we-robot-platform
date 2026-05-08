@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "motor_control.h"
+#include "safety.h"
 #include "pin_definitions.h"
 #include "robot_params.h"
 
@@ -7,6 +8,7 @@
 #include "esp_log.h"
 
 #include <math.h>
+#include <string.h>
 
 static const char *TAG = "motor";
 
@@ -66,6 +68,7 @@ esp_err_t motor_init(void)
 
 void motor_set_speed(motor_id_t id, float speed_pct)
 {
+    if (safety_is_estopped()) return;
     if (id >= MOTOR_COUNT) return;
 
     float clamped = fmaxf(-1.0f, fminf(1.0f, speed_pct));
@@ -87,6 +90,11 @@ void motor_set_speed(motor_id_t id, float speed_pct)
 motor_output_t motor_mecanum_drive(const cmd_vel_t *cmd)
 {
     motor_output_t out;
+
+    if (safety_is_estopped()) {
+        memset(&out, 0, sizeof(out));
+        return out;
+    }
 
     float vx = cmd->vx;
     float vy = cmd->vy;

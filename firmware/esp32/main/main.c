@@ -20,12 +20,15 @@
 
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "nvs.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include <string.h>
+
 static const char *TAG = "main";
 
-#define TASK_STACK_SAFETY    2048
+#define TASK_STACK_SAFETY    4096
 #define TASK_STACK_SENSORS   3072
 #define TASK_STACK_BATTERY   2048
 #define TASK_STACK_MICROROS  16384
@@ -52,8 +55,8 @@ void app_main(void)
     // NVS (required for Wi-Fi, persistent config)
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        nvs_flash_erase();
-        nvs_flash_init();
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ESP_ERROR_CHECK(nvs_flash_init());
     }
 
     // Safety first - must be operational before any motor activity
@@ -81,10 +84,28 @@ void app_main(void)
     // Payload hot-plug system
     ESP_ERROR_CHECK(payload_hotplug_init());
 
+    // OTA signing: load public key from NVS
+    nvs_handle_t nvs_ota;
+    if (nvs_open("security", NVS_READONLY, &nvs_ota) == ESP_OK) {
+        uint8_t ota_pubkey[OTA_PUBKEY_SIZE];
+        size_t pubkey_len = OTA_PUBKEY_SIZE;
+        if (nvs_get_blob(nvs_ota, "ota_pubkey", ota_pubkey, &pubkey_len) == ESP_OK) {
+            ota_signing_init(ota_pubkey);
+        } else {
+            ESP_LOGW(TAG, "OTA pubkey not provisioned - OTA updates will be rejected");
+        }
+        nvs_close(nvs_ota);
+    } else {
+        ESP_LOGW(TAG, "Security NVS namespace not found - OTA disabled");
+    }
+
     // Communication: micro-ROS over UART
     ESP_ERROR_CHECK(microros_init());
 
-    // Communication: UDP fallback transport
+    // Communication: UDP fallback transport (telemetry only - no motor commands)
+#ifndef CONFIG_ROBOT_ALLOW_PLAINTEXT_CTRL
+    // UDP transport is restricted to read-only telemetry when DTLS is available
+#endif
     udp_transport_config_t udp_cfg = {
         .cmd_port = UDP_CMD_PORT,
         .telemetry_port = UDP_TELEM_PORT,
@@ -99,14 +120,34 @@ void app_main(void)
     dtls_config_t dtls_cfg = {
         .listen_port = 5684,
         .psk_identity = "robot-platform",
-        .psk_key = {0},  // Set via provisioning
+        .psk_key = {0},
         .psk_key_len = 16,
         .handshake_timeout_ms = 10000,
         .session_timeout_ms = 60000,
     };
-    esp_err_t dtls_ret = dtls_init(&dtls_cfg);
-    if (dtls_ret != ESP_OK) {
-        ESP_LOGW(TAG, "DTLS init failed - encrypted channel unavailable");
+
+    // Load PSK from NVS - refuse to start DTLS with unprovisioned key
+    nvs_handle_t nvs_dtls;
+    if (nvs_open("security", NVS_READONLY, &nvs_dtls) == ESP_OK) {
+        size_t key_len = sizeof(dtls_cfg.psk_key);
+        if (nvs_get_blob(nvs_dtls, "dtls_psk", dtls_cfg.psk_key, &key_len) == ESP_OK) {
+            dtls_cfg.psk_key_len = (uint8_t)key_len;
+        }
+        nvs_close(nvs_dtls);
+    }
+
+    // Validate PSK is provisioned (not all-zeros)
+    static const uint8_t zero_key[16] = {0};
+    esp_err_t dtls_ret;
+    if (memcmp(dtls_cfg.psk_key, zero_key, dtls_cfg.psk_key_len) == 0) {
+        ESP_LOGE(TAG, "DTLS PSK not provisioned - encrypted channel DISABLED. "
+                 "Provision a key via NVS 'security/dtls_psk' before deployment.");
+        dtls_ret = ESP_ERR_INVALID_STATE;
+    } else {
+        dtls_ret = dtls_init(&dtls_cfg);
+        if (dtls_ret != ESP_OK) {
+            ESP_LOGW(TAG, "DTLS init failed - encrypted channel unavailable");
+        }
     }
 
 #ifdef CONFIG_ROBOT_SKU_INDUSTRIAL

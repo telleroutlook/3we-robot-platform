@@ -163,6 +163,10 @@ esp_err_t canbus_init(const canbus_config_t *config)
     memcpy(&current_config, config, sizeof(canbus_config_t));
 
     spi_mutex = xSemaphoreCreateMutex();
+    if (!spi_mutex) {
+        ESP_LOGE(TAG, "Failed to create SPI mutex");
+        return ESP_ERR_NO_MEM;
+    }
 
     // Configure SPI bus
     spi_bus_config_t bus_cfg = {

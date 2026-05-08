@@ -13,6 +13,8 @@
 #include "mbedtls/pk.h"
 
 #include <string.h>
+#include <stdio.h>
+#include <stdint.h>
 
 static const char *TAG = "ota_sign";
 
@@ -107,6 +109,14 @@ esp_err_t ota_apply_update(const uint8_t *image_data, size_t total_size)
     const uint8_t *firmware = image_data + sizeof(ota_image_header_t);
     size_t firmware_size = total_size - sizeof(ota_image_header_t);
 
+    // Reject version downgrades
+    uint32_t current = ota_get_current_version();
+    if (header->version <= current) {
+        ESP_LOGE(TAG, "Version rollback rejected: incoming=0x%08lX, current=0x%08lX",
+                 (unsigned long)header->version, (unsigned long)current);
+        return ESP_ERR_INVALID_VERSION;
+    }
+
     // Verify signature before writing
     if (!ota_verify_image(firmware, firmware_size, header)) {
         ESP_LOGE(TAG, "Verification failed - aborting OTA");
@@ -152,10 +162,12 @@ esp_err_t ota_apply_update(const uint8_t *image_data, size_t total_size)
 
 uint32_t ota_get_current_version(void)
 {
-    // Version stored in app description
     const esp_app_desc_t *app_desc = esp_app_get_description();
-    // Parse version string "x.y.z" to packed uint32
     int major = 0, minor = 0, patch = 0;
-    sscanf(app_desc->version, "%d.%d.%d", &major, &minor, &patch);
+    int n = sscanf(app_desc->version, "%d.%d.%d", &major, &minor, &patch);
+    if (n != 3) {
+        ESP_LOGW(TAG, "Could not parse version string '%s'", app_desc->version);
+        return UINT32_MAX;
+    }
     return (major << 16) | (minor << 8) | patch;
 }

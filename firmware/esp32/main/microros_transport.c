@@ -66,9 +66,9 @@ static void cmd_vel_callback(const void *msg_in)
     if (safety_is_estopped()) return;
 
     cmd_vel_t cmd = {
-        .vx = (float)msg->linear.x,
-        .vy = (float)msg->linear.y,
-        .omega = (float)msg->angular.z,
+        .vx = safety_clamp_speed((float)msg->linear.x),
+        .vy = safety_clamp_speed((float)msg->linear.y),
+        .omega = fmaxf(-MAX_ANGULAR_VEL, fminf(MAX_ANGULAR_VEL, (float)msg->angular.z)),
     };
     motor_mecanum_drive(&cmd);
     last_cmd_vel_time = esp_timer_get_time();

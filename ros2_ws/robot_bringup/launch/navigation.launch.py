@@ -21,6 +21,10 @@ def generate_launch_description():
         'map', default_value='',
         description='Path to map YAML file (required if use_slam=false)')
 
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time', default_value='false',
+        description='Use simulation clock')
+
     nav2_params_file = PathJoinSubstitution([pkg_bringup, 'config', 'nav2_params.yaml'])
     slam_params_file = PathJoinSubstitution([pkg_bringup, 'config', 'slam_params.yaml'])
 
@@ -33,7 +37,8 @@ def generate_launch_description():
         ),
         launch_arguments={
             'params_file': nav2_params_file,
-            'use_sim_time': 'false',
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'map': LaunchConfiguration('map'),
         }.items(),
     )
 
@@ -50,6 +55,7 @@ def generate_launch_description():
     return LaunchDescription([
         use_slam_arg,
         map_file_arg,
+        use_sim_time_arg,
         nav2_launch,
         slam_node,
     ])

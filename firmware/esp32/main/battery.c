@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "battery.h"
+#include "safety.h"
 #include "pin_definitions.h"
 #include "robot_params.h"
 
@@ -99,7 +100,8 @@ void battery_task(void *params)
         battery_read_voltage();
 
         if (battery_get_state() == BATT_CRITICAL) {
-            ESP_LOGW(TAG, "CRITICAL: Battery %.2fV - shutdown imminent", voltage_avg);
+            ESP_LOGE(TAG, "CRITICAL: Battery %.2fV - triggering safety stop", voltage_avg);
+            safety_trigger_estop();
         }
 
         vTaskDelay(period);

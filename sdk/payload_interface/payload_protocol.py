@@ -6,6 +6,8 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
+from .capability_flags import CAP_CAN, CAP_GPIO, CAP_I2C, CAP_SPI, CAP_UART
+
 try:
     import smbus2
 except ImportError:
@@ -31,23 +33,23 @@ class PayloadDescriptor:
 
     @property
     def uses_i2c(self) -> bool:
-        return bool(self.capabilities & 0x01)
+        return bool(self.capabilities & CAP_I2C)
+
+    @property
+    def uses_spi(self) -> bool:
+        return bool(self.capabilities & CAP_SPI)
 
     @property
     def uses_uart(self) -> bool:
-        return bool(self.capabilities & 0x02)
+        return bool(self.capabilities & CAP_UART)
 
     @property
     def uses_gpio(self) -> bool:
-        return bool(self.capabilities & 0x04)
-
-    @property
-    def uses_usb(self) -> bool:
-        return bool(self.capabilities & 0x08)
+        return bool(self.capabilities & CAP_GPIO)
 
     @property
     def uses_can(self) -> bool:
-        return bool(self.capabilities & 0x10)
+        return bool(self.capabilities & CAP_CAN)
 
     @classmethod
     def from_eeprom(cls, data: bytes) -> Optional['PayloadDescriptor']:
@@ -136,6 +138,9 @@ class PayloadInterface:
                 return None
 
             resp_len = resp[1]
+            if len(resp) < 2 + resp_len + 2:
+                return None
+
             resp_payload = resp[2:2 + resp_len]
             resp_crc = struct.unpack('>H', resp[2 + resp_len:4 + resp_len])[0]
 

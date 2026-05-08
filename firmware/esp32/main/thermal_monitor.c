@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "thermal_monitor.h"
 #include "motor_control.h"
+#include "safety.h"
 #include "pin_definitions.h"
 
 #include "driver/i2c.h"
@@ -114,7 +115,7 @@ static void update_thermal_state(thermal_reading_t *r)
     if (new_state != state) {
         state = new_state;
         if (state == THERMAL_SHUTDOWN) {
-            motor_stop_all();
+            safety_trigger_estop();
             ESP_LOGE(TAG, "THERMAL SHUTDOWN: temp=%.1f°C, current=%.0fmA",
                      r->estimated_temp_c, r->current_ma);
         } else if (state == THERMAL_WARNING) {

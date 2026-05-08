@@ -74,6 +74,7 @@ esp_err_t dtls_init(const dtls_config_t *config)
 
     // Configure as DTLS 1.2 server (ESP-IDF mbedtls supports DTLS 1.2;
     // DTLS 1.3 will be available when mbedtls adds full support)
+    // SECURITY: Enforce DTLS 1.2 minimum to prevent downgrade attacks
     ret = mbedtls_ssl_config_defaults(&conf,
                                        MBEDTLS_SSL_IS_SERVER,
                                        MBEDTLS_SSL_TRANSPORT_DATAGRAM,
@@ -82,6 +83,8 @@ esp_err_t dtls_init(const dtls_config_t *config)
         ESP_LOGE(TAG, "SSL config defaults failed: -0x%04x", -ret);
         return ESP_FAIL;
     }
+
+    mbedtls_ssl_conf_min_tls_version(&conf, MBEDTLS_SSL_VERSION_TLS1_2);
 
     mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
     mbedtls_ssl_conf_psk_cb(&conf, dtls_psk_callback, NULL);

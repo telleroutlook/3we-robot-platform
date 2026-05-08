@@ -8,6 +8,7 @@ class RobotConnection {
         this.subscribers = {};
         this.publishInterval = null;
         this.cmdVel = { linear: { x: 0, y: 0, z: 0 }, angular: { x: 0, y: 0, z: 0 } };
+        this._intentionalClose = false;
     }
 
     connect(url) {
@@ -29,11 +30,19 @@ class RobotConnection {
             this.connected = false;
             document.getElementById('statusDot').classList.remove('connected');
             this.stopPublishing();
-            setTimeout(() => this.connect(url), 3000);
+            if (!this._intentionalClose) {
+                setTimeout(() => this.connect(url), 3000);
+            }
+            this._intentionalClose = false;
         };
 
         this.ws.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
+            let msg;
+            try {
+                msg = JSON.parse(event.data);
+            } catch {
+                return;
+            }
             if (msg.op === 'publish' && this.subscribers[msg.topic]) {
                 this.subscribers[msg.topic](msg.msg);
             }
@@ -43,6 +52,7 @@ class RobotConnection {
     }
 
     disconnect() {
+        this._intentionalClose = true;
         this.stopPublishing();
         if (this.ws) {
             this.ws.close();
@@ -97,8 +107,8 @@ class RobotConnection {
     }
 
     onBattery(msg) {
-        const voltage = msg.voltage ? msg.voltage.toFixed(1) + 'V' : '--';
-        const pct = msg.percentage ? Math.round(msg.percentage * 100) + '%' : '--%';
+        const voltage = msg.voltage != null ? msg.voltage.toFixed(1) + 'V' : '--';
+        const pct = msg.percentage != null ? Math.round(msg.percentage * 100) + '%' : '--%';
         document.getElementById('battVoltage').textContent = voltage;
         document.getElementById('battLevel').textContent = pct;
     }
@@ -199,9 +209,27 @@ function toggleEstop() {
         robot.stop();
         btn.textContent = 'RESET (Click to Resume)';
         btn.classList.add('active');
+        if (robot.ws && robot.ws.readyState === WebSocket.OPEN) {
+            robot.ws.send(JSON.stringify({
+                op: 'call_service',
+                service: '/emergency_stop',
+                type: 'std_srvs/SetBool',
+                args: { data: true },
+                id: 'estop_' + Date.now()
+            }));
+        }
     } else {
         btn.textContent = 'EMERGENCY STOP';
         btn.classList.remove('active');
+        if (robot.ws && robot.ws.readyState === WebSocket.OPEN) {
+            robot.ws.send(JSON.stringify({
+                op: 'call_service',
+                service: '/emergency_stop',
+                type: 'std_srvs/SetBool',
+                args: { data: false },
+                id: 'estop_reset_' + Date.now()
+            }));
+        }
     }
 }
 

@@ -131,5 +131,5 @@ bool imu_is_calibrated(void)
     uint8_t stat = 0;
     if (i2c_read_reg(BNO055_CALIB_STAT_REG, &stat, 1) != ESP_OK) return false;
     // All 4 subsystems calibrated (sys, gyro, accel, mag all == 3)
-    return (stat & 0xC0) >= 0xC0;
+    return stat == 0xFF;
 }
