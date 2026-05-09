@@ -10,8 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # ros:humble
-    container: ros:humble@sha256:70e7f76db6be4a69a5fbb3ac413e81e43a63c0ee00bdf3b41b420550e42a8ec3
+    container: ros:humble
     steps:
       # actions/checkout v4.1.1
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11

@@ -10,8 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # espressif/idf v5.2
-    container: espressif/idf@sha256:86ca6a0e0accdbab757be5e99a4aa1e7c5de50a52ea925bea02c9bd2d88f0c1d
+    container: espressif/idf:v5.2
     strategy:
       matrix:
         include:
