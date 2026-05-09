@@ -24,9 +24,14 @@ dev = [
 ros = [
     "rclpy",
 ]
+provision = [
+    "esptool>=4.0",
+    "cryptography>=41.0",
+]
 
 [project.scripts]
 eeprom-validator = "tools.eeprom_validator:main"
+provision-keys = "tools.provision_keys:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["payload_interface", "tools"]

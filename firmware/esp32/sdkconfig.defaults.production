@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: Apache-2.0
+# Production build configuration overlay.
+# Apply on top of base sdkconfig.defaults + SKU config:
+#   idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.standard;sdkconfig.defaults.production"
+
+# --- Build Mode ---
+CONFIG_PRODUCTION_BUILD=y
+
+# --- Secure Boot V2 (RSA-PSS) ---
+CONFIG_SECURE_BOOT=y
+CONFIG_SECURE_BOOT_V2_ENABLED=y
+CONFIG_SECURE_BOOT_VERIFICATION_KEY="secure_boot_signing_key.pem"
+
+# --- Flash Encryption (Release mode) ---
+CONFIG_SECURE_FLASH_ENC_ENABLED=y
+CONFIG_SECURE_FLASH_ENCRYPTION_MODE_RELEASE=y
+
+# --- NVS Encryption ---
+CONFIG_NVS_ENCRYPTION=y
+
+# --- Logging: suppress INFO/DEBUG in production ---
+CONFIG_LOG_DEFAULT_LEVEL_WARN=y
+CONFIG_LOG_DEFAULT_LEVEL=2
+CONFIG_LOG_MAXIMUM_LEVEL_WARN=y
+CONFIG_LOG_MAXIMUM_LEVEL=2
+
+# --- Disable development Wi-Fi fallback ---
+CONFIG_WIFI_SSID=""
+CONFIG_WIFI_PASSWORD=""
+
+# --- Diagnostics: heap tracking for runtime monitoring ---
+CONFIG_HEAP_TASK_TRACKING=y
+
+# --- Core dump to flash for post-mortem analysis ---
+CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH=y
+CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF=y
+CONFIG_ESP_COREDUMP_CHECKSUM_SHA256=y
+
+# --- Watchdog tighter timeouts for production ---
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=10
+
+# --- Disable JTAG in production (security) ---
+CONFIG_SECURE_DISABLE_ROM_DL_MODE=y
+
+# --- Structured logging (logfmt output for fleet monitoring) ---
+CONFIG_STRUCTURED_LOGGING=y

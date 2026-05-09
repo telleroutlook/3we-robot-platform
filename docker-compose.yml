@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+# Docker Compose for local development and testing of the companion computer stack.
+#
+# Usage:
+#   docker compose up              # Core stack (web + rosbridge + diagnostics)
+#   docker compose --profile fleet up   # Add MQTT broker for fleet telemetry testing
+
+services:
+  companion:
+    build: .
+    ports:
+      - "8080:8080"   # Web UI
+      - "9090:9090"   # Rosbridge WebSocket
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+      - ROBOT_ID=${ROBOT_ID:-robot-dev}
+    volumes:
+      - ./ros2_ws/robot_bringup/config:/ros2_ws/config:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    profiles: ["fleet"]
+    ports:
+      - "1883:1883"
+    volumes:
+      - mosquitto-data:/mosquitto/data
+    command: mosquitto -c /dev/null -p 1883 -v
+
+volumes:
+  mosquitto-data:

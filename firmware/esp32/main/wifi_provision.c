@@ -40,7 +40,7 @@ esp_err_t wifi_provision_get_credentials(wifi_credentials_t *creds)
         return ESP_OK;
     }
 
-#ifdef CONFIG_WIFI_SSID
+#if defined(CONFIG_WIFI_SSID) && !defined(CONFIG_PRODUCTION_BUILD)
     strncpy(creds->ssid, CONFIG_WIFI_SSID, WIFI_CRED_MAX_LEN - 1);
 #ifdef CONFIG_WIFI_PASSWORD
     strncpy(creds->password, CONFIG_WIFI_PASSWORD, WIFI_CRED_MAX_LEN - 1);

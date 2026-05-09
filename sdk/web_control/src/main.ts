@@ -11,6 +11,7 @@ import './components/estop-button';
 import './components/payload-panel';
 import './components/wheel-speeds';
 import './components/imu-attitude';
+import './components/system-status';
 
 /**
  * Initialize the control panel application.

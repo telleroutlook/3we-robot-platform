@@ -139,3 +139,28 @@ jobs:
           source /opt/ros/humble/setup.bash
           source ros2_ws/install/setup.bash
           pytest tests/integration/ -m "simulation and not hardware" --timeout=120 -v --tb=short
+
+  production-build:
+    runs-on: ubuntu-latest
+    container: espressif/idf@sha256:86ca6a0e0accdbab757be5e99a4aa1e7c5de50a52ea925bea02c9bd2d88f0c1d
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Build production firmware (standard)
+        working-directory: firmware/esp32
+        run: |
+          . $IDF_PATH/export.sh
+          idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.standard;sdkconfig.defaults.production" \
+            set-target esp32s3
+          idf.py build
+
+      - name: Verify binary size fits OTA partition
+        working-directory: firmware/esp32
+        run: |
+          BIN_SIZE=$(stat -c%s build/robot-platform.bin 2>/dev/null || stat -f%z build/robot-platform.bin)
+          MAX_SIZE=$((2 * 1024 * 1024))  # 2 MB OTA partition limit
+          echo "Binary size: $BIN_SIZE bytes (max: $MAX_SIZE)"
+          if [ "$BIN_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "ERROR: Binary exceeds OTA partition size!"
+            exit 1
+          fi

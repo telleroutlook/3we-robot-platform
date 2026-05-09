@@ -1,0 +1,150 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Battery Status",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "robot_battery_percentage",
+          "legendFormat": "Battery %"
+        },
+        {
+          "expr": "robot_battery_voltage",
+          "legendFormat": "Voltage (V)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 20 },
+              { "color": "green", "value": 50 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Emergency Stop Status",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "robot_emergency_stop_active",
+          "legendFormat": "E-Stop"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "NORMAL", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "STOPPED", "color": "red" } } }
+          ]
+        }
+      }
+    },
+    {
+      "title": "Velocity Commands",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "robot_cmd_vel_linear_x",
+          "legendFormat": "Linear X (m/s)"
+        },
+        {
+          "expr": "robot_cmd_vel_angular_z",
+          "legendFormat": "Angular Z (rad/s)"
+        }
+      ]
+    },
+    {
+      "title": "IMU Acceleration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "robot_imu_linear_accel_x",
+          "legendFormat": "Accel X"
+        },
+        {
+          "expr": "robot_imu_linear_accel_y",
+          "legendFormat": "Accel Y"
+        },
+        {
+          "expr": "robot_imu_linear_accel_z",
+          "legendFormat": "Accel Z"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "accMS2" }
+      }
+    },
+    {
+      "title": "Front Range Sensor",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "robot_range_front_meters",
+          "legendFormat": "Range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthm",
+          "min": 0,
+          "max": 5,
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 0.3 },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Battery Current Draw",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "robot_battery_current_amps",
+          "legendFormat": "Current (A)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "amp" }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["robot", "ros2", "fleet"],
+  "templating": {
+    "list": [
+      {
+        "name": "robot_id",
+        "type": "query",
+        "query": "label_values(robot_battery_voltage, robot_id)",
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "Robot Platform Overview",
+  "uid": "robot-platform-overview"
+}

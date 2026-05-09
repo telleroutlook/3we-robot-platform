@@ -16,9 +16,14 @@ const rosbridgeServiceResponseSchema = z.object({
   id: z.string().optional(),
 });
 
+const rosbridgePongSchema = z.object({
+  op: z.literal('pong'),
+});
+
 export const rosbridgeMessageSchema = z.discriminatedUnion('op', [
   rosbridgePublishSchema,
   rosbridgeServiceResponseSchema,
+  rosbridgePongSchema,
 ]);
 
 export type ValidatedPublish = z.infer<typeof rosbridgePublishSchema>;

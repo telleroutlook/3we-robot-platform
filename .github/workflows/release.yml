@@ -1,0 +1,143 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]+.*']
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  firmware-build:
+    runs-on: ubuntu-latest
+    container: espressif/idf@sha256:86ca6a0e0accdbab757be5e99a4aa1e7c5de50a52ea925bea02c9bd2d88f0c1d
+    strategy:
+      matrix:
+        include:
+          - sku: ROBOT_SKU_BASIC
+            sku_suffix: basic
+            production: false
+          - sku: ROBOT_SKU_STANDARD
+            sku_suffix: standard
+            production: false
+          - sku: ROBOT_SKU_PRO
+            sku_suffix: pro
+            production: false
+          - sku: ROBOT_SKU_INDUSTRIAL
+            sku_suffix: industrial
+            production: false
+          - sku: ROBOT_SKU_STANDARD
+            sku_suffix: standard
+            production: true
+          - sku: ROBOT_SKU_INDUSTRIAL
+            sku_suffix: industrial
+            production: true
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Build firmware (${{ matrix.sku_suffix }}${{ matrix.production && '-production' || '' }})
+        working-directory: firmware/esp32
+        run: |
+          . $IDF_PATH/export.sh
+          CONFIGS="sdkconfig.defaults;sdkconfig.defaults.${{ matrix.sku_suffix }}"
+          if [ "${{ matrix.production }}" = "true" ]; then
+            CONFIGS="$CONFIGS;sdkconfig.defaults.production"
+          fi
+          idf.py -DSDKCONFIG_DEFAULTS="$CONFIGS" set-target esp32s3
+          idf.py build
+
+      - name: Upload firmware binary
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          name: firmware-${{ matrix.sku_suffix }}${{ matrix.production && '-production' || '' }}
+          path: firmware/esp32/build/robot-platform.bin
+          retention-days: 30
+
+  python-publish:
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: '3.11'
+
+      - name: Build SDK wheel
+        working-directory: sdk
+        run: |
+          pip install build
+          python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: sdk/dist/
+
+  web-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+        with:
+          node-version: '20'
+
+      - name: Build web control
+        working-directory: sdk/web_control
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload web dist
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          name: web-control-dist
+          path: sdk/web_control/dist/
+          retention-days: 30
+
+  create-release:
+    needs: [firmware-build, python-publish, web-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427
+        with:
+          path: release-artifacts/
+
+      - name: Generate checksums
+        working-directory: release-artifacts
+        run: |
+          find . -type f -name "*.bin" -o -name "*.whl" | sort | while read f; do
+            sha256sum "$f" >> CHECKSUMS.sha256
+          done
+          cat CHECKSUMS.sha256
+
+      - name: Generate changelog for this release
+        id: changelog
+        run: |
+          if command -v git-cliff &>/dev/null; then
+            git cliff --latest --strip header > RELEASE_NOTES.md
+          else
+            # Fallback: extract from CHANGELOG.md
+            VERSION="${GITHUB_REF_NAME#v}"
+            sed -n "/^## \[$VERSION\]/,/^## \[/p" CHANGELOG.md | head -n -1 > RELEASE_NOTES.md
+          fi
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "Release ${GITHUB_REF_NAME}" > RELEASE_NOTES.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@69320dbe05506a9a39fc8ae11030b214ec2d1f87
+        with:
+          body_path: RELEASE_NOTES.md
+          files: |
+            release-artifacts/**/*.bin
+            release-artifacts/CHECKSUMS.sha256
+          fail_on_unmatched_files: false

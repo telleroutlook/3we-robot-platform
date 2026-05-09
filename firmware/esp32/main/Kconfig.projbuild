@@ -1,6 +1,29 @@
 # SPDX-License-Identifier: Apache-2.0
 menu "Robot Platform Configuration"
 
+    menu "Build Mode"
+        config PRODUCTION_BUILD
+            bool "Production build"
+            default n
+            help
+                Enable production hardening. Disables development Wi-Fi
+                credential fallback, suppresses verbose logging of sensitive
+                data, and enables structured logging output.
+
+                WARNING: On real hardware, production builds require secure
+                boot keys and NVS encryption keys to be provisioned. Enabling
+                this on a device without provisioned keys will prevent boot.
+
+        config STRUCTURED_LOGGING
+            bool "Structured logging (logfmt)"
+            default n
+            help
+                Output logs in machine-parseable logfmt format:
+                ts=<ms> level=<L> tag=<T> event=<E> key=val ...
+                Useful for fleet monitoring and log aggregation.
+                Falls through to normal ESP_LOGx when disabled.
+    endmenu
+
     choice ROBOT_SKU
         prompt "Robot SKU variant"
         default ROBOT_SKU_BASIC

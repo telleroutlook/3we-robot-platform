@@ -1,0 +1,113 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Coverage Report
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sdk/**'
+      - 'firmware/tests/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'sdk/**'
+      - 'firmware/tests/**'
+
+jobs:
+  web-coverage:
+    name: Web Control Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: sdk/web_control/package-lock.json
+
+      - name: Install dependencies
+        working-directory: sdk/web_control
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        working-directory: sdk/web_control
+        run: npm run test:coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-coverage
+          path: sdk/web_control/coverage/
+          retention-days: 14
+
+      - name: Check coverage thresholds
+        working-directory: sdk/web_control
+        run: |
+          COVERAGE=$(cat coverage/json-summary/coverage-summary.json | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          total = data['total']
+          print(f\"Statements: {total['statements']['pct']}%\")
+          print(f\"Branches:   {total['branches']['pct']}%\")
+          print(f\"Functions:  {total['functions']['pct']}%\")
+          print(f\"Lines:      {total['lines']['pct']}%\")
+          if total['lines']['pct'] < 80:
+              print('::error::Line coverage below 80% threshold')
+              sys.exit(1)
+          ")
+
+  python-coverage:
+    name: Python SDK Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        working-directory: sdk
+        run: pip install -e ".[dev]"
+
+      - name: Run tests with coverage
+        working-directory: sdk
+        run: |
+          python -m pytest tests/ \
+            --cov=payload_interface \
+            --cov-report=term \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov/ \
+            --cov-fail-under=80
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-coverage
+          path: sdk/htmlcov/
+          retention-days: 14
+
+  firmware-coverage:
+    name: Firmware Test Results
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y gcc make
+
+      - name: Build and run firmware tests
+        working-directory: firmware/tests
+        run: |
+          make clean
+          make
+          ./test_runner | tee test-output.txt
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-test-results
+          path: firmware/tests/test-output.txt
+          retention-days: 14

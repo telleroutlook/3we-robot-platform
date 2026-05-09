@@ -62,8 +62,12 @@ test-results/
 
 # Secrets (should never be committed)
 .env
-.env.*
+.env.local
+.env.production
 secrets/
+keys/
+*.pem
+*.key
 
 # KiCad
 hardware/pcb/*-backups/

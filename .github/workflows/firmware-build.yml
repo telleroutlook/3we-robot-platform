@@ -17,19 +17,33 @@ jobs:
         include:
           - sku: ROBOT_SKU_BASIC
             sku_suffix: basic
+            production: false
           - sku: ROBOT_SKU_STANDARD
             sku_suffix: standard
+            production: false
           - sku: ROBOT_SKU_PRO
             sku_suffix: pro
+            production: false
           - sku: ROBOT_SKU_INDUSTRIAL
             sku_suffix: industrial
+            production: false
+          - sku: ROBOT_SKU_STANDARD
+            sku_suffix: standard
+            production: true
+          - sku: ROBOT_SKU_INDUSTRIAL
+            sku_suffix: industrial
+            production: true
     steps:
       # actions/checkout v4.1.1
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
-      - name: Build firmware (${{ matrix.sku }})
+      - name: Build firmware (${{ matrix.sku_suffix }}${{ matrix.production && '-production' || '' }})
         working-directory: firmware/esp32
         run: |
           . $IDF_PATH/export.sh
-          idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.${{ matrix.sku_suffix }}" set-target esp32s3
+          CONFIGS="sdkconfig.defaults;sdkconfig.defaults.${{ matrix.sku_suffix }}"
+          if [ "${{ matrix.production }}" = "true" ]; then
+            CONFIGS="$CONFIGS;sdkconfig.defaults.production"
+          fi
+          idf.py -DSDKCONFIG_DEFAULTS="$CONFIGS" set-target esp32s3
           idf.py build

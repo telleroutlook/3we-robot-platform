@@ -32,6 +32,10 @@ export class RosbridgeConnection extends EventTarget {
   private baseReconnectDelay = 1000;
   private serviceIdCounter = 0;
   private intentionalClose = false;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private missedPongs = 0;
+  private readonly heartbeatIntervalMs = 10000;
+  private readonly maxMissedPongs = 3;
 
   get connectionState(): ConnectionState {
     return this.state;
@@ -59,10 +63,12 @@ export class RosbridgeConnection extends EventTarget {
       this.reconnectAttempts = 0;
       this.setState('connected');
       this.resubscribeAll();
+      this.startHeartbeat();
     };
 
     this.ws.onclose = () => {
       this.ws = null;
+      this.stopHeartbeat();
       if (!this.intentionalClose) {
         this.setState('connecting');
         this.scheduleReconnect();
@@ -193,6 +199,8 @@ export class RosbridgeConnection extends EventTarget {
           pending.reject(new Error(`Service call failed: ${JSON.stringify(msg.values)}`));
         }
       }
+    } else if (msg.op === 'pong') {
+      this.missedPongs = 0;
     }
   }
 
@@ -232,6 +240,28 @@ export class RosbridgeConnection extends EventTarget {
     if (this.reconnectTimer !== null) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
+    }
+  }
+
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.missedPongs = 0;
+    this.heartbeatTimer = setInterval(() => {
+      if (!this.isConnected()) return;
+      this.missedPongs++;
+      if (this.missedPongs > this.maxMissedPongs) {
+        this.stopHeartbeat();
+        this.ws?.close();
+        return;
+      }
+      this.ws!.send(JSON.stringify({ op: 'ping' }));
+    }, this.heartbeatIntervalMs);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer !== null) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
     }
   }
 }
