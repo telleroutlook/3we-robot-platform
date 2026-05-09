@@ -158,6 +158,7 @@ jobs:
         run: |
           . $IDF_PATH/export.sh
           mkdir -p managed_components
+          espsecure.py generate_signing_key --version 2 secure_boot_signing_key.pem
           idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.standard;sdkconfig.defaults.production" \
             set-target esp32s3
           idf.py build

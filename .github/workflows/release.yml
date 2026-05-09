@@ -42,6 +42,9 @@ jobs:
         run: |
           . $IDF_PATH/export.sh
           mkdir -p managed_components
+          if [ "${{ matrix.production }}" = "true" ]; then
+            espsecure.py generate_signing_key --version 2 secure_boot_signing_key.pem
+          fi
           CONFIGS="sdkconfig.defaults;sdkconfig.defaults.${{ matrix.sku_suffix }}"
           if [ "${{ matrix.production }}" = "true" ]; then
             CONFIGS="$CONFIGS;sdkconfig.defaults.production"
