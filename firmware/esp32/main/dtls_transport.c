@@ -62,8 +62,9 @@ static int dtls_psk_callback(void *parameter, mbedtls_ssl_context *ssl_ctx,
 esp_err_t dtls_init(const dtls_config_t *config)
 {
     if (!config) return ESP_ERR_INVALID_ARG;
-    if (config->psk_key_len < 16) {
-        ESP_LOGE(TAG, "PSK key too short: %u bytes (minimum 16)", config->psk_key_len);
+    if (config->psk_key_len < 16 || config->psk_key_len > sizeof(config->psk_key)) {
+        ESP_LOGE(TAG, "PSK key length invalid: %u bytes (must be 16-%u)",
+                 config->psk_key_len, (unsigned)sizeof(config->psk_key));
         return ESP_ERR_INVALID_ARG;
     }
     memcpy(&current_config, config, sizeof(dtls_config_t));
@@ -238,7 +239,8 @@ void dtls_task(void *params)
             continue;
         }
 
-        session_resumed = (mbedtls_ssl_get_session(&ssl, NULL) == 0);
+        mbedtls_ssl_session resumed_session;
+        session_resumed = (mbedtls_ssl_get_session(&ssl, &resumed_session) == 0);
         connected = true;
         ESP_LOGI(TAG, "DTLS client connected (cipher: %s, resumed: %s)",
                  mbedtls_ssl_get_ciphersuite(&ssl),

@@ -6,8 +6,7 @@ on:
     tags: ['v[0-9]+.*']
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 jobs:
   test-gate-firmware:
@@ -109,6 +108,8 @@ jobs:
     needs: [test-gate-firmware, test-gate-python, test-gate-web]
     runs-on: ubuntu-latest
     environment: release
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
@@ -153,6 +154,8 @@ jobs:
   create-release:
     needs: [firmware-build, python-publish, web-build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:

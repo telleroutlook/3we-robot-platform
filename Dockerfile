@@ -94,7 +94,8 @@ RUN chmod +x /entrypoint.sh
 # Non-root user
 RUN useradd -m -s /bin/bash robot && \
     chown -R robot:robot /ros2_ws /var/www/html
-# nginx needs root for port binding, so entrypoint runs as root then drops
+
+USER robot
 
 EXPOSE 8080 9090
 

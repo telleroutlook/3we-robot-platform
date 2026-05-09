@@ -31,6 +31,16 @@ export class RobotSystemStatus extends HTMLElement {
 
   connectedCallback(): void {
     this.render();
+
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+    if (this.staleTimer !== null) {
+      clearInterval(this.staleTimer);
+      this.staleTimer = null;
+    }
+
     this.subscribeToDiagnostics();
 
     this.staleTimer = setInterval(() => {

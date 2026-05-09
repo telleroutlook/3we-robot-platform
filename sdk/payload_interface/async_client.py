@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 import threading
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Optional
@@ -146,8 +147,10 @@ class AsyncPayloadClient:
             depth=qos,
         )
 
+        loop = self._loop
+
         def _callback(msg: Any) -> None:
-            self._loop.call_soon_threadsafe(queue.put_nowait, msg)
+            loop.call_soon_threadsafe(queue.put_nowait, msg)
 
         subscription = self._node.create_subscription(
             msg_type, topic, _callback, qos_profile
@@ -196,13 +199,15 @@ class AsyncPayloadClient:
             future = client.call_async(request)
             asyncio_future: asyncio.Future[Any] = self._loop.create_future()
 
+            loop = self._loop
+
             def _done_callback(rclpy_future: Any) -> None:
                 exc = rclpy_future.exception()
                 if exc is not None:
-                    self._loop.call_soon_threadsafe(asyncio_future.set_exception, exc)
+                    loop.call_soon_threadsafe(asyncio_future.set_exception, exc)
                 else:
                     result = rclpy_future.result()
-                    self._loop.call_soon_threadsafe(asyncio_future.set_result, result)
+                    loop.call_soon_threadsafe(asyncio_future.set_result, result)
 
             future.add_done_callback(_done_callback)
 
@@ -244,8 +249,6 @@ class AsyncPayloadClient:
         goal_msg.pose.header.stamp = self._node.get_clock().now().to_msg()
         goal_msg.pose.pose.position.x = x
         goal_msg.pose.pose.position.y = y
-        import math
-
         goal_msg.pose.pose.orientation.z = math.sin(theta / 2.0)
         goal_msg.pose.pose.orientation.w = math.cos(theta / 2.0)
 
@@ -253,18 +256,21 @@ class AsyncPayloadClient:
 
         send_goal_future = action_client.send_goal_async(goal_msg)
 
+        loop = self._loop
+
         def _goal_response_callback(future: Any) -> None:
             goal_handle = future.result()
             if not goal_handle.accepted:
-                self._loop.call_soon_threadsafe(asyncio_future.set_result, False)
+                loop.call_soon_threadsafe(asyncio_future.set_result, False)
                 return
 
             result_future = goal_handle.get_result_async()
 
             def _result_callback(result_future: Any) -> None:
                 result = result_future.result()
-                success = result.status == 4  # STATUS_SUCCEEDED
-                self._loop.call_soon_threadsafe(asyncio_future.set_result, success)
+                # action_msgs/GoalStatus.STATUS_SUCCEEDED == 4
+                success = result.status == 4
+                loop.call_soon_threadsafe(asyncio_future.set_result, success)
 
             result_future.add_done_callback(_result_callback)
 
@@ -386,8 +392,10 @@ class AsyncPayloadClient:
 
         queue: asyncio.Queue[Any] = asyncio.Queue(maxsize=1)
 
-        # Use a generic message type; actual type depends on robot_interfaces
-        from std_msgs.msg import String
+        try:
+            from robot_interfaces.msg import PayloadState as PayloadStateMsg
+        except ImportError:
+            from std_msgs.msg import String as PayloadStateMsg
 
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
@@ -395,12 +403,14 @@ class AsyncPayloadClient:
             depth=1,
         )
 
+        loop = self._loop
+
         def _callback(msg: Any) -> None:
             if not queue.full():
-                self._loop.call_soon_threadsafe(queue.put_nowait, msg)
+                loop.call_soon_threadsafe(queue.put_nowait, msg)
 
         subscription = self._node.create_subscription(
-            String, "/payload/state", _callback, qos_profile
+            PayloadStateMsg, "/payload/state", _callback, qos_profile
         )
 
         try:

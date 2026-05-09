@@ -93,6 +93,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(manifest, indent=2) + "\n")
+    os.chmod(output_path, 0o600)
 
     private_key_path = output_path.with_suffix(".key.pem")
     private_key_path.write_bytes(ota_private_pem)
@@ -151,7 +152,7 @@ def cmd_flash(args: argparse.Namespace) -> None:
         if result.returncode != 0:
             result = subprocess.run(
                 [
-                    "python",
+                    sys.executable,
                     "-m",
                     "nvs_partition_gen",
                     "generate",

@@ -59,7 +59,11 @@ esp_err_t safety_init(void)
     };
     ESP_ERROR_CHECK(gpio_config(&io_cfg));
 
-    gpio_install_isr_service(0);
+    esp_err_t isr_ret = gpio_install_isr_service(0);
+    if (isr_ret != ESP_OK && isr_ret != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE(TAG, "ISR service install failed: %s", esp_err_to_name(isr_ret));
+        return isr_ret;
+    }
     gpio_isr_handler_add(ESTOP_GPIO, estop_isr, NULL);
 
     // Check initial state (NC button: low = pressed/stopped)
@@ -304,9 +308,13 @@ esp_err_t safety_relay_selftest(void)
         int fb_level = gpio_get_level(SAFETY_RELAY_FB);
         if (fb_level == 0) {
             ESP_LOGE(TAG, "SELF-TEST FAILED: Relay not energized despite E-stop released");
+            portENTER_CRITICAL(&safety_spinlock);
             relay_fault_count++;
             if (relay_fault_count >= 3) {
                 state = SAFETY_RELAY_FAULT;
+            }
+            portEXIT_CRITICAL(&safety_spinlock);
+            if (relay_fault_count >= 3) {
                 persist_relay_fault();
             }
             return ESP_ERR_INVALID_STATE;
@@ -319,9 +327,13 @@ esp_err_t safety_relay_selftest(void)
         int fb_level = gpio_get_level(SAFETY_RELAY_FB);
         if (fb_level != 0) {
             ESP_LOGE(TAG, "SELF-TEST FAILED: Relay energized despite E-stop pressed");
+            portENTER_CRITICAL(&safety_spinlock);
             relay_fault_count++;
             if (relay_fault_count >= 3) {
                 state = SAFETY_RELAY_FAULT;
+            }
+            portEXIT_CRITICAL(&safety_spinlock);
+            if (relay_fault_count >= 3) {
                 persist_relay_fault();
             }
             return ESP_ERR_INVALID_STATE;

@@ -248,8 +248,9 @@ export class RobotEstopButton extends HTMLElement {
 
     try {
       await connection.callService('/emergency_stop', 'std_srvs/SetBool', { data: true });
-    } catch {
-      // Even if service call fails, keep local E-stop state
+    } catch (e: unknown) {
+      // eslint-disable-next-line no-console
+      console.error('[E-stop] Service call failed:', e instanceof Error ? e.message : e);
     }
   }
 

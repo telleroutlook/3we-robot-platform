@@ -58,6 +58,7 @@ jobs:
           cd sdk/web_control
           npm ci
           npx tsc --noEmit
+          npx vitest run
           npx playwright install chromium
           npx playwright test
 
@@ -74,7 +75,7 @@ jobs:
 
       - name: Validate cross-layer types
         run: |
-          npm install tsx
+          npm ci
           npx tsx scripts/validate-ros-types.ts
 
   ros2-build:

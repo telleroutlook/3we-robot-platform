@@ -118,7 +118,8 @@ class DiagnosticsNode(Node):
             status.message = "No battery data received"
             return status
 
-        pct = self._battery_state.percentage * 100.0
+        raw_pct = self._battery_state.percentage
+        pct = raw_pct * 100.0 if raw_pct <= 1.0 else raw_pct
         voltage = self._battery_state.voltage
 
         if pct < 10.0:
