@@ -12,6 +12,7 @@ into individual references.
 Exit code: 0 = all match, 1 = discrepancies found.
 """
 
+import csv
 import re
 import sys
 from pathlib import Path
@@ -69,27 +70,14 @@ def parse_bom(filepath: Path) -> dict[str, set[str]]:
     row_refs: dict[str, set[str]] = {}
 
     with open(filepath, "r") as f:
-        lines = f.readlines()
-
-    if not lines:
-        return row_refs
-
-    header = lines[0].strip().split(",")
-    try:
-        ref_idx = header.index("Reference")
-    except ValueError:
-        print("ERROR: 'Reference' column not found in BOM header")
-        sys.exit(1)
-
-    for line in lines[1:]:
-        if not line.strip():
-            continue
-        cols = line.strip().split(",")
-        if len(cols) <= ref_idx:
-            continue
-        ref_field = cols[ref_idx].strip()
-        if ref_field:
-            row_refs[ref_field] = expand_reference_range(ref_field)
+        reader = csv.DictReader(f)
+        if "Reference" not in (reader.fieldnames or []):
+            print("ERROR: 'Reference' column not found in BOM header")
+            sys.exit(1)
+        for row in reader:
+            ref_field = row.get("Reference", "").strip()
+            if ref_field:
+                row_refs[ref_field] = expand_reference_range(ref_field)
 
     return row_refs
 

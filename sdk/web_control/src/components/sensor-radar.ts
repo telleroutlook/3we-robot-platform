@@ -84,8 +84,8 @@ export class RobotSensorRadar extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot!.appendChild(TEMPLATE.content.cloneNode(true));
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.appendChild(TEMPLATE.content.cloneNode(true));
   }
 
   connectedCallback(): void {
@@ -97,10 +97,8 @@ export class RobotSensorRadar extends HTMLElement {
     ];
 
     for (const [topic, direction] of topics) {
-      const unsub = connection.subscribe<Range>(
-        topic,
-        'sensor_msgs/Range',
-        (msg) => this.onRange(direction, msg)
+      const unsub = connection.subscribe<Range>(topic, 'sensor_msgs/Range', (msg) =>
+        this.onRange(direction, msg)
       );
       this.unsubscribers.push(unsub);
     }
@@ -116,8 +114,8 @@ export class RobotSensorRadar extends HTMLElement {
   }
 
   private onRange(direction: string, msg: Range): void {
-    const range = (Number.isFinite(msg.range) && msg.range >= 0) ? msg.range : Infinity;
-    const maxRange = (Number.isFinite(msg.max_range) && msg.max_range > 0) ? msg.max_range : 4.0;
+    const range = Number.isFinite(msg.range) && msg.range >= 0 ? msg.range : Infinity;
+    const maxRange = Number.isFinite(msg.max_range) && msg.max_range > 0 ? msg.max_range : 4.0;
     this.sensors[direction] = { range, maxRange };
     if (!this.pendingRender) {
       this.pendingRender = true;
@@ -136,14 +134,12 @@ export class RobotSensorRadar extends HTMLElement {
   }
 
   private drawCone(id: string, direction: string, dirX: number, dirY: number): void {
-    const cone = this.shadowRoot!.getElementById(`cone${id}`);
-    const label = this.shadowRoot!.getElementById(`label${id}`);
+    const cone = this.shadowRoot?.getElementById(`cone${id}`);
+    const label = this.shadowRoot?.getElementById(`label${id}`);
     if (!cone || !label) return;
 
     const data = this.sensors[direction];
-    const normalized = Number.isFinite(data.range)
-      ? Math.min(data.range / data.maxRange, 1.0)
-      : 0;
+    const normalized = Number.isFinite(data.range) ? Math.min(data.range / data.maxRange, 1.0) : 0;
     const length = normalized * 55; // max visual range in SVG units
 
     const cx = 100;

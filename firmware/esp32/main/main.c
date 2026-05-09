@@ -132,6 +132,11 @@ void app_main(void)
     ESP_ERROR_CHECK(safety_init());
     ESP_ERROR_CHECK(safety_relay_selftest());
 
+    if (safety_get_state() == SAFETY_RELAY_FAULT) {
+        ESP_LOGE(TAG, "SAFETY HALT: relay fault persisted - requires physical service");
+        while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+    }
+
     // OTA rollback confirmation: mark app valid only after safety passes
     const esp_partition_t *running = esp_ota_get_running_partition();
     esp_ota_img_states_t ota_state;

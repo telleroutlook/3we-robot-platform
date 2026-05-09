@@ -194,8 +194,12 @@ class AsyncPayloadClient:
             asyncio_future: asyncio.Future[Any] = self._loop.create_future()
 
             def _done_callback(rclpy_future: Any) -> None:
-                result = rclpy_future.result()
-                self._loop.call_soon_threadsafe(asyncio_future.set_result, result)
+                exc = rclpy_future.exception()
+                if exc is not None:
+                    self._loop.call_soon_threadsafe(asyncio_future.set_exception, exc)
+                else:
+                    result = rclpy_future.result()
+                    self._loop.call_soon_threadsafe(asyncio_future.set_result, result)
 
             future.add_done_callback(_done_callback)
 
@@ -237,8 +241,10 @@ class AsyncPayloadClient:
         goal_msg.pose.header.stamp = self._node.get_clock().now().to_msg()
         goal_msg.pose.pose.position.x = x
         goal_msg.pose.pose.position.y = y
-        goal_msg.pose.pose.orientation.z = float(theta)
-        goal_msg.pose.pose.orientation.w = 1.0
+        import math
+
+        goal_msg.pose.pose.orientation.z = math.sin(theta / 2.0)
+        goal_msg.pose.pose.orientation.w = math.cos(theta / 2.0)
 
         asyncio_future: asyncio.Future[bool] = self._loop.create_future()
 

@@ -95,15 +95,19 @@ export class RobotJoystick extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot!.appendChild(TEMPLATE.content.cloneNode(true));
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.appendChild(TEMPLATE.content.cloneNode(true));
   }
 
   connectedCallback(): void {
-    this.canvas = this.shadowRoot!.getElementById('canvas') as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext('2d')!;
-    this.vxEl = this.shadowRoot!.getElementById('vxValue')!;
-    this.vzEl = this.shadowRoot!.getElementById('vzValue')!;
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+    this.canvas = shadow.getElementById('canvas') as HTMLCanvasElement;
+    const ctx = this.canvas.getContext('2d');
+    if (!ctx) return;
+    this.ctx = ctx;
+    this.vxEl = shadow.getElementById('vxValue') as HTMLElement;
+    this.vzEl = shadow.getElementById('vzValue') as HTMLElement;
 
     this.canvas.addEventListener('pointerdown', this.onPointerDown);
     this.canvas.addEventListener('pointermove', this.onPointerMove);
@@ -111,9 +115,19 @@ export class RobotJoystick extends HTMLElement {
     this.canvas.addEventListener('pointercancel', this.onPointerEnd);
     this.canvas.addEventListener('pointerleave', this.onPointerEnd);
 
+    document.addEventListener('robot-estop', this.onEstop);
+
     this.startPublishing();
+    if (this.animFrame !== null) {
+      cancelAnimationFrame(this.animFrame);
+      this.animFrame = null;
+    }
     this.draw();
   }
+
+  private onEstop = (): void => {
+    this.stop();
+  };
 
   public stop(): void {
     this.active = false;
@@ -128,7 +142,9 @@ export class RobotJoystick extends HTMLElement {
     this.stopPublishing();
     if (this.animFrame !== null) {
       cancelAnimationFrame(this.animFrame);
+      this.animFrame = null;
     }
+    document.removeEventListener('robot-estop', this.onEstop);
     this.canvas.removeEventListener('pointerdown', this.onPointerDown);
     this.canvas.removeEventListener('pointermove', this.onPointerMove);
     this.canvas.removeEventListener('pointerup', this.onPointerEnd);
@@ -249,9 +265,7 @@ export class RobotJoystick extends HTMLElement {
     ctx.arc(kx, ky, this.knobRadius, 0, Math.PI * 2);
     ctx.fillStyle = gradient;
     ctx.fill();
-    ctx.strokeStyle = this.active
-      ? 'rgba(59, 130, 246, 0.8)'
-      : 'rgba(100, 140, 200, 0.3)';
+    ctx.strokeStyle = this.active ? 'rgba(59, 130, 246, 0.8)' : 'rgba(100, 140, 200, 0.3)';
     ctx.lineWidth = 2;
     ctx.stroke();
   };

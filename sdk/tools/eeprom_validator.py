@@ -50,7 +50,7 @@ class EepromDescriptor:
         self.power_12v_ma: int = 0
         self.capabilities: int = 0
         self.gpio_mask: int = 0
-        self.reserved: bytes = b"\x00" * 5
+        self.i2c_addr_count: int = 0
 
     def to_bytes(self) -> bytes:
         """Serialize descriptor to 64-byte binary."""
@@ -82,7 +82,10 @@ class EepromDescriptor:
         # Offset 0x3A: GPIO mask (1 byte)
         buf[0x3A] = self.gpio_mask
 
-        # Offset 0x3B-0x3F: Reserved (5 bytes)
+        # Offset 0x3B: I2C address count (1 byte)
+        buf[0x3B] = self.i2c_addr_count
+
+        # Offset 0x3C-0x3F: Reserved (4 bytes)
         return bytes(buf)
 
     @classmethod
@@ -100,6 +103,7 @@ class EepromDescriptor:
         desc.power_12v_ma = struct.unpack_from(">H", data, 0x37)[0]
         desc.capabilities = data[0x39]
         desc.gpio_mask = data[0x3A]
+        desc.i2c_addr_count = data[0x3B]
         return desc
 
 

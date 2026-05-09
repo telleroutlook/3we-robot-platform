@@ -25,7 +25,8 @@ export function validateEnv(overrides?: Partial<Record<string, string>>): Env {
       : {};
 
   const raw = {
-    VITE_ROSBRIDGE_URL: overrides?.VITE_ROSBRIDGE_URL ?? fromVite.VITE_ROSBRIDGE_URL ?? defaults.VITE_ROSBRIDGE_URL,
+    VITE_ROSBRIDGE_URL:
+      overrides?.VITE_ROSBRIDGE_URL ?? fromVite.VITE_ROSBRIDGE_URL ?? defaults.VITE_ROSBRIDGE_URL,
   };
 
   const result = envSchema.safeParse(raw);

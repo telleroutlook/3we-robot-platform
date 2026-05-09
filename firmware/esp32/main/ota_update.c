@@ -166,8 +166,31 @@ static esp_err_t perform_ota_from_url(const char *url)
         return ESP_ERR_INVALID_SIZE;
     }
 
-    // Verify signature (read firmware back from partition for hash check)
+    // Verify signature by reading firmware back from partition
     set_progress(OTA_STATUS_VERIFYING, 100, received, total, NULL);
+
+    uint8_t *verify_buf = malloc(firmware_size);
+    if (!verify_buf) {
+        esp_ota_abort(ota_handle);
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Out of memory for verification");
+        return ESP_ERR_NO_MEM;
+    }
+
+    err = esp_partition_read(update_part, 0, verify_buf, firmware_size);
+    if (err != ESP_OK) {
+        free(verify_buf);
+        esp_ota_abort(ota_handle);
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Failed to read partition for verify");
+        return err;
+    }
+
+    if (!ota_verify_image(verify_buf, firmware_size, header)) {
+        free(verify_buf);
+        esp_ota_abort(ota_handle);
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Signature verification failed");
+        return ESP_ERR_IMAGE_INVALID;
+    }
+    free(verify_buf);
 
     err = esp_ota_end(ota_handle);
     if (err != ESP_OK) {

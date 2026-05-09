@@ -170,21 +170,21 @@ export class RobotImuAttitude extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot!.appendChild(TEMPLATE.content.cloneNode(true));
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.appendChild(TEMPLATE.content.cloneNode(true));
   }
 
   connectedCallback(): void {
-    this.horizonSky = this.shadowRoot!.getElementById('horizonSky')!;
-    this.horizonGround = this.shadowRoot!.getElementById('horizonGround')!;
-    this.rollEl = this.shadowRoot!.getElementById('rollValue')!;
-    this.pitchEl = this.shadowRoot!.getElementById('pitchValue')!;
-    this.yawEl = this.shadowRoot!.getElementById('yawValue')!;
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+    this.horizonSky = shadow.getElementById('horizonSky') as HTMLElement;
+    this.horizonGround = shadow.getElementById('horizonGround') as HTMLElement;
+    this.rollEl = shadow.getElementById('rollValue') as HTMLElement;
+    this.pitchEl = shadow.getElementById('pitchValue') as HTMLElement;
+    this.yawEl = shadow.getElementById('yawValue') as HTMLElement;
 
-    this.unsubscribe = connection.subscribe<Imu>(
-      '/imu/data',
-      'sensor_msgs/Imu',
-      (msg) => this.onImuData(msg)
+    this.unsubscribe = connection.subscribe<Imu>('/imu/data', 'sensor_msgs/Imu', (msg) =>
+      this.onImuData(msg)
     );
   }
 

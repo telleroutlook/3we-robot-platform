@@ -124,7 +124,7 @@ describe('RosbridgeConnection', () => {
       const subMsg = ws.sent.find((s) => JSON.parse(s).op === 'subscribe');
       expect(subMsg).toBeDefined();
 
-      const parsed = JSON.parse(subMsg!);
+      const parsed = JSON.parse(subMsg as string);
       expect(parsed.topic).toBe('/battery');
       expect(parsed.type).toBe('sensor_msgs/BatteryState');
     });
@@ -168,7 +168,7 @@ describe('RosbridgeConnection', () => {
       const pubMsg = ws.sent.find((s) => JSON.parse(s).op === 'publish');
       expect(pubMsg).toBeDefined();
 
-      const parsed = JSON.parse(pubMsg!);
+      const parsed = JSON.parse(pubMsg as string);
       expect(parsed.topic).toBe('/cmd_vel');
       expect(parsed.msg.linear.x).toBe(0.5);
     });

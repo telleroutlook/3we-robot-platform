@@ -18,11 +18,16 @@ const LEVEL_WARN = 1;
 const LEVEL_ERROR = 2;
 const LEVEL_STALE = 3;
 
-class RobotSystemStatus extends HTMLElement {
+export class RobotSystemStatus extends HTMLElement {
   private unsubscribe: (() => void) | null = null;
   private statuses: DiagnosticStatus[] = [];
   private lastUpdate = 0;
   private staleTimer: ReturnType<typeof setInterval> | null = null;
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+  }
 
   connectedCallback(): void {
     this.render();
@@ -60,7 +65,7 @@ class RobotSystemStatus extends HTMLElement {
   }
 
   private updateDisplay(): void {
-    const container = this.querySelector('.system-status__grid');
+    const container = this.shadowRoot?.querySelector('.system-status__grid');
     if (!container) return;
 
     container.innerHTML = '';
@@ -86,16 +91,22 @@ class RobotSystemStatus extends HTMLElement {
 
   private levelToString(level: number): string {
     switch (level) {
-      case LEVEL_OK: return 'ok';
-      case LEVEL_WARN: return 'warn';
-      case LEVEL_ERROR: return 'error';
-      case LEVEL_STALE: return 'stale';
-      default: return 'unknown';
+      case LEVEL_OK:
+        return 'ok';
+      case LEVEL_WARN:
+        return 'warn';
+      case LEVEL_ERROR:
+        return 'error';
+      case LEVEL_STALE:
+        return 'stale';
+      default:
+        return 'unknown';
     }
   }
 
   private render(): void {
-    this.innerHTML = `
+    if (!this.shadowRoot) return;
+    this.shadowRoot.innerHTML = `
       <style>
         .system-status { padding: 0.5rem; }
         .system-status__title {

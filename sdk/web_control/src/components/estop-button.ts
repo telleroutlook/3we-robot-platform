@@ -187,15 +187,17 @@ export class RobotEstopButton extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot!.appendChild(TEMPLATE.content.cloneNode(true));
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.appendChild(TEMPLATE.content.cloneNode(true));
   }
 
   connectedCallback(): void {
-    this.btn = this.shadowRoot!.getElementById('estopBtn') as HTMLButtonElement;
-    this.overlay = this.shadowRoot!.getElementById('confirmOverlay')!;
-    const cancelBtn = this.shadowRoot!.getElementById('cancelReset')!;
-    const confirmBtn = this.shadowRoot!.getElementById('confirmReset')!;
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+    this.btn = shadow.getElementById('estopBtn') as HTMLButtonElement;
+    this.overlay = shadow.getElementById('confirmOverlay') as HTMLElement;
+    const cancelBtn = shadow.getElementById('cancelReset') as HTMLElement;
+    const confirmBtn = shadow.getElementById('confirmReset') as HTMLElement;
 
     this.btn.addEventListener('click', () => this.onButtonClick());
     cancelBtn.addEventListener('click', () => this.hideConfirm());
@@ -227,16 +229,11 @@ export class RobotEstopButton extends HTMLElement {
     this.estopped = true;
     this.setVisualState('estopped');
 
-    // Zero joystick velocities immediately
-    const joystick = document.querySelector('robot-joystick') as HTMLElement & { stop?: () => void } | null;
-    if (joystick?.stop) joystick.stop();
+    // Notify all listeners (joystick, etc.) to halt immediately
+    document.dispatchEvent(new CustomEvent('robot-estop', { detail: { estopped: true } }));
 
     try {
-      await connection.callService(
-        '/emergency_stop',
-        'std_srvs/SetBool',
-        { data: true }
-      );
+      await connection.callService('/emergency_stop', 'std_srvs/SetBool', { data: true });
     } catch {
       // Even if service call fails, keep local E-stop state
     }
@@ -255,11 +252,7 @@ export class RobotEstopButton extends HTMLElement {
     this.setVisualState('recovery_pending');
 
     try {
-      await connection.callService(
-        '/emergency_stop',
-        'std_srvs/SetBool',
-        { data: false }
-      );
+      await connection.callService('/emergency_stop', 'std_srvs/SetBool', { data: false });
       // State will be cleared by onEstopState when topic confirms
     } catch {
       // Remain in estopped state on failure

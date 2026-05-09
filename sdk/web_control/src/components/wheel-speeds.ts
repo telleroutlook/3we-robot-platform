@@ -130,15 +130,17 @@ export class RobotWheelSpeeds extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot!.appendChild(TEMPLATE.content.cloneNode(true));
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.appendChild(TEMPLATE.content.cloneNode(true));
   }
 
   connectedCallback(): void {
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
     const wheels = ['FL', 'FR', 'RL', 'RR'];
     for (const w of wheels) {
-      this.bars[w] = this.shadowRoot!.getElementById(`bar${w}`)!;
-      this.values[w] = this.shadowRoot!.getElementById(`val${w}`)!;
+      this.bars[w] = shadow.getElementById(`bar${w}`) as HTMLElement;
+      this.values[w] = shadow.getElementById(`val${w}`) as HTMLElement;
     }
 
     this.unsubscribe = connection.subscribe<WheelSpeeds>(

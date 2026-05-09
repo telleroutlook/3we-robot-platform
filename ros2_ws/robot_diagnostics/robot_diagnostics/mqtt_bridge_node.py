@@ -110,8 +110,8 @@ class MqttBridgeNode(Node):
         if not self._connected and self._mqtt_client is not None:
             try:
                 self._mqtt_client.reconnect()
-            except Exception:
-                pass
+            except Exception as exc:
+                self.get_logger().warn(f'MQTT reconnect failed: {exc}')
 
     def _on_diagnostics(self, msg: DiagnosticArray) -> None:
         if not self._connected or self._mqtt_client is None:

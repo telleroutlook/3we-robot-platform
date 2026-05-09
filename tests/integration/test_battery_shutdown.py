@@ -67,8 +67,8 @@ class TestBatteryShutdown:
 
         # Basic validity checks
         assert msg.percentage >= 0.0, "Battery percentage should not be negative"
-        assert msg.percentage <= 1.0 or msg.percentage <= 100.0, (
-            "Battery percentage out of range"
+        assert (0.0 <= msg.percentage <= 1.0) or (0.0 <= msg.percentage <= 100.0), (
+            f"Battery percentage out of valid range: {msg.percentage}"
         )
 
     def test_battery_voltage_within_valid_range(self, test_node: Any) -> None:

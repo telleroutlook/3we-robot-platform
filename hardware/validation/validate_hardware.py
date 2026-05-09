@@ -12,6 +12,7 @@ Validates consistency between:
 Exit code: 0 = all checks pass, 1 = one or more failures.
 """
 
+import csv
 import os
 import re
 import sys
@@ -132,27 +133,14 @@ def parse_bom_references(filepath: Path) -> set[str]:
     """Parse Reference column from BOM CSV, expanding ranges."""
     refs = set()
     with open(filepath, "r") as f:
-        lines = f.readlines()
-
-    if not lines:
-        return refs
-
-    # Find the Reference column index
-    header = lines[0].strip().split(",")
-    try:
-        ref_idx = header.index("Reference")
-    except ValueError:
-        print("  ERROR: 'Reference' column not found in BOM header")
-        return refs
-
-    for line in lines[1:]:
-        if not line.strip():
-            continue
-        cols = line.strip().split(",")
-        if len(cols) <= ref_idx:
-            continue
-        ref_field = cols[ref_idx].strip()
-        refs.update(expand_reference_range(ref_field))
+        reader = csv.DictReader(f)
+        if "Reference" not in (reader.fieldnames or []):
+            print("  ERROR: 'Reference' column not found in BOM header")
+            return refs
+        for row in reader:
+            ref_field = row.get("Reference", "").strip()
+            if ref_field:
+                refs.update(expand_reference_range(ref_field))
 
     return refs
 

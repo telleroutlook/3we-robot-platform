@@ -185,27 +185,29 @@ export class RobotPayloadPanel extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot!.appendChild(TEMPLATE.content.cloneNode(true));
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.appendChild(TEMPLATE.content.cloneNode(true));
   }
 
   connectedCallback(): void {
-    this.connectionDot = this.shadowRoot!.getElementById('connectionDot')!;
-    this.noPayload = this.shadowRoot!.getElementById('noPayload')!;
-    this.payloadInfo = this.shadowRoot!.getElementById('payloadInfo')!;
-    this.railToggles = this.shadowRoot!.getElementById('railToggles')!;
-    this.payloadName = this.shadowRoot!.getElementById('payloadName')!;
-    this.payloadId = this.shadowRoot!.getElementById('payloadId')!;
-    this.payloadPower = this.shadowRoot!.getElementById('payloadPower')!;
-    this.toggle5v = this.shadowRoot!.getElementById('toggle5v')!;
-    this.toggle12v = this.shadowRoot!.getElementById('toggle12v')!;
-    this.toggleVbat = this.shadowRoot!.getElementById('toggleVbat')!;
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+    this.connectionDot = shadow.getElementById('connectionDot') as HTMLElement;
+    this.noPayload = shadow.getElementById('noPayload') as HTMLElement;
+    this.payloadInfo = shadow.getElementById('payloadInfo') as HTMLElement;
+    this.railToggles = shadow.getElementById('railToggles') as HTMLElement;
+    this.payloadName = shadow.getElementById('payloadName') as HTMLElement;
+    this.payloadId = shadow.getElementById('payloadId') as HTMLElement;
+    this.payloadPower = shadow.getElementById('payloadPower') as HTMLElement;
+    this.toggle5v = shadow.getElementById('toggle5v') as HTMLElement;
+    this.toggle12v = shadow.getElementById('toggle12v') as HTMLElement;
+    this.toggleVbat = shadow.getElementById('toggleVbat') as HTMLElement;
 
     this.toggle5v.addEventListener('click', () => this.toggleRail('5V', this.toggle5v));
     this.toggle12v.addEventListener('click', () => this.toggleRail('12V', this.toggle12v));
     this.toggleVbat.addEventListener('click', () => this.toggleRail('VBAT', this.toggleVbat));
 
-    [this.toggle5v, this.toggle12v, this.toggleVbat].forEach(el => {
+    [this.toggle5v, this.toggle12v, this.toggleVbat].forEach((el) => {
       el.addEventListener('keydown', (e: KeyboardEvent) => {
         if (e.key === ' ' || e.key === 'Enter') {
           e.preventDefault();
@@ -261,10 +263,8 @@ export class RobotPayloadPanel extends HTMLElement {
     }
   }
 
-  private async toggleRail(
-    rail: string,
-    toggleEl: HTMLElement
-  ): Promise<void> {
+  private async toggleRail(rail: string, toggleEl: HTMLElement): Promise<void> {
+    if (!this.currentPayloadId) return;
     const currentlyActive = toggleEl.classList.contains('active');
     const enable = !currentlyActive;
 

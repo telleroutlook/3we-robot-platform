@@ -165,16 +165,18 @@ export class RobotBatteryGauge extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot!.appendChild(TEMPLATE.content.cloneNode(true));
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.appendChild(TEMPLATE.content.cloneNode(true));
   }
 
   connectedCallback(): void {
-    this.fillEl = this.shadowRoot!.getElementById('batteryFill')!;
-    this.pctEl = this.shadowRoot!.getElementById('batteryPct')!;
-    this.statusEl = this.shadowRoot!.getElementById('statusBadge')!;
-    this.voltageEl = this.shadowRoot!.getElementById('voltage')!;
-    this.currentEl = this.shadowRoot!.getElementById('current')!;
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+    this.fillEl = shadow.getElementById('batteryFill') as HTMLElement;
+    this.pctEl = shadow.getElementById('batteryPct') as HTMLElement;
+    this.statusEl = shadow.getElementById('statusBadge') as HTMLElement;
+    this.voltageEl = shadow.getElementById('voltage') as HTMLElement;
+    this.currentEl = shadow.getElementById('current') as HTMLElement;
 
     this.unsubscribe = connection.subscribe<BatteryState>(
       '/battery_state',

@@ -5,10 +5,15 @@ Validates that:
 - A DTLS connection can be established to the ESP32 on port 5684
 - cmd_vel frames are delivered over the encrypted channel
 - Unauthenticated connections are rejected
+
+NOTE: These tests currently use plaintext UDP as a transport smoke test.
+Real DTLS-PSK verification requires a library such as python-dtls.
+The tests validate frame format and endpoint reachability, not encryption.
 """
 
 from __future__ import annotations
 
+import os
 import socket
 import ssl
 import struct
@@ -31,7 +36,7 @@ from conftest import topic_collector  # noqa: E402
 DTLS_PORT: int = 5684
 DTLS_HOST: str = "192.168.4.1"  # Default ESP32 AP address
 PSK_IDENTITY: bytes = b"robot-controller"
-PSK_KEY: bytes = b"integration-test-key"
+PSK_KEY: bytes = os.environb.get(b"INTEGRATION_TEST_PSK_KEY", b"")
 
 # cmd_vel binary frame layout: [header(1) | linear_x(f32) | linear_y(f32) | angular_z(f32)]
 CMD_VEL_HEADER: int = 0x01
@@ -73,10 +78,11 @@ def _create_dtls_socket(
 
     Returns the wrapped socket or None if connection fails.
 
-    Note: Python's ssl module has limited DTLS support. This uses a
-    simplified approach suitable for integration testing. Production
-    DTLS requires a dedicated library (e.g., python-dtls).
+    Note: Python's ssl module does not support DTLS. This creates a raw
+    UDP socket for transport smoke testing only. Production DTLS requires
+    a dedicated library (e.g., python-dtls or mbedtls bindings).
     """
+    # TODO: Implement real DTLS-PSK using python-dtls or equivalent
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(timeout)
@@ -92,8 +98,9 @@ def _send_cmd_vel_udp(
     frame: CmdVelFrame,
     timeout: float = 5.0,
 ) -> bool:
-    """Send a cmd_vel frame over UDP to the DTLS endpoint.
+    """Send a cmd_vel frame over plaintext UDP to the DTLS endpoint.
 
+    This is a transport smoke test only — does NOT verify encryption.
     Returns True if the send succeeded (no socket error).
     """
     try:

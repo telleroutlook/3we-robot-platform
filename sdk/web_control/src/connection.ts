@@ -46,6 +46,12 @@ export class RosbridgeConnection extends EventTarget {
       this.setState('error');
       return;
     }
+    if (url.startsWith('ws://') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[RosbridgeConnection] Unencrypted ws:// connection to a non-localhost host. Use wss:// for robot control over a network.'
+      );
+    }
     this.intentionalClose = false;
     this.url = url;
     this.clearReconnectTimer();
@@ -114,8 +120,10 @@ export class RosbridgeConnection extends EventTarget {
     }
 
     return () => {
-      entry!.callbacks.delete(callback as TopicCallback);
-      if (entry!.callbacks.size === 0) {
+      const current = this.subscribers.get(topic);
+      if (!current) return;
+      current.callbacks.delete(callback as TopicCallback);
+      if (current.callbacks.size === 0) {
         this.subscribers.delete(topic);
         this.sendUnsubscribe(topic);
       }
@@ -126,7 +134,7 @@ export class RosbridgeConnection extends EventTarget {
     if (!this.isConnected()) return;
 
     const payload: RosbridgePublish = { op: 'publish', topic, type, msg };
-    this.ws!.send(JSON.stringify(payload));
+    this.ws?.send(JSON.stringify(payload));
   }
 
   async callService<TArgs = unknown, TResult = unknown>(
@@ -152,7 +160,7 @@ export class RosbridgeConnection extends EventTarget {
     });
 
     const payload: RosbridgeCallService = { op: 'call_service', service, type, args, id };
-    this.ws!.send(JSON.stringify(payload));
+    this.ws?.send(JSON.stringify(payload));
 
     return promise as Promise<TResult>;
   }
@@ -207,12 +215,12 @@ export class RosbridgeConnection extends EventTarget {
   private sendSubscribe(topic: string, type: string): void {
     if (!this.isConnected()) return;
     const payload: RosbridgeSubscribe = { op: 'subscribe', topic, type };
-    this.ws!.send(JSON.stringify(payload));
+    this.ws?.send(JSON.stringify(payload));
   }
 
   private sendUnsubscribe(topic: string): void {
     if (!this.isConnected()) return;
-    this.ws!.send(JSON.stringify({ op: 'unsubscribe', topic }));
+    this.ws?.send(JSON.stringify({ op: 'unsubscribe', topic }));
   }
 
   private resubscribeAll(): void {
@@ -249,12 +257,12 @@ export class RosbridgeConnection extends EventTarget {
     this.heartbeatTimer = setInterval(() => {
       if (!this.isConnected()) return;
       this.missedPongs++;
-      if (this.missedPongs > this.maxMissedPongs) {
+      if (this.missedPongs >= this.maxMissedPongs) {
         this.stopHeartbeat();
         this.ws?.close();
         return;
       }
-      this.ws!.send(JSON.stringify({ op: 'ping' }));
+      this.ws?.send(JSON.stringify({ op: 'ping' }));
     }, this.heartbeatIntervalMs);
   }
 
