@@ -12,6 +12,7 @@ on:
     paths:
       - 'sdk/**'
       - 'firmware/tests/**'
+  workflow_dispatch:
 
 jobs:
   web-coverage:
