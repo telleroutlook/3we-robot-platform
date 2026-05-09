@@ -236,3 +236,347 @@ class TestEstop:
         assert call_args[0][1] is mock_srv
         assert call_args[0][2] is mock_request_instance
         assert mock_request_instance.reason == "test halt"
+
+
+# ---------------------------------------------------------------------------
+# Connect / Disconnect tests
+# ---------------------------------------------------------------------------
+
+
+class TestConnectDisconnect:
+    @pytest.mark.asyncio
+    async def test_connect_initializes_node(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient(node_name="conn_test")
+
+        with patch.dict(sys.modules, _rclpy_mocks):
+            rclpy_mod = sys.modules["rclpy"]
+            rclpy_mod.ok.return_value = True
+            mock_node = MagicMock()
+            rclpy_mod.create_node.return_value = mock_node
+
+            mock_executor_cls = sys.modules["rclpy.executors"].MultiThreadedExecutor
+            mock_executor_instance = MagicMock()
+            mock_executor_cls.return_value = mock_executor_instance
+
+            await client.connect()
+
+            assert client._connected is True
+            assert client._node is mock_node
+            rclpy_mod.create_node.assert_called_once_with("conn_test")
+            mock_executor_instance.add_node.assert_called_once_with(mock_node)
+
+    @pytest.mark.asyncio
+    async def test_connect_idempotent(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+
+        await client.connect()
+        assert client._connected is True
+
+    @pytest.mark.asyncio
+    async def test_disconnect_cleans_up(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._executor = MagicMock()
+        client._spin_thread = MagicMock()
+        client._node = MagicMock()
+
+        await client.disconnect()
+
+        assert client._connected is False
+        assert client._executor is None
+        assert client._spin_thread is None
+        assert client._node is None
+
+    @pytest.mark.asyncio
+    async def test_disconnect_when_not_connected(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = False
+
+        await client.disconnect()
+        assert client._connected is False
+
+    @pytest.mark.asyncio
+    async def test_context_manager(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient(node_name="ctx_test")
+        client.connect = AsyncMock()
+        client.disconnect = AsyncMock()
+
+        async with client as c:
+            assert c is client
+            client.connect.assert_called_once()
+
+        client.disconnect.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# _ensure_connected tests
+# ---------------------------------------------------------------------------
+
+
+class TestEnsureConnected:
+    def test_raises_when_not_connected(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = False
+
+        with pytest.raises(RuntimeError, match="not connected"):
+            client._ensure_connected()
+
+    def test_raises_when_node_is_none(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = None
+
+        with pytest.raises(RuntimeError, match="not connected"):
+            client._ensure_connected()
+
+    def test_passes_when_connected(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = MagicMock()
+
+        client._ensure_connected()
+
+
+# ---------------------------------------------------------------------------
+# call_service tests
+# ---------------------------------------------------------------------------
+
+
+class TestCallService:
+    @pytest.mark.asyncio
+    async def test_service_not_available_raises(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = MagicMock()
+        client._loop = asyncio.get_event_loop()
+
+        mock_client = MagicMock()
+        mock_client.wait_for_service.return_value = False
+        client._node.create_client.return_value = mock_client
+
+        with pytest.raises(RuntimeError, match="not available"):
+            await client.call_service(
+                "/test_srv", MagicMock(), MagicMock(), timeout=1.0
+            )
+
+        client._node.destroy_client.assert_called_once_with(mock_client)
+
+    @pytest.mark.asyncio
+    async def test_service_success(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = MagicMock()
+        client._loop = asyncio.get_event_loop()
+
+        mock_srv_client = MagicMock()
+        mock_srv_client.wait_for_service.return_value = True
+
+        mock_future = MagicMock()
+        expected_result = MagicMock()
+
+        def fake_call_async(req):
+            return mock_future
+
+        mock_srv_client.call_async = fake_call_async
+        client._node.create_client.return_value = mock_srv_client
+
+        def trigger_callback(*args, **kwargs):
+            cb = mock_future.add_done_callback.call_args[0][0]
+            mock_future.exception.return_value = None
+            mock_future.result.return_value = expected_result
+            client._loop.call_soon_threadsafe(lambda: cb(mock_future))
+
+        mock_future.add_done_callback = MagicMock(side_effect=trigger_callback)
+
+        result = await asyncio.wait_for(
+            client.call_service("/test", MagicMock(), MagicMock(), timeout=5.0),
+            timeout=2.0,
+        )
+        assert result is expected_result
+
+
+# ---------------------------------------------------------------------------
+# subscribe_topic tests
+# ---------------------------------------------------------------------------
+
+
+class TestSubscribeTopic:
+    @pytest.mark.asyncio
+    async def test_subscribe_yields_messages(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = MagicMock()
+        client._loop = asyncio.get_event_loop()
+
+        mock_sub = MagicMock()
+        captured_callback = None
+
+        def create_sub(msg_type, topic, callback, qos):
+            nonlocal captured_callback
+            captured_callback = callback
+            return mock_sub
+
+        client._node.create_subscription = create_sub
+
+        messages = []
+
+        async def collect():
+            count = 0
+            async for msg in client.subscribe_topic("/test", MagicMock):
+                messages.append(msg)
+                count += 1
+                if count >= 2:
+                    break
+
+        task = asyncio.create_task(collect())
+        await asyncio.sleep(0.05)
+
+        captured_callback("msg1")
+        captured_callback("msg2")
+        await asyncio.sleep(0.05)
+
+        client._connected = False
+        await asyncio.wait_for(task, timeout=2.0)
+        assert messages == ["msg1", "msg2"]
+
+    @pytest.mark.asyncio
+    async def test_subscribe_not_connected_raises(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = False
+        client._node = None
+
+        with pytest.raises(RuntimeError, match="not connected"):
+            async for _ in client.subscribe_topic("/test", MagicMock):
+                pass
+
+
+# ---------------------------------------------------------------------------
+# get_battery_state / get_payload_state tests
+# ---------------------------------------------------------------------------
+
+
+class TestGetBatteryState:
+    @pytest.mark.asyncio
+    async def test_battery_ok(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = MagicMock()
+        client._loop = asyncio.get_event_loop()
+
+        mock_msg = MagicMock()
+        mock_msg.voltage = 12.6
+        mock_msg.percentage = 0.85
+
+        def create_sub(msg_type, topic, callback, qos):
+            client._loop.call_soon(callback, mock_msg)
+            return MagicMock()
+
+        client._node.create_subscription = create_sub
+
+        result = await client.get_battery_state()
+        assert result.voltage == 12.6
+        assert result.percentage == 0.85
+        assert result.state == "ok"
+
+    @pytest.mark.asyncio
+    async def test_battery_low(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = MagicMock()
+        client._loop = asyncio.get_event_loop()
+
+        mock_msg = MagicMock()
+        mock_msg.voltage = 11.0
+        mock_msg.percentage = 0.15
+
+        def create_sub(msg_type, topic, callback, qos):
+            client._loop.call_soon(callback, mock_msg)
+            return MagicMock()
+
+        client._node.create_subscription = create_sub
+
+        result = await client.get_battery_state()
+        assert result.state == "low"
+
+    @pytest.mark.asyncio
+    async def test_battery_critical(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = MagicMock()
+        client._loop = asyncio.get_event_loop()
+
+        mock_msg = MagicMock()
+        mock_msg.voltage = 9.5
+        mock_msg.percentage = 0.05
+
+        def create_sub(msg_type, topic, callback, qos):
+            client._loop.call_soon(callback, mock_msg)
+            return MagicMock()
+
+        client._node.create_subscription = create_sub
+
+        result = await client.get_battery_state()
+        assert result.state == "critical"
+
+
+class TestGetPayloadState:
+    @pytest.mark.asyncio
+    async def test_payload_state(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = MagicMock()
+        client._loop = asyncio.get_event_loop()
+
+        mock_msg = MagicMock()
+        mock_msg.payload_id = "p-100"
+        mock_msg.name = "gripper"
+        mock_msg.connected = True
+        mock_msg.state = 2
+
+        def create_sub(msg_type, topic, callback, qos):
+            client._loop.call_soon(callback, mock_msg)
+            return MagicMock()
+
+        client._node.create_subscription = create_sub
+
+        result = await client.get_payload_state()
+        assert result.payload_id == "p-100"
+        assert result.name == "gripper"
+        assert result.connected is True
+        assert result.state == 2
+
+
+# ---------------------------------------------------------------------------
+# send_nav_goal tests
+# ---------------------------------------------------------------------------
+
+
+class TestSendNavGoal:
+    @pytest.mark.asyncio
+    async def test_missing_nav2_raises(self) -> None:
+        mod = _import_async_client()
+        client = mod.AsyncPayloadClient()
+        client._connected = True
+        client._node = MagicMock()
+        client._loop = asyncio.get_event_loop()
+
+        with patch.object(mod, "NavigateToPose", None):
+            with pytest.raises(ImportError, match="nav2_msgs"):
+                await client.send_nav_goal(1.0, 2.0)
