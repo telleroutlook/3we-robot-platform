@@ -93,12 +93,14 @@ jobs:
 
       - name: Build
         working-directory: ros2_ws
+        shell: bash
         run: |
           source /opt/ros/humble/setup.bash
           colcon build --symlink-install
 
       - name: Test
         working-directory: ros2_ws
+        shell: bash
         run: |
           source /opt/ros/humble/setup.bash
           source install/setup.bash
@@ -128,12 +130,14 @@ jobs:
           rosdep install --from-paths ros2_ws --ignore-src -y --skip-keys="micro_ros_agent"
 
       - name: Build workspace
+        shell: bash
         run: |
           source /opt/ros/humble/setup.bash
           cd ros2_ws
           colcon build --symlink-install
 
       - name: Run integration tests
+        shell: bash
         run: |
           source /opt/ros/humble/setup.bash
           source ros2_ws/install/setup.bash
