@@ -32,7 +32,11 @@ def diagnostics_node(ros2_context, test_node):
     time.sleep(2)
     yield proc
     proc.send_signal(signal.SIGINT)
-    proc.wait(timeout=5)
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
 
 
 def test_diagnostics_publishes(ros2_context, test_node, diagnostics_node, collect_topics):
