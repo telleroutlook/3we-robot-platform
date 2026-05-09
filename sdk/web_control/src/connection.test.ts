@@ -3,9 +3,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { RosbridgeConnection } from './connection';
 
+const WS_CONNECTING = 0;
+const WS_OPEN = 1;
+const WS_CLOSED = 3;
+
 class MockWebSocket {
+  static CONNECTING = WS_CONNECTING;
+  static OPEN = WS_OPEN;
+  static CLOSED = WS_CLOSED;
   static instances: MockWebSocket[] = [];
-  readyState = WebSocket.CONNECTING;
+  readyState = WS_CONNECTING;
   onopen: (() => void) | null = null;
   onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
@@ -15,7 +22,7 @@ class MockWebSocket {
   constructor(public url: string) {
     MockWebSocket.instances.push(this);
     setTimeout(() => {
-      this.readyState = WebSocket.OPEN;
+      this.readyState = WS_OPEN;
       this.onopen?.();
     }, 0);
   }
@@ -25,7 +32,7 @@ class MockWebSocket {
   }
 
   close(): void {
-    this.readyState = WebSocket.CLOSED;
+    this.readyState = WS_CLOSED;
     this.onclose?.();
   }
 
@@ -353,7 +360,7 @@ describe('RosbridgeConnection', () => {
       await connected;
 
       const ws = MockWebSocket.instances[0];
-      ws.readyState = WebSocket.CLOSED;
+      ws.readyState = WS_CLOSED;
       ws.onclose?.();
 
       expect(conn.connectionState).toBe('connecting');
@@ -398,7 +405,7 @@ describe('RosbridgeConnection', () => {
       conn.subscribe('/battery', 'sensor_msgs/BatteryState', () => {});
 
       const ws1 = MockWebSocket.instances[0];
-      ws1.readyState = WebSocket.CLOSED;
+      ws1.readyState = WS_CLOSED;
       ws1.onclose?.();
 
       vi.advanceTimersByTime(1000);
@@ -457,7 +464,7 @@ describe('RosbridgeConnection', () => {
       vi.advanceTimersByTime(10000);
       ws.simulateMessage(JSON.stringify({ op: 'pong' }));
 
-      expect(ws.readyState).toBe(WebSocket.OPEN);
+      expect(ws.readyState).toBe(WS_OPEN);
     });
 
     it('closes WebSocket after max missed pongs', async () => {
@@ -476,7 +483,7 @@ describe('RosbridgeConnection', () => {
       vi.advanceTimersByTime(30001);
 
       const ws = MockWebSocket.instances[0];
-      expect(ws.readyState).toBe(WebSocket.CLOSED);
+      expect(ws.readyState).toBe(WS_CLOSED);
     });
   });
 
