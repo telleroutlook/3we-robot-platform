@@ -7,6 +7,8 @@
 #include "esp_http_client.h"
 #include "esp_http_server.h"
 #include "esp_partition.h"
+#include "esp_tls.h"
+#include "esp_crt_bundle.h"
 #include "mbedtls/sha256.h"
 
 #include "freertos/FreeRTOS.h"
@@ -51,6 +53,7 @@ static esp_err_t perform_ota_from_url(const char *url)
     esp_http_client_config_t http_cfg = {
         .url = url,
         .timeout_ms = 30000,
+        .crt_bundle_attach = esp_crt_bundle_attach,
     };
     esp_http_client_handle_t client = esp_http_client_init(&http_cfg);
     if (!client) {
@@ -222,39 +225,124 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
         return ESP_FAIL;
     }
 
-    uint8_t *image = malloc(req->content_len);
-    if (!image) {
+    uint8_t *buf = malloc(OTA_BUF_SIZE);
+    if (!buf) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Out of memory");
         return ESP_FAIL;
     }
 
-    size_t received = 0;
-    while (received < req->content_len) {
-        int ret = httpd_req_recv(req, (char *)(image + received),
-                                 req->content_len - received);
-        if (ret <= 0) {
-            free(image);
-            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Receive error");
-            return ESP_FAIL;
-        }
-        received += (size_t)ret;
-    }
-
-    set_progress(OTA_STATUS_VERIFYING, 50, received, received, NULL);
-
-    esp_err_t err = ota_apply_update(image, received);
-    free(image);
-
-    if (err != ESP_OK) {
-        char msg[64];
-        snprintf(msg, sizeof(msg), "OTA failed: %s", esp_err_to_name(err));
-        set_progress(OTA_STATUS_FAILED, 0, 0, 0, msg);
-        httpd_resp_set_type(req, "application/json");
-        httpd_resp_send(req, "{\"success\":false}", -1);
+    // Read header first
+    int ret = httpd_req_recv(req, (char *)buf, sizeof(ota_image_header_t));
+    if (ret != (int)sizeof(ota_image_header_t)) {
+        free(buf);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Failed to read header");
         return ESP_FAIL;
     }
 
-    set_progress(OTA_STATUS_REBOOTING, 100, received, received, NULL);
+    ota_image_header_t header;
+    memcpy(&header, buf, sizeof(header));
+
+    if (header.magic != OTA_HEADER_MAGIC) {
+        free(buf);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid image magic");
+        return ESP_FAIL;
+    }
+
+    uint32_t firmware_size = header.image_size;
+    if (firmware_size == 0 || firmware_size > OTA_MAX_IMAGE_SIZE) {
+        free(buf);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid firmware size in header");
+        return ESP_FAIL;
+    }
+
+    const esp_partition_t *update_part = esp_ota_get_next_update_partition(NULL);
+    if (!update_part) {
+        free(buf);
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "No OTA partition");
+        return ESP_FAIL;
+    }
+
+    esp_ota_handle_t ota_handle;
+    esp_err_t err = esp_ota_begin(update_part, firmware_size, &ota_handle);
+    if (err != ESP_OK) {
+        free(buf);
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "OTA begin failed");
+        return ESP_FAIL;
+    }
+
+    set_progress(OTA_STATUS_DOWNLOADING, 0, 0, firmware_size, NULL);
+
+    mbedtls_sha256_context sha_ctx;
+    mbedtls_sha256_init(&sha_ctx);
+    mbedtls_sha256_starts(&sha_ctx, 0);
+
+    uint32_t firmware_written = 0;
+    bool upload_ok = true;
+
+    while (firmware_written < firmware_size) {
+        int to_read = (int)((firmware_size - firmware_written) < OTA_BUF_SIZE ?
+                            (firmware_size - firmware_written) : OTA_BUF_SIZE);
+        ret = httpd_req_recv(req, (char *)buf, to_read);
+        if (ret <= 0) {
+            upload_ok = false;
+            break;
+        }
+
+        mbedtls_sha256_update(&sha_ctx, buf, (size_t)ret);
+
+        err = esp_ota_write(ota_handle, buf, (size_t)ret);
+        if (err != ESP_OK) {
+            upload_ok = false;
+            break;
+        }
+
+        firmware_written += (uint32_t)ret;
+        uint8_t pct = (uint8_t)((firmware_written * 100) / firmware_size);
+        set_progress(OTA_STATUS_DOWNLOADING, pct, firmware_written, firmware_size, NULL);
+    }
+
+    free(buf);
+
+    if (!upload_ok || firmware_written != firmware_size) {
+        mbedtls_sha256_free(&sha_ctx);
+        esp_ota_abort(ota_handle);
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Upload incomplete");
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Upload incomplete");
+        return ESP_FAIL;
+    }
+
+    set_progress(OTA_STATUS_VERIFYING, 100, firmware_written, firmware_size, NULL);
+
+    uint8_t computed_hash[OTA_HASH_SIZE];
+    mbedtls_sha256_finish(&sha_ctx, computed_hash);
+    mbedtls_sha256_free(&sha_ctx);
+
+    if (!ota_verify_image_hash(computed_hash, firmware_size, &header)) {
+        esp_ota_abort(ota_handle);
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Signature verification failed");
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, "{\"success\":false,\"error\":\"Signature verification failed\"}", -1);
+        return ESP_FAIL;
+    }
+
+    err = esp_ota_end(ota_handle);
+    if (err != ESP_OK) {
+        esp_ota_abort(ota_handle);
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "OTA end failed");
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, "{\"success\":false,\"error\":\"OTA finalize failed\"}", -1);
+        return ESP_FAIL;
+    }
+
+    err = esp_ota_set_boot_partition(update_part);
+    if (err != ESP_OK) {
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Set boot partition failed");
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, "{\"success\":false,\"error\":\"Set boot partition failed\"}", -1);
+        return ESP_FAIL;
+    }
+
+    set_progress(OTA_STATUS_REBOOTING, 100, firmware_written, firmware_size, NULL);
     httpd_resp_set_type(req, "application/json");
     httpd_resp_send(req, "{\"success\":true,\"message\":\"Rebooting...\"}", -1);
 

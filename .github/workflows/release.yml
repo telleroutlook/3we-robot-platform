@@ -79,11 +79,17 @@ jobs:
 
       - name: Build firmware (${{ matrix.sku_suffix }}${{ matrix.production && '-production' || '' }})
         working-directory: firmware/esp32
+        env:
+          SECURE_BOOT_SIGNING_KEY: ${{ matrix.production == true && secrets.SECURE_BOOT_SIGNING_KEY || '' }}
         run: |
           . $IDF_PATH/export.sh
           mkdir -p managed_components
           if [ "${{ matrix.production }}" = "true" ]; then
-            espsecure.py generate_signing_key --version 2 secure_boot_signing_key.pem
+            if [ -z "$SECURE_BOOT_SIGNING_KEY" ]; then
+              echo "::error::SECURE_BOOT_SIGNING_KEY secret is not set"
+              exit 1
+            fi
+            echo "$SECURE_BOOT_SIGNING_KEY" | base64 -d > secure_boot_signing_key.pem
           fi
           CONFIGS="sdkconfig.defaults;sdkconfig.defaults.${{ matrix.sku_suffix }}"
           if [ "${{ matrix.production }}" = "true" ]; then
