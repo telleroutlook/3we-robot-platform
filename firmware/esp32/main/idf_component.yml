@@ -1,5 +1,0 @@
-## SPDX-License-Identifier: Apache-2.0
-dependencies:
-  micro_ros_espidf_component:
-    git: https://github.com/micro-ROS/micro_ros_espidf_component.git
-    version: "humble"

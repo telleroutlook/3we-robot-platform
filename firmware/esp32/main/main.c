@@ -6,7 +6,9 @@
 #include "i2c_bus.h"
 #include "battery.h"
 #include "safety.h"
+#ifndef MICROROS_DISABLED
 #include "microros_transport.h"
+#endif
 #include "dtls_transport.h"
 #include "ota_signing.h"
 #include "ota_update.h"
@@ -187,7 +189,9 @@ void app_main(void)
     }
 
     // Communication: micro-ROS over UART
+#ifndef MICROROS_DISABLED
     ESP_ERROR_CHECK(microros_init());
+#endif
 
     // Communication: UDP fallback transport (telemetry only - no motor commands)
 #ifndef CONFIG_ROBOT_ALLOW_PLAINTEXT_CTRL
@@ -271,11 +275,13 @@ void app_main(void)
         ESP_LOGE(TAG, "FATAL: safety_task creation failed - rebooting");
         esp_restart();
     }
+#ifndef MICROROS_DISABLED
     rc = xTaskCreate(microros_task, "microros", TASK_STACK_MICROROS, NULL, TASK_PRIO_MICROROS, NULL);
     if (rc != pdPASS) {
         ESP_LOGE(TAG, "FATAL: microros_task creation failed - rebooting");
         esp_restart();
     }
+#endif
     rc = xTaskCreate(ultrasonic_task, "ultrasonic", TASK_STACK_SENSORS, NULL, TASK_PRIO_SENSORS, NULL);
     if (rc != pdPASS) {
         ESP_LOGE(TAG, "FATAL: ultrasonic_task creation failed - rebooting");

@@ -1,24 +1,37 @@
 # SPDX-License-Identifier: Apache-2.0
+
+set(SRCS
+    "main.c"
+    "motor_control.c"
+    "ultrasonic.c"
+    "encoder.c"
+    "imu.c"
+    "i2c_bus.c"
+    "battery.c"
+    "safety.c"
+    "dtls_transport.c"
+    "ota_signing.c"
+    "ota_update.c"
+    "payload_hotplug.c"
+    "canbus.c"
+    "thermal_monitor.c"
+    "udp_transport.c"
+    "wifi_provision.c"
+    "captive_portal.c"
+)
+
+set(PRIV_REQS "")
+set(COMPILE_DEFS "")
+
+if(DEFINED ENV{CI})
+    list(APPEND COMPILE_DEFS "MICROROS_DISABLED=1")
+else()
+    list(APPEND SRCS "microros_transport.c")
+    set(PRIV_REQS micro_ros_espidf_component)
+endif()
+
 idf_component_register(
-    SRCS
-        "main.c"
-        "motor_control.c"
-        "ultrasonic.c"
-        "encoder.c"
-        "imu.c"
-        "i2c_bus.c"
-        "battery.c"
-        "safety.c"
-        "microros_transport.c"
-        "dtls_transport.c"
-        "ota_signing.c"
-        "ota_update.c"
-        "payload_hotplug.c"
-        "canbus.c"
-        "thermal_monitor.c"
-        "udp_transport.c"
-        "wifi_provision.c"
-        "captive_portal.c"
+    SRCS ${SRCS}
     INCLUDE_DIRS
         "."
         "../../config"
@@ -38,5 +51,9 @@ idf_component_register(
         esp_partition
         json
     PRIV_REQUIRES
-        micro_ros_espidf_component
+        ${PRIV_REQS}
 )
+
+if(COMPILE_DEFS)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE ${COMPILE_DEFS})
+endif()
