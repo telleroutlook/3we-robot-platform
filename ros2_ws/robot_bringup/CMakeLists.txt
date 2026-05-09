@@ -14,7 +14,10 @@ install(DIRECTORY config/
 
 if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)
+  find_package(ament_cmake_pytest REQUIRED)
   add_launch_test(test/test_robot_launch.py)
+  ament_add_pytest_test(test_navigation_params test/test_navigation_params.py)
+  ament_add_pytest_test(test_hardware_launch test/test_hardware_launch.py)
 endif()
 
 ament_package()

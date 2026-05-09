@@ -25,6 +25,8 @@ dist/
 .eggs/
 .venv/
 venv/
+.coverage
+htmlcov/
 env/
 
 # ROS2
