@@ -45,6 +45,11 @@ static void IRAM_ATTR estop_isr(void *arg)
 
 esp_err_t safety_init(void)
 {
+    state = SAFETY_NORMAL;
+    relay_fault_count = 0;
+    user_callback = NULL;
+    speed_limit_mps = DEFAULT_SPEED_LIMIT;
+
     gpio_config_t io_cfg = {
         .pin_bit_mask = (1ULL << ESTOP_GPIO),
         .mode = GPIO_MODE_INPUT,
@@ -189,6 +194,15 @@ void safety_feed_watchdog(void)
 {
     int64_t now = esp_timer_get_time();
     portENTER_CRITICAL(&safety_spinlock);
+    int64_t elapsed = now - last_watchdog_feed;
+    if (state == SAFETY_NORMAL && elapsed > (WATCHDOG_TIMEOUT_MS * 1000LL)) {
+        state = SAFETY_ESTOPPED;
+        portEXIT_CRITICAL(&safety_spinlock);
+        motor_stop_all();
+        notify_state_change();
+        ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
+        return;
+    }
     last_watchdog_feed = now;
     portEXIT_CRITICAL(&safety_spinlock);
 }
@@ -287,10 +301,14 @@ esp_err_t safety_relay_selftest(void)
         int fb_level = gpio_get_level(SAFETY_RELAY_FB);
         if (fb_level == 0) {
             ESP_LOGE(TAG, "SELF-TEST FAILED: Relay not energized despite E-stop released");
-            state = SAFETY_RELAY_FAULT;
-            persist_relay_fault();
+            relay_fault_count++;
+            if (relay_fault_count >= 3) {
+                state = SAFETY_RELAY_FAULT;
+                persist_relay_fault();
+            }
             return ESP_ERR_INVALID_STATE;
         }
+        relay_fault_count = 0;
         ESP_LOGI(TAG, "Relay self-test PASSED (feedback=HIGH, relay energized)");
     } else {
         // E-stop is pressed at boot — relay should be de-energized
@@ -298,10 +316,14 @@ esp_err_t safety_relay_selftest(void)
         int fb_level = gpio_get_level(SAFETY_RELAY_FB);
         if (fb_level != 0) {
             ESP_LOGE(TAG, "SELF-TEST FAILED: Relay energized despite E-stop pressed");
-            state = SAFETY_RELAY_FAULT;
-            persist_relay_fault();
+            relay_fault_count++;
+            if (relay_fault_count >= 3) {
+                state = SAFETY_RELAY_FAULT;
+                persist_relay_fault();
+            }
             return ESP_ERR_INVALID_STATE;
         }
+        relay_fault_count = 0;
         ESP_LOGI(TAG, "Relay self-test PASSED (feedback=LOW, E-stop active)");
     }
 

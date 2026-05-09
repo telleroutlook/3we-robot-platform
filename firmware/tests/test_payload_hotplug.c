@@ -14,9 +14,6 @@
 
 #include "payload_hotplug.h"
 
-// Additional Unity assertions not in the minimal implementation
-#define TEST_ASSERT_NOT_NULL(ptr) TEST_ASSERT_TRUE((ptr) != NULL)
-#define TEST_ASSERT_NULL(ptr) TEST_ASSERT_TRUE((ptr) == NULL)
 #define TEST_ASSERT_NOT_EQUAL(expected, actual) TEST_ASSERT_TRUE((expected) != (actual))
 #define TEST_ASSERT_EQUAL_HEX8(expected, actual) TEST_ASSERT_EQUAL_UINT8((expected), (actual))
 #define TEST_ASSERT_GREATER_OR_EQUAL(threshold, actual) \

@@ -23,7 +23,7 @@ def valid_eeprom_bytes() -> bytes:
     buf[0:4] = b"PBC4"
     buf[4] = 0x01
     buf[5:20] = b"test-payload-01"
-    buf[0x15:0x2C] = b"Test Sensor Array\x00" + b"\x00" * 6
+    buf[0x15:0x35] = b"Test Sensor Array\x00" + b"\x00" * 14
     struct.pack_into(">H", buf, 0x35, 500)
     struct.pack_into(">H", buf, 0x37, 0)
     buf[0x39] = 0x01  # CAP_I2C
