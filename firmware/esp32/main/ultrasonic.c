@@ -135,7 +135,7 @@ float ultrasonic_get_last(ultrasonic_id_t id)
 
 void ultrasonic_task(void *params)
 {
-    const TickType_t period = pdMS_TO_TICKS(1000 / ULTRASONIC_PUBLISH_HZ);
+    (void)params;
     ultrasonic_id_t current = US_FRONT;
 
     while (1) {

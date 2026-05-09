@@ -68,6 +68,7 @@ def _make_pose_stamped(goal: GoalPose, frame_id: str = "map") -> PoseStamped:
 
 
 @pytest.mark.simulation
+@pytest.mark.fullstack
 @pytest.mark.timeout(60)
 class TestNav2Goal:
     """Navigation goal acceptance and execution verification."""

@@ -35,11 +35,11 @@ def diagnostics_node(ros2_context, test_node):
     proc.wait(timeout=5)
 
 
-def test_diagnostics_publishes(ros2_context, test_node, diagnostics_node, topic_collector):
+def test_diagnostics_publishes(ros2_context, test_node, diagnostics_node, collect_topics):
     """Verify diagnostics node publishes DiagnosticArray."""
     from diagnostic_msgs.msg import DiagnosticArray
 
-    msgs = topic_collector('/diagnostics', DiagnosticArray, count=3, timeout=5.0)
+    msgs = collect_topics('/diagnostics', DiagnosticArray, count=3, timeout=5.0)
     assert len(msgs) >= 1, "No DiagnosticArray messages received"
 
     diag = msgs[0]
@@ -49,11 +49,10 @@ def test_diagnostics_publishes(ros2_context, test_node, diagnostics_node, topic_
     assert any('system' in n for n in names), f"No system status found in {names}"
 
 
-def test_diagnostics_reports_battery(ros2_context, test_node, diagnostics_node, topic_collector):
+def test_diagnostics_reports_battery(ros2_context, test_node, diagnostics_node, collect_topics):
     """Verify diagnostics includes battery status after publishing battery data."""
     from diagnostic_msgs.msg import DiagnosticArray
     from sensor_msgs.msg import BatteryState
-    import rclpy
 
     pub = test_node.create_publisher(BatteryState, '/battery_state', 10)
     time.sleep(0.5)
@@ -65,7 +64,7 @@ def test_diagnostics_reports_battery(ros2_context, test_node, diagnostics_node, 
 
     time.sleep(1.5)
 
-    msgs = topic_collector('/diagnostics', DiagnosticArray, count=2, timeout=5.0)
+    msgs = collect_topics('/diagnostics', DiagnosticArray, count=2, timeout=5.0)
     assert len(msgs) >= 1
 
     battery_found = False
@@ -79,7 +78,7 @@ def test_diagnostics_reports_battery(ros2_context, test_node, diagnostics_node, 
     assert battery_found, "Battery status not found in diagnostics"
 
 
-def test_diagnostics_reports_estop(ros2_context, test_node, diagnostics_node, topic_collector):
+def test_diagnostics_reports_estop(ros2_context, test_node, diagnostics_node, collect_topics):
     """Verify diagnostics reflects E-stop state."""
     from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
     from std_msgs.msg import Bool
@@ -93,7 +92,7 @@ def test_diagnostics_reports_estop(ros2_context, test_node, diagnostics_node, to
 
     time.sleep(1.5)
 
-    msgs = topic_collector('/diagnostics', DiagnosticArray, count=2, timeout=5.0)
+    msgs = collect_topics('/diagnostics', DiagnosticArray, count=2, timeout=5.0)
     assert len(msgs) >= 1
 
     estop_found = False

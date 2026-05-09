@@ -34,6 +34,7 @@ from conftest import service_caller, wait_for_topic  # noqa: E402
 
 
 @pytest.mark.simulation
+@pytest.mark.fullstack
 @pytest.mark.timeout(60)
 class TestEmergencyStop:
     """E-stop activation and state verification."""

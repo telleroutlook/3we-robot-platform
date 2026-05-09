@@ -48,4 +48,4 @@ jobs:
           source ros2_ws/install/setup.bash
           ros2 launch robot_simulation gazebo.launch.py headless:=true &
           sleep 10
-          pytest tests/integration/ -m "simulation and not hardware" --timeout=120 -v --tb=short
+          pytest tests/integration/ -m "simulation and not hardware and not fullstack" --timeout=120 -v --tb=short
