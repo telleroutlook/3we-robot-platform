@@ -35,12 +35,12 @@ esp_err_t battery_init(void)
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, BATT_ADC_CHANNEL, &chan_cfg));
 
     // Calibration
-    adc_cali_line_fitting_config_t cali_cfg = {
+    adc_cali_curve_fitting_config_t cali_cfg = {
         .unit_id = ADC_UNIT_1,
         .atten = ADC_ATTEN_DB_11,
         .bitwidth = ADC_BITWIDTH_12,
     };
-    adc_cali_create_scheme_line_fitting(&cali_cfg, &cali_handle);
+    adc_cali_create_scheme_curve_fitting(&cali_cfg, &cali_handle);
 
     for (int i = 0; i < BATT_ADC_SAMPLES; i++) {
         readings[i] = BATT_CELLS_SERIES * BATT_CELL_NOMINAL_V;

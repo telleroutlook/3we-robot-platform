@@ -4,6 +4,7 @@
 #include "esp_log.h"
 #include "esp_ota_ops.h"
 #include "esp_partition.h"
+#define MBEDTLS_ALLOW_PRIVATE_ACCESS
 #include "mbedtls/sha256.h"
 #include "mbedtls/ecdsa.h"
 #include "mbedtls/ecp.h"
@@ -40,7 +41,8 @@ static bool ecdsa_p256_verify(const uint8_t *hash, size_t hash_len,
     uncompressed[0] = 0x04;
     memcpy(&uncompressed[1], pubkey, OTA_PUBKEY_SIZE);
 
-    ret = mbedtls_ecp_point_read_binary(&ctx.grp, &ctx.Q, uncompressed, sizeof(uncompressed));
+    ret = mbedtls_ecp_point_read_binary(&ctx.grp, &ctx.Q,
+                                         uncompressed, sizeof(uncompressed));
     if (ret != 0) {
         ESP_LOGE(TAG, "point_read_binary failed: -0x%04X", (unsigned int)-ret);
         mbedtls_ecdsa_free(&ctx);
@@ -60,7 +62,8 @@ static bool ecdsa_p256_verify(const uint8_t *hash, size_t hash_len,
         return false;
     }
 
-    ret = mbedtls_ecdsa_verify(&ctx.grp, hash, hash_len, &ctx.Q, &r, &s);
+    ret = mbedtls_ecdsa_verify(&ctx.grp, hash, hash_len,
+                               &ctx.Q, &r, &s);
 
     mbedtls_mpi_free(&r);
     mbedtls_mpi_free(&s);

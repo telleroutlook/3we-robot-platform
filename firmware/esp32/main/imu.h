@@ -2,6 +2,7 @@
 #ifndef IMU_H
 #define IMU_H
 
+#include <stdbool.h>
 #include "esp_err.h"
 
 typedef struct {

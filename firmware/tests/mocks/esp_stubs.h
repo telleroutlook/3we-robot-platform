@@ -142,11 +142,13 @@ typedef void* adc_cali_handle_t;
 typedef struct { int unit_id; } adc_oneshot_unit_init_cfg_t;
 typedef struct { int atten; int bitwidth; } adc_oneshot_chan_cfg_t;
 typedef struct { int unit_id; int atten; int bitwidth; } adc_cali_line_fitting_config_t;
+typedef adc_cali_line_fitting_config_t adc_cali_curve_fitting_config_t;
 
 esp_err_t adc_oneshot_new_unit(const adc_oneshot_unit_init_cfg_t *cfg, adc_oneshot_unit_handle_t *handle);
 esp_err_t adc_oneshot_config_channel(adc_oneshot_unit_handle_t handle, int channel, const adc_oneshot_chan_cfg_t *cfg);
 esp_err_t adc_oneshot_read(adc_oneshot_unit_handle_t handle, int channel, int *raw);
 esp_err_t adc_cali_create_scheme_line_fitting(const adc_cali_line_fitting_config_t *cfg, adc_cali_handle_t *handle);
+esp_err_t adc_cali_create_scheme_curve_fitting(const adc_cali_curve_fitting_config_t *cfg, adc_cali_handle_t *handle);
 esp_err_t adc_cali_raw_to_voltage(adc_cali_handle_t handle, int raw, int *mv);
 
 void mock_set_adc_raw(int raw_value);

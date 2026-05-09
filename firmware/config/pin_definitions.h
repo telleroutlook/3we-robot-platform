@@ -2,6 +2,10 @@
 #ifndef PIN_DEFINITIONS_H
 #define PIN_DEFINITIONS_H
 
+#ifdef ESP_PLATFORM
+#include "hal/spi_types.h"
+#endif
+
 // =============================================================================
 // ESP32-S3 Pin Assignment — Robot Platform
 // =============================================================================
