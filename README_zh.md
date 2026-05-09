@@ -10,6 +10,13 @@
 [![ROS2](https://img.shields.io/badge/ROS2-Humble%20|%20Jazzy-blueviolet.svg)](https://ros.org/)
 [![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.x-red.svg)](https://github.com/espressif/esp-idf)
 
+[![ESP32-S3](https://img.shields.io/badge/ESP32--S3-000000?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/en/products/socs/esp32-s3)
+[![ROS2](https://img.shields.io/badge/ROS2-22314E?style=for-the-badge&logo=ros&logoColor=white)](https://ros.org/)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![KiCad](https://img.shields.io/badge/KiCad-314CB0?style=for-the-badge&logo=kicad&logoColor=white)](https://www.kicad.org/)
+[![CI](https://img.shields.io/github/actions/workflow/status/3we/robot-platform/full-validation.yml?style=for-the-badge&label=CI)](../../actions)
+
 一个开源的全向移动机器人平台，<br/>
 专为**模块化**、**可扩展性**和**快速载荷集成**而设计。
 
@@ -75,6 +82,25 @@
 </td>
 </tr>
 </table>
+
+<br/>
+
+## ✦ 为什么选择本项目
+
+| 痛点 | 我们的解决方案 |
+|:-----|:---------------|
+| 从零搭建机器人平台需要数月时间 | 完整开源技术栈：硬件 → 固件 → ROS2 → SDK，开箱即用可定制 |
+| 多数平台硬件设计闭源 | 完全开放 PCB（KiCad）+ 机械图纸，采用 CERN-OHL-P 许可 |
+| 没有标准化的载荷接口 | PBC-34 热插拔总线 + EEPROM 自动识别 —— 插入传感器即刻工作 |
+| 教育平台无法扩展到工业场景 | 4 个 SKU 从教室（Basic）到工厂（Industrial）—— 同一代码库 |
+| 安全性往往是事后补救 | DTLS 1.2 加密通信 + 签名 OTA + 硬件急停，从第一天就内置 |
+
+### 适合谁？
+
+- **学生与教育者** —— 用生产级代码学习真正的嵌入式系统、ROS2 和机电一体化，而非玩具示例
+- **科研人员** —— 跳过 6 个月的平台搭建期；在经过验证的传感器融合底盘上专注你的算法
+- **产品开发者** —— 从原型到产品用同一平台；切换 SKU 配置无需重写代码
+- **工业集成商** —— IP65 防护、CAN 总线、5G、硬件安全继电器 —— 自信部署到真实场景
 
 <br/>
 
@@ -197,6 +223,24 @@ ros2 launch robot_bringup robot.launch.py
 | 电机驱动 | DRV8833 x2 | 4 路直流电机 H 桥 |
 | 安全加密 | DTLS 1.2 + Ed25519 OTA | 加密控制、签名升级 |
 | 安全系统 | ISO 13850 急停 | 硬件互锁 |
+
+<br/>
+
+## ✦ 与竞品对比
+
+| 特性 | **本项目** | TurtleBot 4 | Linorobot2 | ROSbot XL | Yahboom X3 |
+|:-----|:---:|:---:|:---:|:---:|:---:|
+| **开放硬件** | 完全开放 (CERN-OHL-P) | 部分 | 部分 | 闭源 | 闭源 |
+| **麦轮驱动** | 四轮全向 | 差速 | 可配置 | 麦轮 | 麦轮 |
+| **载荷系统** | PBC-34 热插拔总线 | USB/串口 | 无 | GPIO 排针 | 无 |
+| **加密通信** | DTLS 1.2 | 无 | 无 | 无 | 无 |
+| **多 SKU** | 4 个变体（同一代码库） | 单一 | 单一 | 2 个变体 | 单一 |
+| **Web 控制** | 内置（TypeScript） | 需 RViz | 无 | ROSbot UI | 仅 App |
+| **硬件安全继电器** | ISO 13850 + 自检 | 仅软件 | 无 | 仅软件 | 无 |
+
+本平台占据独特定位：**完全开放硬件 + 生产级安全**，填补了教育套件与闭源工业机器人之间的空白。没有其他开源平台能在单一架构中同时提供标准化载荷总线、加密通信和多 SKU 可扩展性。
+
+> 详细多维度对比请参见 **[docs/competitive_analysis.md](docs/competitive_analysis.md)**。
 
 <br/>
 

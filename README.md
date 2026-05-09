@@ -10,6 +10,13 @@
 [![ROS2](https://img.shields.io/badge/ROS2-Humble%20|%20Jazzy-blueviolet.svg)](https://ros.org/)
 [![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.x-red.svg)](https://github.com/espressif/esp-idf)
 
+[![ESP32-S3](https://img.shields.io/badge/ESP32--S3-000000?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/en/products/socs/esp32-s3)
+[![ROS2](https://img.shields.io/badge/ROS2-22314E?style=for-the-badge&logo=ros&logoColor=white)](https://ros.org/)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![KiCad](https://img.shields.io/badge/KiCad-314CB0?style=for-the-badge&logo=kicad&logoColor=white)](https://www.kicad.org/)
+[![CI](https://img.shields.io/github/actions/workflow/status/3we/robot-platform/full-validation.yml?style=for-the-badge&label=CI)](../../actions)
+
 An open-source omnidirectional mobile robot platform designed for<br/>
 **modularity**, **extensibility**, and **rapid payload integration**.
 
@@ -75,6 +82,25 @@ An open-source omnidirectional mobile robot platform designed for<br/>
 </td>
 </tr>
 </table>
+
+<br/>
+
+## ✦ Why This Project
+
+| Pain Point | How We Solve It |
+|:-----------|:----------------|
+| Building a robot platform from scratch takes months | Complete open-source stack: hardware → firmware → ROS2 → SDK, ready to customize |
+| Most platforms have closed hardware designs | Fully open PCB (KiCad) + mechanical drawings under CERN-OHL-P |
+| No standard payload interface exists | PBC-34 hot-plug bus with EEPROM auto-discovery — plug in your sensor and go |
+| Education platforms don't scale to industry | 4 SKUs from classroom (Basic) to factory floor (Industrial) — same codebase |
+| Security is bolted on as an afterthought | DTLS 1.2 encrypted comms + signed OTA + hardware E-stop from day one |
+
+### Who Is This For?
+
+- **Students & Educators** — Learn real embedded systems, ROS2, and mechatronics with production-grade code instead of toy examples
+- **Researchers** — Skip 6 months of platform building; focus on your algorithm with a validated, sensor-fused base
+- **Product Developers** — Prototype to product on the same platform; swap SKU configs without rewriting code
+- **Industrial Integrators** — IP65, CAN bus, 5G, hardware safety relays — deploy in real facilities with confidence
 
 <br/>
 
@@ -197,6 +223,24 @@ ros2 launch robot_bringup robot.launch.py
 | Motor Driver | DRV8833 x2 | 4 × DC motor H-bridge |
 | Security | DTLS 1.2 + Ed25519 OTA | Encrypted control, signed updates |
 | Safety | ISO 13850 E-stop | Hardware interlock |
+
+<br/>
+
+## ✦ Comparison with Alternatives
+
+| Feature | **This Project** | TurtleBot 4 | Linorobot2 | ROSbot XL | Yahboom X3 |
+|:--------|:---:|:---:|:---:|:---:|:---:|
+| **Open Hardware** | Full (CERN-OHL-P) | Partial | Partial | Closed | Closed |
+| **Mecanum Drive** | 4-wheel omnidirectional | Differential | Configurable | Mecanum | Mecanum |
+| **Payload System** | PBC-34 hot-plug bus | USB/serial | None | GPIO header | None |
+| **Encrypted Comms** | DTLS 1.2 | None | None | None | None |
+| **Multi-SKU** | 4 variants (1 codebase) | Single | Single | 2 variants | Single |
+| **Web Control UI** | Built-in (TypeScript) | Via RViz | None | ROSbot UI | App only |
+| **HW Safety Relay** | ISO 13850 + self-test | Software only | None | Software only | None |
+
+This platform occupies a unique position: **fully open hardware with production-grade security**, bridging the gap between educational kits and closed industrial robots. No other open-source platform combines a standardized payload bus, encrypted communication, and multi-SKU scalability in a single architecture.
+
+> See **[docs/competitive_analysis.md](docs/competitive_analysis.md)** for detailed multi-dimensional comparison.
 
 <br/>
 
