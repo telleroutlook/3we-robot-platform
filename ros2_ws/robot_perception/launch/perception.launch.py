@@ -63,10 +63,12 @@ def generate_launch_description() -> LaunchDescription:
     #     output="screen",
     # )
 
-    return LaunchDescription([
-        model_path_arg,
-        confidence_threshold_arg,
-        device_id_arg,
-        inference_node,
-        # camera_node,
-    ])
+    return LaunchDescription(
+        [
+            model_path_arg,
+            confidence_threshold_arg,
+            device_id_arg,
+            inference_node,
+            # camera_node,
+        ]
+    )

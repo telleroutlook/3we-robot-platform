@@ -182,9 +182,15 @@ export class RobotPayloadPanel extends HTMLElement {
   private toggleVbat!: HTMLElement;
   private unsubscribe: (() => void) | null = null;
   private currentPayloadId = '';
-  private on5vClick = (): void => { this.toggleRail('5V', this.toggle5v); };
-  private on12vClick = (): void => { this.toggleRail('12V', this.toggle12v); };
-  private onVbatClick = (): void => { this.toggleRail('VBAT', this.toggleVbat); };
+  private on5vClick = (): void => {
+    this.toggleRail('5V', this.toggle5v);
+  };
+  private on12vClick = (): void => {
+    this.toggleRail('12V', this.toggle12v);
+  };
+  private onVbatClick = (): void => {
+    this.toggleRail('VBAT', this.toggleVbat);
+  };
   private onKeydown = (e: KeyboardEvent): void => {
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();

@@ -23,11 +23,23 @@ class HailoInferenceNode(Node):
         self.declare_parameter("input_topic", "/camera/image_raw")
         self.declare_parameter("output_topic", "/perception/detections")
 
-        self._model_path = self.get_parameter("model_path").get_parameter_value().string_value
-        self._confidence_threshold = self.get_parameter("confidence_threshold").get_parameter_value().double_value
-        self._device_id = self.get_parameter("device_id").get_parameter_value().integer_value
-        input_topic = self.get_parameter("input_topic").get_parameter_value().string_value
-        output_topic = self.get_parameter("output_topic").get_parameter_value().string_value
+        self._model_path = (
+            self.get_parameter("model_path").get_parameter_value().string_value
+        )
+        self._confidence_threshold = (
+            self.get_parameter("confidence_threshold")
+            .get_parameter_value()
+            .double_value
+        )
+        self._device_id = (
+            self.get_parameter("device_id").get_parameter_value().integer_value
+        )
+        input_topic = (
+            self.get_parameter("input_topic").get_parameter_value().string_value
+        )
+        output_topic = (
+            self.get_parameter("output_topic").get_parameter_value().string_value
+        )
 
         self._bridge = CvBridge()
         self._latest_frame: np.ndarray | None = None
@@ -37,7 +49,12 @@ class HailoInferenceNode(Node):
 
         # Attempt to import Hailo runtime
         try:
-            from hailo_platform import HEF, VDevice, ConfigureParams, HailoStreamInterface  # noqa: F401
+            from hailo_platform import (  # noqa: F401
+                HEF,
+                VDevice,
+                ConfigureParams,
+                HailoStreamInterface,
+            )
 
             self._hailo_available = True
             self.get_logger().info("Hailo runtime detected successfully")
@@ -70,14 +87,20 @@ class HailoInferenceNode(Node):
     def _initialize_hailo(self) -> None:
         """Load the HEF model onto the Hailo device."""
         try:
-            from hailo_platform import HEF, VDevice, ConfigureParams, HailoStreamInterface  # noqa: F401
+            from hailo_platform import (
+                HEF,
+                VDevice,
+                ConfigureParams,
+            )  # noqa: F401
 
             self.get_logger().info(f"Loading model: {self._model_path}")
             self._hef_model = HEF(self._model_path)
             params = VDevice.create_params()
             params.device_ids = [self._device_id]
             self._vdevice = VDevice(params)
-            self._infer_model = self._vdevice.configure(self._hef_model, ConfigureParams.create_from_hef(self._hef_model))
+            self._infer_model = self._vdevice.configure(
+                self._hef_model, ConfigureParams.create_from_hef(self._hef_model)
+            )
             self.get_logger().info("Hailo model loaded and device configured")
         except Exception as e:
             self.get_logger().error(f"Failed to initialize Hailo device: {e}")
@@ -92,7 +115,9 @@ class HailoInferenceNode(Node):
         if not self._hailo_available:
             self._passthrough_log_counter += 1
             if self._passthrough_log_counter % 150 == 1:
-                self.get_logger().info("Hailo runtime not found, running in passthrough mode")
+                self.get_logger().info(
+                    "Hailo runtime not found, running in passthrough mode"
+                )
             return
 
         if self._latest_frame is None:

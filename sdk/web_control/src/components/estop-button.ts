@@ -180,9 +180,15 @@ export class RobotEstopButton extends HTMLElement {
   private _visualState: EstopVisualState = 'normal';
   private estopped = false;
   private unsubscribe: (() => void) | null = null;
-  private onBtnClick = (): void => { this.onButtonClick(); };
-  private onCancelClick = (): void => { this.hideConfirm(); };
-  private onConfirmClick = (): void => { this.doReset(); };
+  private onBtnClick = (): void => {
+    this.onButtonClick();
+  };
+  private onCancelClick = (): void => {
+    this.hideConfirm();
+  };
+  private onConfirmClick = (): void => {
+    this.doReset();
+  };
 
   get visualState(): EstopVisualState {
     return this._visualState;
