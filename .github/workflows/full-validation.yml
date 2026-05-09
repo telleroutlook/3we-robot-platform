@@ -89,7 +89,7 @@ jobs:
           apt-get update
           apt-get install -y python3-colcon-common-extensions
           rosdep update
-          rosdep install --from-paths ros2_ws --ignore-src -y
+          rosdep install --from-paths ros2_ws --ignore-src -y --skip-keys="micro_ros_agent"
 
       - name: Build
         working-directory: ros2_ws
@@ -125,7 +125,7 @@ jobs:
             ros-humble-ros-gz-bridge
           pip3 install pytest pytest-timeout
           rosdep update
-          rosdep install --from-paths ros2_ws --ignore-src -y
+          rosdep install --from-paths ros2_ws --ignore-src -y --skip-keys="micro_ros_agent"
 
       - name: Build workspace
         run: |

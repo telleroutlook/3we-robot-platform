@@ -249,4 +249,285 @@ describe('RosbridgeConnection', () => {
       expect(() => ws.simulateMessage('not json')).not.toThrow();
     });
   });
+
+  describe('callService', () => {
+    it('sends service call message and resolves on response', async () => {
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await connected;
+
+      const ws = MockWebSocket.instances[0];
+      const resultPromise = conn.callService('/get_map', 'nav_msgs/GetMap', {});
+
+      const svcMsg = ws.sent.find((s) => JSON.parse(s).op === 'call_service');
+      expect(svcMsg).toBeDefined();
+      const parsed = JSON.parse(svcMsg as string);
+      expect(parsed.service).toBe('/get_map');
+
+      ws.simulateMessage(
+        JSON.stringify({
+          op: 'service_response',
+          service: '/get_map',
+          id: parsed.id,
+          result: true,
+          values: { map: 'data' },
+        })
+      );
+
+      const result = await resultPromise;
+      expect(result).toEqual({ map: 'data' });
+    });
+
+    it('rejects on failed service response', async () => {
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await connected;
+
+      const ws = MockWebSocket.instances[0];
+      const resultPromise = conn.callService('/fail_svc', 'std_srvs/Trigger', {});
+
+      const svcMsg = ws.sent.find((s) => JSON.parse(s).op === 'call_service');
+      const parsed = JSON.parse(svcMsg as string);
+
+      ws.simulateMessage(
+        JSON.stringify({
+          op: 'service_response',
+          service: '/fail_svc',
+          id: parsed.id,
+          result: false,
+          values: { message: 'failed' },
+        })
+      );
+
+      await expect(resultPromise).rejects.toThrow('Service call failed');
+    });
+
+    it('throws when not connected', async () => {
+      await expect(conn.callService('/test', 'std_srvs/Trigger', {})).rejects.toThrow(
+        'Not connected'
+      );
+    });
+
+    it('times out after 10s', async () => {
+      vi.useFakeTimers();
+
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await vi.advanceTimersByTimeAsync(1);
+      await connected;
+
+      const resultPromise = conn.callService('/slow', 'std_srvs/Trigger', {});
+      vi.advanceTimersByTime(10001);
+
+      await expect(resultPromise).rejects.toThrow('timed out');
+    });
+  });
+
+  describe('reconnection', () => {
+    it('schedules reconnect on unexpected close', async () => {
+      vi.useFakeTimers();
+
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await vi.advanceTimersByTimeAsync(1);
+      await connected;
+
+      const ws = MockWebSocket.instances[0];
+      ws.readyState = WebSocket.CLOSED;
+      ws.onclose?.();
+
+      expect(conn.connectionState).toBe('connecting');
+
+      vi.advanceTimersByTime(1000);
+      expect(MockWebSocket.instances.length).toBe(2);
+    });
+
+    it('does not reconnect on intentional disconnect', async () => {
+      vi.useFakeTimers();
+
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await vi.advanceTimersByTimeAsync(1);
+      await connected;
+
+      conn.disconnect();
+      expect(conn.connectionState).toBe('disconnected');
+
+      vi.advanceTimersByTime(5000);
+      expect(MockWebSocket.instances.length).toBe(1);
+    });
+
+    it('resubscribes topics after reconnect', async () => {
+      vi.useFakeTimers();
+
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await vi.advanceTimersByTimeAsync(1);
+      await connected;
+
+      conn.subscribe('/battery', 'sensor_msgs/BatteryState', () => {});
+
+      const ws1 = MockWebSocket.instances[0];
+      ws1.readyState = WebSocket.CLOSED;
+      ws1.onclose?.();
+
+      vi.advanceTimersByTime(1000);
+      await vi.advanceTimersByTimeAsync(1);
+
+      const ws2 = MockWebSocket.instances[1];
+      const subMsgs = ws2.sent.filter((s) => JSON.parse(s).op === 'subscribe');
+      expect(subMsgs.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('heartbeat', () => {
+    it('sends ping messages periodically', async () => {
+      vi.useFakeTimers();
+
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await vi.advanceTimersByTimeAsync(1);
+      await connected;
+
+      const ws = MockWebSocket.instances[0];
+      ws.sent.length = 0;
+
+      vi.advanceTimersByTime(10000);
+
+      const pings = ws.sent.filter((s) => JSON.parse(s).op === 'ping');
+      expect(pings.length).toBe(1);
+    });
+
+    it('resets missed pongs on pong response', async () => {
+      vi.useFakeTimers();
+
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await vi.advanceTimersByTimeAsync(1);
+      await connected;
+
+      const ws = MockWebSocket.instances[0];
+
+      vi.advanceTimersByTime(10000);
+      ws.simulateMessage(JSON.stringify({ op: 'pong' }));
+
+      vi.advanceTimersByTime(10000);
+      ws.simulateMessage(JSON.stringify({ op: 'pong' }));
+
+      vi.advanceTimersByTime(10000);
+      ws.simulateMessage(JSON.stringify({ op: 'pong' }));
+
+      expect(ws.readyState).toBe(WebSocket.OPEN);
+    });
+
+    it('closes WebSocket after max missed pongs', async () => {
+      vi.useFakeTimers();
+
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await vi.advanceTimersByTimeAsync(1);
+      await connected;
+
+      vi.advanceTimersByTime(30001);
+
+      const ws = MockWebSocket.instances[0];
+      expect(ws.readyState).toBe(WebSocket.CLOSED);
+    });
+  });
+
+  describe('WebSocket error handling', () => {
+    it('transitions to error state on WebSocket error', async () => {
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await connected;
+
+      const states: string[] = [];
+      conn.addEventListener('statechange', ((e: CustomEvent) => {
+        states.push(e.detail.state);
+      }) as EventListener);
+
+      const ws = MockWebSocket.instances[0];
+      ws.simulateError();
+
+      expect(states).toContain('error');
+    });
+
+    it('rejects pending services on disconnect', async () => {
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await connected;
+
+      vi.useFakeTimers();
+      const svcPromise = conn.callService('/test', 'std_srvs/Trigger', {});
+      conn.disconnect();
+
+      await expect(svcPromise).rejects.toThrow('Disconnected');
+    });
+  });
+
+  describe('non-localhost ws:// warning', () => {
+    it('warns on insecure non-localhost connection', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      conn.connect('ws://192.168.1.100:9090');
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Unencrypted ws://'));
+      warnSpy.mockRestore();
+    });
+  });
 });

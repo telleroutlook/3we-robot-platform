@@ -41,7 +41,7 @@ RUN pip3 install --no-cache-dir paho-mqtt
 
 SHELL ["/bin/bash", "-c"]
 RUN source /opt/ros/humble/setup.bash && \
-    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+    colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 # ============================================================
 # Stage 3: Runtime
