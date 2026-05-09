@@ -28,9 +28,14 @@ services:
     profiles: ["fleet"]
     ports:
       - "1883:1883"
+    environment:
+      - MQTT_USER=${MQTT_USER:-robot}
+      - MQTT_PASS=${MQTT_PASS:-changeme}
     volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./docker/mosquitto/entrypoint.sh:/entrypoint.sh:ro
       - mosquitto-data:/mosquitto/data
-    command: mosquitto -c /dev/null -p 1883 -v
+    entrypoint: /entrypoint.sh
 
 volumes:
   mosquitto-data:

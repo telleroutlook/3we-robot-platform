@@ -1,6 +1,6 @@
 <div align="center">
 
-# Robot Platform
+# 3WE Robot Platform
 
 **Universal Modular Mobile Platform**
 

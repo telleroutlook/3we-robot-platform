@@ -25,6 +25,9 @@ typedef struct __attribute__((packed)) {
 esp_err_t ota_signing_init(const uint8_t pubkey[OTA_PUBKEY_SIZE]);
 bool ota_verify_image(const uint8_t *image_data, size_t image_size,
                       const ota_image_header_t *header);
+bool ota_verify_image_hash(const uint8_t computed_hash[OTA_HASH_SIZE],
+                           size_t image_size,
+                           const ota_image_header_t *header);
 esp_err_t ota_apply_update(const uint8_t *image_data, size_t total_size);
 uint32_t ota_get_current_version(void);
 

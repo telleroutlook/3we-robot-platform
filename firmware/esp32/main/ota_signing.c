@@ -111,6 +111,29 @@ bool ota_verify_image(const uint8_t *image_data, size_t image_size,
     uint8_t computed_hash[OTA_HASH_SIZE];
     mbedtls_sha256(image_data, image_size, computed_hash, 0);
 
+    return ota_verify_image_hash(computed_hash, image_size, header);
+}
+
+bool ota_verify_image_hash(const uint8_t computed_hash[OTA_HASH_SIZE],
+                           size_t image_size,
+                           const ota_image_header_t *header)
+{
+    if (!initialized) {
+        ESP_LOGE(TAG, "Not initialized - rejecting image");
+        return false;
+    }
+
+    if (header->magic != OTA_HEADER_MAGIC) {
+        ESP_LOGE(TAG, "Invalid magic: 0x%08lX", (unsigned long)header->magic);
+        return false;
+    }
+
+    if (header->image_size != image_size) {
+        ESP_LOGE(TAG, "Size mismatch: header=%lu, actual=%zu",
+                 (unsigned long)header->image_size, image_size);
+        return false;
+    }
+
     // Verify hash matches header
     if (memcmp(computed_hash, header->sha256, OTA_HASH_SIZE) != 0) {
         ESP_LOGE(TAG, "SHA-256 hash mismatch - image corrupted");
@@ -118,7 +141,6 @@ bool ota_verify_image(const uint8_t *image_data, size_t image_size,
     }
 
     // Compute signed digest: SHA-256(magic || version || image_size || firmware_hash)
-    // This binds the header fields to the signature, preventing replay/manipulation
     uint8_t signed_digest[OTA_HASH_SIZE];
     mbedtls_sha256_context sha_ctx;
     mbedtls_sha256_init(&sha_ctx);

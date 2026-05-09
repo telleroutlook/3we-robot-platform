@@ -189,6 +189,29 @@ extern void test_ota_update_progress_pct_complete(void);
 extern void test_ota_update_rejects_empty_url(void);
 extern void test_ota_update_url_max_length(void);
 
+// test_microros_messages.c
+extern void test_fk_all_wheels_forward_gives_pure_vx(void);
+extern void test_fk_zero_wheels_gives_zero_velocity(void);
+extern void test_fk_strafe_right_pattern(void);
+extern void test_fk_rotation_ccw_pattern(void);
+extern void test_fk_asymmetric_speeds_give_combined_motion(void);
+extern void test_odom_integration_forward(void);
+extern void test_odom_integration_rotation_then_forward(void);
+extern void test_odom_integration_zero_velocity(void);
+extern void test_odom_integration_small_dt(void);
+extern void test_quaternion_zero_yaw(void);
+extern void test_quaternion_90_degrees(void);
+extern void test_quaternion_unit_norm(void);
+extern void test_cmd_vel_clamp_within_limit(void);
+extern void test_cmd_vel_clamp_above_limit(void);
+extern void test_cmd_vel_clamp_below_negative_limit(void);
+extern void test_wheel_msg_requires_4_elements(void);
+extern void test_range_field_of_view_reasonable(void);
+extern void test_range_limits_match_params(void);
+extern void test_battery_percentage_bounded(void);
+extern void test_battery_percentage_boundary_zero(void);
+extern void test_battery_percentage_boundary_full(void);
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -380,6 +403,29 @@ int main(void)
     RUN_TEST(test_ota_update_progress_pct_complete);
     RUN_TEST(test_ota_update_rejects_empty_url);
     RUN_TEST(test_ota_update_url_max_length);
+
+    // micro-ROS message logic
+    RUN_TEST(test_fk_all_wheels_forward_gives_pure_vx);
+    RUN_TEST(test_fk_zero_wheels_gives_zero_velocity);
+    RUN_TEST(test_fk_strafe_right_pattern);
+    RUN_TEST(test_fk_rotation_ccw_pattern);
+    RUN_TEST(test_fk_asymmetric_speeds_give_combined_motion);
+    RUN_TEST(test_odom_integration_forward);
+    RUN_TEST(test_odom_integration_rotation_then_forward);
+    RUN_TEST(test_odom_integration_zero_velocity);
+    RUN_TEST(test_odom_integration_small_dt);
+    RUN_TEST(test_quaternion_zero_yaw);
+    RUN_TEST(test_quaternion_90_degrees);
+    RUN_TEST(test_quaternion_unit_norm);
+    RUN_TEST(test_cmd_vel_clamp_within_limit);
+    RUN_TEST(test_cmd_vel_clamp_above_limit);
+    RUN_TEST(test_cmd_vel_clamp_below_negative_limit);
+    RUN_TEST(test_wheel_msg_requires_4_elements);
+    RUN_TEST(test_range_field_of_view_reasonable);
+    RUN_TEST(test_range_limits_match_params);
+    RUN_TEST(test_battery_percentage_bounded);
+    RUN_TEST(test_battery_percentage_boundary_zero);
+    RUN_TEST(test_battery_percentage_boundary_full);
 
     return UNITY_END();
 }

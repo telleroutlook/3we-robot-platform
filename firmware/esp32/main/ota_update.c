@@ -7,6 +7,7 @@
 #include "esp_http_client.h"
 #include "esp_http_server.h"
 #include "esp_partition.h"
+#include "mbedtls/sha256.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -124,9 +125,14 @@ static esp_err_t perform_ota_from_url(const char *url)
     set_progress(OTA_STATUS_DOWNLOADING, (uint8_t)((received * 100) / total),
                  received, total, NULL);
 
-    // Stream firmware to OTA partition
+    // Stream firmware to OTA partition while computing SHA-256
+    mbedtls_sha256_context sha_ctx;
+    mbedtls_sha256_init(&sha_ctx);
+    mbedtls_sha256_starts(&sha_ctx, 0);
+
     uint8_t *buf = malloc(OTA_BUF_SIZE);
     if (!buf) {
+        mbedtls_sha256_free(&sha_ctx);
         esp_ota_abort(ota_handle);
         esp_http_client_cleanup(client);
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Out of memory");
@@ -145,6 +151,8 @@ static esp_err_t perform_ota_from_url(const char *url)
             break;
         }
 
+        mbedtls_sha256_update(&sha_ctx, buf, (size_t)read_len);
+
         err = esp_ota_write(ota_handle, buf, (size_t)read_len);
         if (err != ESP_OK) {
             download_ok = false;
@@ -161,36 +169,24 @@ static esp_err_t perform_ota_from_url(const char *url)
     esp_http_client_cleanup(client);
 
     if (!download_ok || firmware_written != firmware_size) {
+        mbedtls_sha256_free(&sha_ctx);
         esp_ota_abort(ota_handle);
         set_progress(OTA_STATUS_FAILED, 0, received, total, "Download incomplete");
         return ESP_ERR_INVALID_SIZE;
     }
 
-    // Verify signature by reading firmware back from partition
+    // Finalize streaming hash and verify signature without re-reading flash
     set_progress(OTA_STATUS_VERIFYING, 100, received, total, NULL);
 
-    uint8_t *verify_buf = malloc(firmware_size);
-    if (!verify_buf) {
-        esp_ota_abort(ota_handle);
-        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Out of memory for verification");
-        return ESP_ERR_NO_MEM;
-    }
+    uint8_t computed_hash[OTA_HASH_SIZE];
+    mbedtls_sha256_finish(&sha_ctx, computed_hash);
+    mbedtls_sha256_free(&sha_ctx);
 
-    err = esp_partition_read(update_part, 0, verify_buf, firmware_size);
-    if (err != ESP_OK) {
-        free(verify_buf);
-        esp_ota_abort(ota_handle);
-        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Failed to read partition for verify");
-        return err;
-    }
-
-    if (!ota_verify_image(verify_buf, firmware_size, header)) {
-        free(verify_buf);
+    if (!ota_verify_image_hash(computed_hash, firmware_size, header)) {
         esp_ota_abort(ota_handle);
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Signature verification failed");
         return ESP_ERR_OTA_VALIDATE_FAILED;
     }
-    free(verify_buf);
 
     err = esp_ota_end(ota_handle);
     if (err != ESP_OK) {
