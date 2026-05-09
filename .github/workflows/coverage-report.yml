@@ -44,7 +44,7 @@ jobs:
       - name: Check coverage thresholds
         working-directory: sdk/web_control
         run: |
-          COVERAGE=$(cat coverage/json-summary/coverage-summary.json | python3 -c "
+          COVERAGE=$(cat coverage/coverage-summary.json | python3 -c "
           import json, sys
           data = json.load(sys.stdin)
           total = data['total']

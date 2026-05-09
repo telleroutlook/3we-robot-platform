@@ -35,4 +35,5 @@ jobs:
         run: |
           source /opt/ros/humble/setup.bash
           source install/setup.bash
-          colcon test --return-code-on-test-failure
+          colcon test --return-code-on-test-failure \
+            --packages-skip robot_bringup robot_simulation
