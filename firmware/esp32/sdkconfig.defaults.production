@@ -11,9 +11,6 @@ CONFIG_SECURE_BOOT=y
 CONFIG_SECURE_BOOT_V2_ENABLED=y
 CONFIG_SECURE_BOOT_VERIFICATION_KEY="secure_boot_signing_key.pem"
 
-# --- Partition table offset (larger bootloader with secure boot) ---
-CONFIG_PARTITION_TABLE_OFFSET=0x10000
-
 # --- Flash Encryption (Release mode) ---
 CONFIG_SECURE_FLASH_ENC_ENABLED=y
 CONFIG_SECURE_FLASH_ENCRYPTION_MODE_RELEASE=y

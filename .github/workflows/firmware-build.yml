@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     container: espressif/idf:v5.2
     strategy:
+      fail-fast: false
       matrix:
         include:
           - sku: ROBOT_SKU_BASIC
