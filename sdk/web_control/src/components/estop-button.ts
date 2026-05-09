@@ -180,6 +180,9 @@ export class RobotEstopButton extends HTMLElement {
   private _visualState: EstopVisualState = 'normal';
   private estopped = false;
   private unsubscribe: (() => void) | null = null;
+  private onBtnClick = (): void => { this.onButtonClick(); };
+  private onCancelClick = (): void => { this.hideConfirm(); };
+  private onConfirmClick = (): void => { this.doReset(); };
 
   get visualState(): EstopVisualState {
     return this._visualState;
@@ -199,9 +202,9 @@ export class RobotEstopButton extends HTMLElement {
     const cancelBtn = shadow.getElementById('cancelReset') as HTMLElement;
     const confirmBtn = shadow.getElementById('confirmReset') as HTMLElement;
 
-    this.btn.addEventListener('click', () => this.onButtonClick());
-    cancelBtn.addEventListener('click', () => this.hideConfirm());
-    confirmBtn.addEventListener('click', () => this.doReset());
+    this.btn.addEventListener('click', this.onBtnClick);
+    cancelBtn.addEventListener('click', this.onCancelClick);
+    confirmBtn.addEventListener('click', this.onConfirmClick);
 
     this.unsubscribe = connection.subscribe<EmergencyStopState>(
       '/emergency_stop_state',
@@ -215,6 +218,11 @@ export class RobotEstopButton extends HTMLElement {
       this.unsubscribe();
       this.unsubscribe = null;
     }
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+    this.btn?.removeEventListener('click', this.onBtnClick);
+    shadow.getElementById('cancelReset')?.removeEventListener('click', this.onCancelClick);
+    shadow.getElementById('confirmReset')?.removeEventListener('click', this.onConfirmClick);
   }
 
   private onButtonClick(): void {

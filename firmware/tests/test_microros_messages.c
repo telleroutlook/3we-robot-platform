@@ -187,17 +187,17 @@ void test_cmd_vel_clamp_below_negative_limit(void)
 
 void test_wheel_msg_requires_4_elements(void)
 {
-    float data[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    TEST_ASSERT_EQUAL(4, (int)(sizeof(data) / sizeof(data[0])));
+    _Static_assert(NUM_WHEELS == 4, "mecanum kinematics requires exactly 4 wheels");
+    float data[NUM_WHEELS] = {0.0f, 0.0f, 0.0f, 0.0f};
+    TEST_ASSERT_EQUAL(NUM_WHEELS, (int)(sizeof(data) / sizeof(data[0])));
 }
 
 // --- Range message field validation ---
 
 void test_range_field_of_view_reasonable(void)
 {
-    float fov = 0.26f;  // ~15 degrees as in microros_transport.c
-    TEST_ASSERT_TRUE(fov > 0.0f);
-    TEST_ASSERT_TRUE(fov < (float)M_PI);
+    TEST_ASSERT_TRUE(US_FOV_RAD > 0.0f);
+    TEST_ASSERT_TRUE(US_FOV_RAD < (float)M_PI);
 }
 
 void test_range_limits_match_params(void)
@@ -211,11 +211,11 @@ void test_range_limits_match_params(void)
 
 void test_battery_percentage_bounded(void)
 {
-    // Percentage from battery_get_percentage() is 0-100, divided by 100 for ROS msg
-    float pct_raw = 85.0f;
-    float msg_pct = pct_raw / 100.0f;
-    TEST_ASSERT_TRUE(msg_pct >= 0.0f);
-    TEST_ASSERT_TRUE(msg_pct <= 1.0f);
+    for (float pct_raw = 0.0f; pct_raw <= 100.0f; pct_raw += 25.0f) {
+        float msg_pct = pct_raw / 100.0f;
+        TEST_ASSERT_TRUE(msg_pct >= 0.0f);
+        TEST_ASSERT_TRUE(msg_pct <= 1.0f);
+    }
 }
 
 void test_battery_percentage_boundary_zero(void)

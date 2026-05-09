@@ -3,6 +3,7 @@
 #define ROBOT_PARAMS_H
 
 // Chassis geometry (mm)
+#define NUM_WHEELS              4
 #define WHEEL_RADIUS_MM         24.0f
 #define WHEEL_SEPARATION_MM    200.0f   // Track width (left-right center distance)
 #define WHEELBASE_MM           180.0f   // Front-rear axle distance
@@ -54,6 +55,7 @@
 // Ultrasonic
 #define US_MAX_RANGE_M          4.0f
 #define US_MIN_RANGE_M          0.02f
+#define US_FOV_RAD              0.26f   // ~15 degrees beam width
 #define US_TRIGGER_PULSE_US     10
 #define US_TIMEOUT_US           25000   // ~4.3m max
 #define US_SAFETY_THRESHOLD_M   0.05f   // Emergency stop distance

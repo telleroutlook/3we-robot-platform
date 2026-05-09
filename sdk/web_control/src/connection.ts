@@ -55,6 +55,18 @@ export class RosbridgeConnection extends EventTarget {
     this.intentionalClose = false;
     this.url = url;
     this.clearReconnectTimer();
+    this.stopHeartbeat();
+
+    if (this.ws) {
+      const old = this.ws;
+      this.ws = null;
+      old.onopen = null;
+      old.onclose = null;
+      old.onerror = null;
+      old.onmessage = null;
+      old.close();
+    }
+
     this.setState('connecting');
 
     try {
@@ -88,7 +100,8 @@ export class RosbridgeConnection extends EventTarget {
     };
 
     this.ws.onmessage = (event: MessageEvent) => {
-      this.handleMessage(event.data as string);
+      if (typeof event.data !== 'string') return;
+      this.handleMessage(event.data);
     };
   }
 

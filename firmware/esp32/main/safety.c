@@ -228,6 +228,9 @@ void safety_task(void *params)
         }
 
         // Continuous relay feedback monitoring
+        portENTER_CRITICAL(&safety_spinlock);
+        current_state = state;
+        portEXIT_CRITICAL(&safety_spinlock);
         int relay_fb = gpio_get_level(SAFETY_RELAY_FB);
         if (current_state == SAFETY_NORMAL && relay_fb == 0) {
             relay_fault_count++;

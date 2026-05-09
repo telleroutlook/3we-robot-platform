@@ -141,6 +141,7 @@ static esp_err_t perform_ota_from_url(const char *url)
 
     uint32_t firmware_written = 0;
     bool download_ok = true;
+    uint8_t last_pct = 0;
 
     while (firmware_written < firmware_size) {
         int to_read = (int)((firmware_size - firmware_written) < OTA_BUF_SIZE ?
@@ -162,7 +163,10 @@ static esp_err_t perform_ota_from_url(const char *url)
         firmware_written += (uint32_t)read_len;
         received += (uint32_t)read_len;
         uint8_t pct = (uint8_t)((received * 100) / total);
-        set_progress(OTA_STATUS_DOWNLOADING, pct, received, total, NULL);
+        if (pct != last_pct) {
+            set_progress(OTA_STATUS_DOWNLOADING, pct, received, total, NULL);
+            last_pct = pct;
+        }
     }
 
     free(buf);
@@ -190,6 +194,7 @@ static esp_err_t perform_ota_from_url(const char *url)
 
     err = esp_ota_end(ota_handle);
     if (err != ESP_OK) {
+        esp_ota_abort(ota_handle);
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "OTA end failed");
         return err;
     }

@@ -182,6 +182,15 @@ export class RobotPayloadPanel extends HTMLElement {
   private toggleVbat!: HTMLElement;
   private unsubscribe: (() => void) | null = null;
   private currentPayloadId = '';
+  private on5vClick = (): void => { this.toggleRail('5V', this.toggle5v); };
+  private on12vClick = (): void => { this.toggleRail('12V', this.toggle12v); };
+  private onVbatClick = (): void => { this.toggleRail('VBAT', this.toggleVbat); };
+  private onKeydown = (e: KeyboardEvent): void => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      (e.currentTarget as HTMLElement).click();
+    }
+  };
 
   constructor() {
     super();
@@ -203,17 +212,12 @@ export class RobotPayloadPanel extends HTMLElement {
     this.toggle12v = shadow.getElementById('toggle12v') as HTMLElement;
     this.toggleVbat = shadow.getElementById('toggleVbat') as HTMLElement;
 
-    this.toggle5v.addEventListener('click', () => this.toggleRail('5V', this.toggle5v));
-    this.toggle12v.addEventListener('click', () => this.toggleRail('12V', this.toggle12v));
-    this.toggleVbat.addEventListener('click', () => this.toggleRail('VBAT', this.toggleVbat));
+    this.toggle5v.addEventListener('click', this.on5vClick);
+    this.toggle12v.addEventListener('click', this.on12vClick);
+    this.toggleVbat.addEventListener('click', this.onVbatClick);
 
     [this.toggle5v, this.toggle12v, this.toggleVbat].forEach((el) => {
-      el.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.key === ' ' || e.key === 'Enter') {
-          e.preventDefault();
-          (e.currentTarget as HTMLElement).click();
-        }
-      });
+      el.addEventListener('keydown', this.onKeydown);
     });
 
     this.unsubscribe = connection.subscribe<PayloadState>(
@@ -228,6 +232,12 @@ export class RobotPayloadPanel extends HTMLElement {
       this.unsubscribe();
       this.unsubscribe = null;
     }
+    this.toggle5v?.removeEventListener('click', this.on5vClick);
+    this.toggle12v?.removeEventListener('click', this.on12vClick);
+    this.toggleVbat?.removeEventListener('click', this.onVbatClick);
+    [this.toggle5v, this.toggle12v, this.toggleVbat].forEach((el) => {
+      el?.removeEventListener('keydown', this.onKeydown);
+    });
   }
 
   private onPayloadState(msg: PayloadState): void {

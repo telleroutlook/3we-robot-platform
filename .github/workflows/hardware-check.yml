@@ -15,15 +15,18 @@ on:
       - 'ros2_ws/robot_description/**'
       - 'sdk/payload_interface/**'
 
+permissions:
+  contents: read
+
 jobs:
   cross-layer-validation:
     name: Cross-Layer Consistency Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
         with:
           python-version: '3.11'
 
@@ -40,7 +43,7 @@ jobs:
       image: kicad/kicad:8.0
       options: --user root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Run DRC
         run: |
@@ -52,7 +55,7 @@ jobs:
     name: DXF File Integrity
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Verify DXF files exist and are non-empty
         run: |

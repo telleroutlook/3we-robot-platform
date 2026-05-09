@@ -15,6 +15,9 @@ on:
       - 'ros2_ws/**'
       - 'sdk/web_control/**'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest

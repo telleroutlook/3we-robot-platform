@@ -155,7 +155,10 @@ class AsyncPayloadClient:
 
         try:
             while self._connected:
-                msg = await queue.get()
+                try:
+                    msg = await asyncio.wait_for(queue.get(), timeout=0.5)
+                except asyncio.TimeoutError:
+                    continue
                 yield msg
         finally:
             self._node.destroy_subscription(subscription)
@@ -346,7 +349,8 @@ class AsyncPayloadClient:
         )
 
         def _callback(msg: Any) -> None:
-            self._loop.call_soon_threadsafe(queue.put_nowait, msg)
+            if not queue.full():
+                self._loop.call_soon_threadsafe(queue.put_nowait, msg)
 
         subscription = self._node.create_subscription(
             RosBatteryState, "/battery_state", _callback, qos_profile
@@ -392,7 +396,8 @@ class AsyncPayloadClient:
         )
 
         def _callback(msg: Any) -> None:
-            self._loop.call_soon_threadsafe(queue.put_nowait, msg)
+            if not queue.full():
+                self._loop.call_soon_threadsafe(queue.put_nowait, msg)
 
         subscription = self._node.create_subscription(
             String, "/payload/state", _callback, qos_profile

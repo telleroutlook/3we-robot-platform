@@ -10,7 +10,15 @@ permissions:
   id-token: write
 
 jobs:
-  test-gate:
+  test-gate-firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Run firmware unit tests
+        run: cd firmware/tests && make clean && make test
+
+  test-gate-python:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -19,21 +27,20 @@ jobs:
         with:
           python-version: '3.11'
 
-      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
-        with:
-          node-version: '20'
-
-      - name: Run firmware unit tests
-        run: |
-          sudo apt-get update && sudo apt-get install -y gcc make
-          cd firmware/tests
-          make clean && make test
-
       - name: Run Python SDK tests
         run: |
           cd sdk
           pip install -e ".[dev]"
           pytest tests/ -v
+
+  test-gate-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+        with:
+          node-version: '20'
 
       - name: Run web control type check and tests
         run: |
@@ -43,7 +50,7 @@ jobs:
           npx vitest run
 
   firmware-build:
-    needs: [test-gate]
+    needs: [test-gate-firmware, test-gate-python, test-gate-web]
     runs-on: ubuntu-latest
     container: espressif/idf:v5.2
     strategy:
@@ -93,7 +100,7 @@ jobs:
           retention-days: 30
 
   python-publish:
-    needs: [test-gate]
+    needs: [test-gate-firmware, test-gate-python, test-gate-web]
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -110,12 +117,12 @@ jobs:
           python -m build
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3d6ba38048
         with:
           packages-dir: sdk/dist/
 
   web-build:
-    needs: [test-gate]
+    needs: [test-gate-firmware, test-gate-python, test-gate-web]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11

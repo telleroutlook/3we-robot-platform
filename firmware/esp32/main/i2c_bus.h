@@ -20,7 +20,10 @@ static inline bool i2c_bus_lock(void)
 
 static inline void i2c_bus_unlock(void)
 {
-    xSemaphoreGive(i2c_bus_get_mutex());
+    SemaphoreHandle_t mtx = i2c_bus_get_mutex();
+    if (mtx != NULL) {
+        xSemaphoreGive(mtx);
+    }
 }
 
 #endif // I2C_BUS_H

@@ -30,7 +30,7 @@ services:
       - "1883:1883"
     environment:
       - MQTT_USER=${MQTT_USER:-robot}
-      - MQTT_PASS=${MQTT_PASS:-changeme}
+      - MQTT_PASS=${MQTT_PASS:?MQTT_PASS must be set in .env or environment}
     volumes:
       - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./docker/mosquitto/entrypoint.sh:/entrypoint.sh:ro

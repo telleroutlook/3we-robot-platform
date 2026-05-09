@@ -196,6 +196,7 @@ export class RobotImuAttitude extends HTMLElement {
   }
 
   private onImuData(msg: Imu): void {
+    if (!msg.orientation) return;
     const { roll, pitch, yaw } = this.quaternionToEuler(msg.orientation);
 
     const rollDeg = this.radToDeg(roll);

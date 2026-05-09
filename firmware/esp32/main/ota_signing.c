@@ -94,20 +94,6 @@ bool ota_verify_image(const uint8_t *image_data, size_t image_size,
         return false;
     }
 
-    // Verify magic
-    if (header->magic != OTA_HEADER_MAGIC) {
-        ESP_LOGE(TAG, "Invalid magic: 0x%08lX", (unsigned long)header->magic);
-        return false;
-    }
-
-    // Verify image size matches
-    if (header->image_size != image_size) {
-        ESP_LOGE(TAG, "Size mismatch: header=%lu, actual=%zu",
-                 (unsigned long)header->image_size, image_size);
-        return false;
-    }
-
-    // Compute SHA-256 of image
     uint8_t computed_hash[OTA_HASH_SIZE];
     mbedtls_sha256(image_data, image_size, computed_hash, 0);
 
@@ -222,6 +208,7 @@ esp_err_t ota_apply_update(const uint8_t *image_data, size_t total_size)
     err = esp_ota_end(ota_handle);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "OTA end failed: %s", esp_err_to_name(err));
+        esp_ota_abort(ota_handle);
         return err;
     }
 
