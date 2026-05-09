@@ -188,7 +188,7 @@ static esp_err_t perform_ota_from_url(const char *url)
         free(verify_buf);
         esp_ota_abort(ota_handle);
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Signature verification failed");
-        return ESP_ERR_IMAGE_INVALID;
+        return ESP_ERR_OTA_VALIDATE_FAILED;
     }
     free(verify_buf);
 
