@@ -34,9 +34,8 @@ idf_component_register(
         esp_http_client
         lwip
         mbedtls
-        esp_ota_ops
-        esp_partition
         app_update
+        esp_partition
         json
     PRIV_REQUIRES
         micro_ros_espidf_component

@@ -40,6 +40,7 @@ jobs:
         working-directory: firmware/esp32
         run: |
           . $IDF_PATH/export.sh
+          mkdir -p managed_components
           CONFIGS="sdkconfig.defaults;sdkconfig.defaults.${{ matrix.sku_suffix }}"
           if [ "${{ matrix.production }}" = "true" ]; then
             CONFIGS="$CONFIGS;sdkconfig.defaults.production"

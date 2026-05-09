@@ -153,6 +153,7 @@ jobs:
         working-directory: firmware/esp32
         run: |
           . $IDF_PATH/export.sh
+          mkdir -p managed_components
           idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.standard;sdkconfig.defaults.production" \
             set-target esp32s3
           idf.py build
