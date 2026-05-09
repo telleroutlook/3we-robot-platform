@@ -13,6 +13,8 @@
 An open-source omnidirectional mobile robot platform designed for<br/>
 **modularity**, **extensibility**, and **rapid payload integration**.
 
+<img src="docs/images/robot-platform-hero.png" alt="Robot Platform" width="600"/>
+
 [Getting Started](#-quick-start) &bull;
 [Documentation](docs/) &bull;
 [Contributing](CONTRIBUTING.md) &bull;

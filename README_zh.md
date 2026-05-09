@@ -13,6 +13,8 @@
 一个开源的全向移动机器人平台，<br/>
 专为**模块化**、**可扩展性**和**快速载荷集成**而设计。
 
+<img src="docs/images/robot-platform-hero.png" alt="机器人平台" width="600"/>
+
 [快速开始](#-快速开始) &bull;
 [文档](docs/) &bull;
 [参与贡献](CONTRIBUTING.md) &bull;
