@@ -121,30 +121,52 @@ ros2 launch robot_bringup bringup.launch.py
 
 ## Validation Checklist
 
-Run these checks (in order) to verify cross-layer consistency after any code change:
+Run these checks (in order) to verify cross-layer consistency after any code change.
+Quick alias: `make all` runs lint + test + build from root.
 
 ```bash
-# 1. Firmware — compile with GCC (host-side unit test build)
-cd firmware/tests && make clean && make
+# 1. Firmware — host-side unit tests (152 tests)
+cd firmware/tests && make clean && make && ./test_runner
 
-# 2. Firmware — run unit tests
-cd firmware/tests && ./test_runner
-
-# 3. SDK web_control — TypeScript type-check
+# 2. SDK web_control — TypeScript type-check
 cd sdk/web_control && npx tsc --noEmit
 
-# 4. SDK web_control — Playwright E2E tests
+# 3. SDK web_control — unit tests (28 tests, vitest)
+cd sdk/web_control && npx vitest run
+
+# 4. SDK web_control — Playwright E2E (53 tests)
 cd sdk/web_control && npx playwright test
 
-# 5. Cross-layer — ROS2 msg/srv ↔ TypeScript ↔ firmware enum alignment
-npx tsx scripts/validate-ros-types.ts
+# 5. SDK web_control — lint & format
+cd sdk/web_control && npx eslint src/ && npx prettier --check 'src/**/*.ts'
 
-# 6. Python SDK — format and lint
-ruff format --check sdk/
-ruff check sdk/
+# 6. Python SDK — tests (76 tests, pytest)
+cd sdk && python3 -m pytest tests/ -v
+
+# 7. Python SDK — format and lint
+ruff format --check sdk/ && ruff check sdk/
+
+# 8. Cross-layer — ROS2 ↔ TypeScript ↔ firmware enum alignment
+npx tsx scripts/validate-ros-types.ts
 ```
 
-If any step fails, fix before committing. Steps 1–2 catch firmware regressions, 3–4 catch web UI issues, 5 catches interface drift between layers, and 6 enforces Python code quality.
+If any step fails, fix before committing.
+
+### Test & Config Locations
+
+| What | Location |
+|------|----------|
+| Firmware unit tests | `firmware/tests/` (Unity framework, Makefile) |
+| Web unit tests | `sdk/web_control/src/**/*.test.ts` (Vitest, `vitest.config.ts`) |
+| Web E2E tests | `sdk/web_control/tests/` (Playwright, `playwright.config.ts`) |
+| Python SDK tests | `sdk/tests/` (pytest, config in `sdk/pyproject.toml`) |
+| Integration tests | `tests/integration/` (pytest, `tests/integration/pytest.ini`) |
+| ESLint config | `sdk/web_control/eslint.config.js` |
+| Prettier config | `sdk/web_control/.prettierrc` |
+| Coverage CI | `.github/workflows/coverage-report.yml` |
+| Full CI | `.github/workflows/full-validation.yml` |
+| Monitoring | `monitoring/` (Prometheus, Grafana, metrics exporter) |
+| Env validation | `sdk/web_control/src/env.ts` + `sdk/payload_interface/env_validation.py` |
 
 **Important**: Fix ALL errors and warnings — including pre-existing ones not caused by your current changes. Do not leave known issues unfixed or skip them because "they were already there." The codebase must be clean after every session.
 
