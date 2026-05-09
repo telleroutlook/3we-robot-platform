@@ -24,7 +24,9 @@ class MetricsStore:
         self._metrics: dict[str, float] = {}
         self._labels: dict[str, dict[str, str]] = {}
 
-    def set(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
+    def set(
+        self, name: str, value: float, labels: dict[str, str] | None = None
+    ) -> None:
         with self._lock:
             self._metrics[name] = value
             if labels:
@@ -70,14 +72,16 @@ class MetricsExporter(Node):
         self.declare_parameter("port", 9101)
         port = self.get_parameter("port").get_parameter_value().integer_value
 
-        self.create_subscription(BatteryState, "/robot/battery", self._on_battery, 10)
-        self.create_subscription(Twist, "/robot/cmd_vel", self._on_cmd_vel, 10)
-        self.create_subscription(Bool, "/robot/emergency_stop", self._on_estop, 10)
-        self.create_subscription(Imu, "/robot/imu", self._on_imu, 10)
-        self.create_subscription(Range, "/robot/range/front", self._on_range_front, 10)
+        self.create_subscription(BatteryState, "/battery_state", self._on_battery, 10)
+        self.create_subscription(Twist, "/cmd_vel", self._on_cmd_vel, 10)
+        self.create_subscription(Bool, "/emergency_stop_state", self._on_estop, 10)
+        self.create_subscription(Imu, "/imu/data", self._on_imu, 10)
+        self.create_subscription(Range, "/ultrasonic/front", self._on_range_front, 10)
 
         self._http_server = HTTPServer(("0.0.0.0", port), MetricsHTTPHandler)
-        self._http_thread = threading.Thread(target=self._http_server.serve_forever, daemon=True)
+        self._http_thread = threading.Thread(
+            target=self._http_server.serve_forever, daemon=True
+        )
         self._http_thread.start()
 
         self.get_logger().info(f"Metrics exporter serving on :{port}/metrics")

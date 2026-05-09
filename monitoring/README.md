@@ -39,14 +39,14 @@ python3 monitoring/metrics_exporter.py
 
 | Metric | Source Topic | Unit |
 |--------|-------------|------|
-| `robot_battery_voltage` | /robot/battery | V |
-| `robot_battery_current_amps` | /robot/battery | A |
-| `robot_battery_percentage` | /robot/battery | 0-1 |
-| `robot_cmd_vel_linear_x` | /robot/cmd_vel | m/s |
-| `robot_cmd_vel_angular_z` | /robot/cmd_vel | rad/s |
-| `robot_emergency_stop_active` | /robot/emergency_stop | 0/1 |
-| `robot_imu_linear_accel_{x,y,z}` | /robot/imu | m/s² |
-| `robot_range_front_meters` | /robot/range/front | m |
+| `robot_battery_voltage` | /battery_state | V |
+| `robot_battery_current_amps` | /battery_state | A |
+| `robot_battery_percentage` | /battery_state | 0-1 |
+| `robot_cmd_vel_linear_x` | /cmd_vel | m/s |
+| `robot_cmd_vel_angular_z` | /cmd_vel | rad/s |
+| `robot_emergency_stop_active` | /emergency_stop_state | 0/1 |
+| `robot_imu_linear_accel_{x,y,z}` | /imu/data | m/s² |
+| `robot_range_front_meters` | /ultrasonic/front | m |
 
 ## Grafana Dashboard
 

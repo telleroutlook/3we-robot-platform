@@ -189,6 +189,23 @@ extern void test_ota_update_progress_pct_complete(void);
 extern void test_ota_update_rejects_empty_url(void);
 extern void test_ota_update_url_max_length(void);
 
+// test_ota_upload.c
+extern void test_upload_rejects_zero_content_length(void);
+extern void test_upload_rejects_oversized_content(void);
+extern void test_upload_rejects_short_header(void);
+extern void test_upload_rejects_invalid_magic(void);
+extern void test_upload_rejects_zero_firmware_size(void);
+extern void test_upload_rejects_firmware_size_too_large(void);
+extern void test_upload_rejects_no_ota_partition(void);
+extern void test_upload_rejects_ota_begin_failure(void);
+extern void test_upload_incomplete_body(void);
+extern void test_upload_write_failure_aborts(void);
+extern void test_upload_signature_verification_failure(void);
+extern void test_upload_ota_end_failure(void);
+extern void test_upload_set_boot_partition_failure(void);
+extern void test_upload_success_triggers_reboot(void);
+extern void test_upload_writes_correct_firmware_data(void);
+
 // test_microros_messages.c
 extern void test_fk_all_wheels_forward_gives_pure_vx(void);
 extern void test_fk_zero_wheels_gives_zero_velocity(void);
@@ -403,6 +420,23 @@ int main(void)
     RUN_TEST(test_ota_update_progress_pct_complete);
     RUN_TEST(test_ota_update_rejects_empty_url);
     RUN_TEST(test_ota_update_url_max_length);
+
+    // OTA upload handler
+    RUN_TEST(test_upload_rejects_zero_content_length);
+    RUN_TEST(test_upload_rejects_oversized_content);
+    RUN_TEST(test_upload_rejects_short_header);
+    RUN_TEST(test_upload_rejects_invalid_magic);
+    RUN_TEST(test_upload_rejects_zero_firmware_size);
+    RUN_TEST(test_upload_rejects_firmware_size_too_large);
+    RUN_TEST(test_upload_rejects_no_ota_partition);
+    RUN_TEST(test_upload_rejects_ota_begin_failure);
+    RUN_TEST(test_upload_incomplete_body);
+    RUN_TEST(test_upload_write_failure_aborts);
+    RUN_TEST(test_upload_signature_verification_failure);
+    RUN_TEST(test_upload_ota_end_failure);
+    RUN_TEST(test_upload_set_boot_partition_failure);
+    RUN_TEST(test_upload_success_triggers_reboot);
+    RUN_TEST(test_upload_writes_correct_firmware_data);
 
     // micro-ROS message logic
     RUN_TEST(test_fk_all_wheels_forward_gives_pure_vx);
