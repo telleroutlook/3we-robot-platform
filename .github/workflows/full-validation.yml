@@ -165,8 +165,9 @@ jobs:
 
       - name: Verify binary size fits OTA partition
         working-directory: firmware/esp32
+        shell: bash
         run: |
-          BIN_SIZE=$(stat -c%s build/robot-platform.bin 2>/dev/null || stat -f%z build/robot-platform.bin)
+          BIN_SIZE=$(wc -c < build/robot_platform_firmware.bin)
           MAX_SIZE=$((2 * 1024 * 1024))  # 2 MB OTA partition limit
           echo "Binary size: $BIN_SIZE bytes (max: $MAX_SIZE)"
           if [ "$BIN_SIZE" -gt "$MAX_SIZE" ]; then
