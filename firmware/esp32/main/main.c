@@ -9,9 +9,12 @@
 #include "microros_transport.h"
 #include "dtls_transport.h"
 #include "ota_signing.h"
+#include "ota_update.h"
 #include "payload_hotplug.h"
 #include "thermal_monitor.h"
 #include "udp_transport.h"
+#include "wifi_provision.h"
+#include "captive_portal.h"
 #include "robot_params.h"
 #include "pin_definitions.h"
 
@@ -21,10 +24,15 @@
 
 #include "esp_log.h"
 #include "esp_mac.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_netif.h"
+#include "esp_ota_ops.h"
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -40,6 +48,7 @@ static const char *TAG = "main";
 #define TASK_STACK_THERMAL   2048
 #define TASK_STACK_UDP       4096
 #define TASK_STACK_CANBUS    3072
+#define TASK_STACK_OTA       8192
 
 #define TASK_PRIO_SAFETY     (configMAX_PRIORITIES - 1)
 #define TASK_PRIO_MICROROS   5
@@ -50,6 +59,30 @@ static const char *TAG = "main";
 #define TASK_PRIO_BATTERY    2
 #define TASK_PRIO_UDP        3
 #define TASK_PRIO_CANBUS     4
+#define TASK_PRIO_OTA        2
+
+#define WIFI_CONNECT_TIMEOUT_MS  10000
+
+static EventGroupHandle_t s_wifi_event_group;
+#define WIFI_CONNECTED_BIT  BIT0
+#define WIFI_FAIL_BIT       BIT1
+
+static void wifi_event_handler(void *arg, esp_event_base_t event_base,
+                               int32_t event_id, void *event_data)
+{
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+    }
+}
+
+static void captive_portal_done(const char *ssid, const char *password)
+{
+    ESP_LOGI(TAG, "Credentials received via captive portal, restarting...");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
+}
 
 void app_main(void)
 {
@@ -62,9 +95,52 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
     }
 
+    // Network: initialize event loop and try Wi-Fi STA, fall back to captive portal
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ESP_ERROR_CHECK(esp_netif_init());
+    s_wifi_event_group = xEventGroupCreate();
+
+    wifi_credentials_t wifi_creds;
+    bool wifi_connected = false;
+    if (wifi_provision_get_credentials(&wifi_creds) == ESP_OK) {
+        esp_netif_create_default_wifi_sta();
+        esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL);
+        esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL);
+
+        wifi_provision_start_sta();
+
+        EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
+            WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+            pdFALSE, pdFALSE, pdMS_TO_TICKS(WIFI_CONNECT_TIMEOUT_MS));
+
+        if (bits & WIFI_CONNECTED_BIT) {
+            ESP_LOGI(TAG, "Wi-Fi connected");
+            wifi_connected = true;
+        } else {
+            ESP_LOGW(TAG, "Wi-Fi connection failed - starting captive portal");
+            esp_wifi_stop();
+        }
+    }
+
+    if (!wifi_connected) {
+        captive_portal_config_t portal_cfg = CAPTIVE_PORTAL_DEFAULT_CONFIG();
+        portal_cfg.on_credentials_received = captive_portal_done;
+        captive_portal_start(&portal_cfg);
+    }
+
     // Safety first - must be operational before any motor activity
     ESP_ERROR_CHECK(safety_init());
     ESP_ERROR_CHECK(safety_relay_selftest());
+
+    // OTA rollback confirmation: mark app valid only after safety passes
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    esp_ota_img_states_t ota_state;
+    if (esp_ota_get_state_partition(running, &ota_state) == ESP_OK) {
+        if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+            ESP_LOGI(TAG, "OTA: safety passed, confirming new firmware");
+            esp_ota_mark_app_valid_cancel_rollback();
+        }
+    }
 
     // Initialize motor subsystem
     ESP_ERROR_CHECK(motor_init());
@@ -228,6 +304,10 @@ void app_main(void)
         xTaskCreate(canbus_task, "canbus", TASK_STACK_CANBUS, NULL, TASK_PRIO_CANBUS, NULL);
     }
 #endif
+
+    // OTA update task
+    ota_update_init(captive_portal_get_httpd());
+    xTaskCreate(ota_update_task, "ota", TASK_STACK_OTA, NULL, TASK_PRIO_OTA, NULL);
 
     ESP_LOGI(TAG, "All systems initialized. Robot ready.");
 

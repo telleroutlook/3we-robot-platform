@@ -170,6 +170,25 @@ extern void test_udp_init_success(void);
 extern void test_udp_send_telemetry_no_client(void);
 extern void test_udp_set_recv_callback(void);
 
+// test_captive_portal.c
+extern void test_captive_portal_ssid_from_mac(void);
+extern void test_captive_portal_ssid_zero_mac(void);
+extern void test_captive_portal_store_rejects_empty_ssid(void);
+extern void test_captive_portal_store_rejects_null_ssid(void);
+extern void test_captive_portal_store_accepts_valid(void);
+extern void test_captive_portal_store_empty_password(void);
+extern void test_captive_portal_store_null_password(void);
+
+// test_ota_update.c
+extern void test_ota_update_progress_initial_idle(void);
+extern void test_ota_update_progress_downloading(void);
+extern void test_ota_update_progress_failed_with_message(void);
+extern void test_ota_update_progress_pct_calculation(void);
+extern void test_ota_update_progress_pct_zero_total(void);
+extern void test_ota_update_progress_pct_complete(void);
+extern void test_ota_update_rejects_empty_url(void);
+extern void test_ota_update_url_max_length(void);
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -342,6 +361,25 @@ int main(void)
     RUN_TEST(test_udp_init_success);
     RUN_TEST(test_udp_send_telemetry_no_client);
     RUN_TEST(test_udp_set_recv_callback);
+
+    // Captive portal
+    RUN_TEST(test_captive_portal_ssid_from_mac);
+    RUN_TEST(test_captive_portal_ssid_zero_mac);
+    RUN_TEST(test_captive_portal_store_rejects_empty_ssid);
+    RUN_TEST(test_captive_portal_store_rejects_null_ssid);
+    RUN_TEST(test_captive_portal_store_accepts_valid);
+    RUN_TEST(test_captive_portal_store_empty_password);
+    RUN_TEST(test_captive_portal_store_null_password);
+
+    // OTA update
+    RUN_TEST(test_ota_update_progress_initial_idle);
+    RUN_TEST(test_ota_update_progress_downloading);
+    RUN_TEST(test_ota_update_progress_failed_with_message);
+    RUN_TEST(test_ota_update_progress_pct_calculation);
+    RUN_TEST(test_ota_update_progress_pct_zero_total);
+    RUN_TEST(test_ota_update_progress_pct_complete);
+    RUN_TEST(test_ota_update_rejects_empty_url);
+    RUN_TEST(test_ota_update_url_max_length);
 
     return UNITY_END();
 }

@@ -55,7 +55,9 @@ class UltrasonicLog(Node):
                     f"avg={avg:.3f}m, min={mn:.3f}m, max={mx:.3f}m"
                 )
             else:
-                self.get_logger().warning(f"  {direction:5s}: NO DATA (sensor timeout?)")
+                self.get_logger().warning(
+                    f"  {direction:5s}: NO DATA (sensor timeout?)"
+                )
 
 
 def main():

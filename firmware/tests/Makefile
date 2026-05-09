@@ -24,6 +24,8 @@ SRCS = test_runner.c \
        test_thermal_monitor.c \
        test_i2c_bus.c \
        test_udp_transport.c \
+       test_captive_portal.c \
+       test_ota_update.c \
        mocks/esp_stubs.c \
        mocks/i2c_stubs.c \
        mocks/spi_stubs.c \

@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+hailo_inference:
+  ros__parameters:
+    model_path: ""
+    confidence_threshold: 0.5
+    device_id: 0
+    input_topic: "/camera/image_raw"
+    output_topic: "/perception/detections"

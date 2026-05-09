@@ -13,5 +13,7 @@ typedef struct {
 } wifi_credentials_t;
 
 esp_err_t wifi_provision_get_credentials(wifi_credentials_t *creds);
+esp_err_t wifi_provision_store_credentials(const char *ssid, const char *password);
+esp_err_t wifi_provision_start_sta(void);
 
 #endif // WIFI_PROVISION_H
