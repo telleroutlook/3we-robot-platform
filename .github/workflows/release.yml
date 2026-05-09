@@ -12,7 +12,7 @@ permissions:
 jobs:
   firmware-build:
     runs-on: ubuntu-latest
-    container: espressif/idf:v5.2
+    container: espressif/idf:v5.3
     strategy:
       matrix:
         include:
