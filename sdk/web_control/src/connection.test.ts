@@ -537,4 +537,81 @@ describe('RosbridgeConnection', () => {
       warnSpy.mockRestore();
     });
   });
+
+  describe('parse error observability', () => {
+    it('emits parseerror event on malformed rosbridge message', async () => {
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await connected;
+
+      const errors: unknown[] = [];
+      conn.addEventListener('parseerror', ((e: CustomEvent) => {
+        errors.push(e.detail);
+      }) as EventListener);
+
+      const ws = MockWebSocket.instances[0];
+      ws.simulateMessage(JSON.stringify({ invalid: 'not a rosbridge msg' }));
+
+      expect(errors).toHaveLength(1);
+      expect(conn.parseErrorCount).toBe(1);
+    });
+
+    it('emits parseerror on safeSubscribe schema mismatch', async () => {
+      const { z } = await import('zod');
+
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await connected;
+
+      const schema = z.object({ x: z.number(), y: z.number() });
+      const received: unknown[] = [];
+      const errors: unknown[] = [];
+
+      conn.safeSubscribe('/test', 'geometry_msgs/Point', schema, (msg) => {
+        received.push(msg);
+      });
+
+      conn.addEventListener('parseerror', ((e: CustomEvent) => {
+        errors.push(e.detail);
+      }) as EventListener);
+
+      const ws = MockWebSocket.instances[0];
+      ws.simulateMessage(
+        JSON.stringify({ op: 'publish', topic: '/test', msg: { x: 'not_a_number', y: 2 } })
+      );
+
+      expect(received).toHaveLength(0);
+      expect(errors).toHaveLength(1);
+      expect((errors[0] as { topic: string }).topic).toBe('/test');
+      expect(conn.parseErrorCount).toBe(1);
+    });
+
+    it('increments parseErrorCount on each failure', async () => {
+      const connected = new Promise<void>((resolve) => {
+        conn.addEventListener('statechange', ((e: CustomEvent) => {
+          if (e.detail.state === 'connected') resolve();
+        }) as EventListener);
+      });
+
+      conn.connect('ws://localhost:9090');
+      await connected;
+
+      const ws = MockWebSocket.instances[0];
+      ws.simulateMessage(JSON.stringify({ bad: 1 }));
+      ws.simulateMessage(JSON.stringify({ bad: 2 }));
+      ws.simulateMessage(JSON.stringify({ bad: 3 }));
+
+      expect(conn.parseErrorCount).toBe(3);
+    });
+  });
 });

@@ -227,3 +227,34 @@ void test_ota_apply_rejects_when_no_partition(void) {
 
     free(image);
 }
+
+// --- ota_check_version_policy tests ---
+
+void test_ota_version_policy_allows_upgrade(void) {
+    setUp_ota();
+    // Current is v1.0.0, incoming is v2.0.0
+    esp_err_t err = ota_check_version_policy((2 << 16) | (0 << 8) | 0);
+    TEST_ASSERT_EQUAL(ESP_OK, err);
+}
+
+void test_ota_version_policy_rejects_rollback(void) {
+    setUp_ota();
+    // Current is v1.0.0, incoming is v0.9.0
+    esp_err_t err = ota_check_version_policy((0 << 16) | (9 << 8) | 0);
+    TEST_ASSERT_EQUAL(ESP_ERR_INVALID_VERSION, err);
+}
+
+void test_ota_version_policy_rejects_same_version(void) {
+    setUp_ota();
+    // Current is v1.0.0, incoming is v1.0.0
+    esp_err_t err = ota_check_version_policy((1 << 16) | (0 << 8) | 0);
+    TEST_ASSERT_EQUAL(ESP_ERR_INVALID_VERSION, err);
+}
+
+void test_ota_version_policy_allows_when_current_unparseable(void) {
+    setUp_ota();
+    mock_ota_set_current_version("garbage");
+    // When current version can't be parsed, updates should be allowed
+    esp_err_t err = ota_check_version_policy((2 << 16) | (0 << 8) | 0);
+    TEST_ASSERT_EQUAL(ESP_OK, err);
+}

@@ -114,11 +114,11 @@ static esp_err_t perform_ota_from_url(const char *url)
     }
 
     // Check version before downloading entire image
-    uint32_t current = ota_get_current_version();
-    if (current != UINT32_MAX && header->version <= current) {
+    esp_err_t ver_err = ota_check_version_policy(header->version);
+    if (ver_err != ESP_OK) {
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Version rollback rejected");
         esp_http_client_cleanup(client);
-        return ESP_ERR_INVALID_VERSION;
+        return ver_err;
     }
 
     // Check protocol compatibility
@@ -287,8 +287,8 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
     }
 
     // Reject version rollback (consistent with perform_ota_from_url)
-    uint32_t current = ota_get_current_version();
-    if (current != UINT32_MAX && header.version <= current) {
+    esp_err_t ver_err = ota_check_version_policy(header.version);
+    if (ver_err != ESP_OK) {
         free(buf);
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Version rollback rejected");
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Version rollback rejected");

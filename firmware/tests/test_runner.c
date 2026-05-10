@@ -60,6 +60,10 @@ extern void test_ota_apply_rejects_version_rollback(void);
 extern void test_ota_apply_rejects_same_version(void);
 extern void test_ota_apply_succeeds_with_valid_upgrade(void);
 extern void test_ota_apply_rejects_when_no_partition(void);
+extern void test_ota_version_policy_allows_upgrade(void);
+extern void test_ota_version_policy_rejects_rollback(void);
+extern void test_ota_version_policy_rejects_same_version(void);
+extern void test_ota_version_policy_allows_when_current_unparseable(void);
 
 // test_dtls_transport.c
 extern void test_dtls_init_rejects_null_config(void);
@@ -358,6 +362,10 @@ int main(void)
     RUN_TEST(test_ota_apply_rejects_same_version);
     RUN_TEST(test_ota_apply_succeeds_with_valid_upgrade);
     RUN_TEST(test_ota_apply_rejects_when_no_partition);
+    RUN_TEST(test_ota_version_policy_allows_upgrade);
+    RUN_TEST(test_ota_version_policy_rejects_rollback);
+    RUN_TEST(test_ota_version_policy_rejects_same_version);
+    RUN_TEST(test_ota_version_policy_allows_when_current_unparseable);
 
     // DTLS transport
     RUN_TEST(test_dtls_init_rejects_null_config);

@@ -213,15 +213,9 @@ esp_err_t ota_apply_update(const uint8_t *image_data, size_t total_size)
     size_t firmware_size = total_size - sizeof(ota_image_header_t);
 
     // Reject version downgrades
-    uint32_t current = ota_get_current_version();
-    if (current == UINT32_MAX) {
-        ESP_LOGE(TAG, "Cannot determine current version - rejecting update");
-        return ESP_ERR_INVALID_STATE;
-    }
-    if (header->version <= current) {
-        ESP_LOGE(TAG, "Version rollback rejected: incoming=0x%08lX, current=0x%08lX",
-                 (unsigned long)header->version, (unsigned long)current);
-        return ESP_ERR_INVALID_VERSION;
+    esp_err_t ver_err = ota_check_version_policy(header->version);
+    if (ver_err != ESP_OK) {
+        return ver_err;
     }
 
     // Verify signature before writing
@@ -278,6 +272,21 @@ uint32_t ota_get_current_version(void)
         return UINT32_MAX;
     }
     return ((uint32_t)major << 16) | ((uint32_t)minor << 8) | (uint32_t)patch;
+}
+
+esp_err_t ota_check_version_policy(uint32_t incoming_version)
+{
+    uint32_t current = ota_get_current_version();
+    if (current == UINT32_MAX) {
+        ESP_LOGW(TAG, "Cannot determine current version - allowing update");
+        return ESP_OK;
+    }
+    if (incoming_version <= current) {
+        ESP_LOGE(TAG, "Version rollback rejected: incoming=0x%08lX, current=0x%08lX",
+                 (unsigned long)incoming_version, (unsigned long)current);
+        return ESP_ERR_INVALID_VERSION;
+    }
+    return ESP_OK;
 }
 
 #ifdef UNIT_TEST_BUILD

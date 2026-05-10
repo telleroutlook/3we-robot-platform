@@ -187,3 +187,11 @@ export interface RosbridgeMessage {
   result?: boolean;
   id?: string;
 }
+
+// --- Parse error observability ---
+
+export interface ParseErrorDetail {
+  topic: string | null;
+  type: string | null;
+  errors: Array<{ message: string; path: Array<string | number> }>;
+}

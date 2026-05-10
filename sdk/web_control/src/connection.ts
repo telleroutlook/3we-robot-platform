@@ -37,9 +37,14 @@ export class RosbridgeConnection extends EventTarget {
   private missedPongs = 0;
   private readonly heartbeatIntervalMs = 10000;
   private readonly maxMissedPongs = 3;
+  private _parseErrorCount = 0;
 
   get connectionState(): ConnectionState {
     return this.state;
+  }
+
+  get parseErrorCount(): number {
+    return this._parseErrorCount;
   }
 
   connect(url: string): void {
@@ -155,6 +160,13 @@ export class RosbridgeConnection extends EventTarget {
       const result = schema.safeParse(raw);
       if (result.success) {
         callback(result.data);
+      } else {
+        this._parseErrorCount++;
+        this.dispatchEvent(
+          new CustomEvent('parseerror', {
+            detail: { topic, type, errors: result.error.issues },
+          })
+        );
       }
     });
   }
@@ -214,6 +226,12 @@ export class RosbridgeConnection extends EventTarget {
 
     const result = rosbridgeMessageSchema.safeParse(json);
     if (!result.success) {
+      this._parseErrorCount++;
+      this.dispatchEvent(
+        new CustomEvent('parseerror', {
+          detail: { topic: null, type: null, errors: result.error.issues },
+        })
+      );
       return;
     }
 
