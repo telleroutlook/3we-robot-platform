@@ -73,7 +73,9 @@ RUN echo 'server { \
     root /var/www/html; \
     location / { try_files $uri $uri/ /index.html; } \
     location /health { return 200 "ok"; add_header Content-Type text/plain; } \
-}' > /etc/nginx/sites-available/default
+}' > /etc/nginx/sites-available/default && \
+    sed -i 's/^user /#user /' /etc/nginx/nginx.conf && \
+    sed -i 's|/run/nginx.pid|/tmp/nginx.pid|' /etc/nginx/nginx.conf
 
 # Entrypoint script
 COPY <<'EOF' /entrypoint.sh
@@ -93,7 +95,8 @@ RUN chmod +x /entrypoint.sh
 
 # Non-root user
 RUN useradd -m -s /bin/bash robot && \
-    chown -R robot:robot /ros2_ws /var/www/html
+    chown -R robot:robot /ros2_ws /var/www/html && \
+    chown -R robot:robot /var/log/nginx /var/lib/nginx /run
 
 USER robot
 
