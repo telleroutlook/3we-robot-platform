@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { connection } from './connection';
+import { validateEnv } from './env';
 import type { ConnectionEvent } from './types';
 
 // Import all Web Components (side-effect: registers custom elements)
@@ -17,10 +18,16 @@ import './components/system-status';
  * Initialize the control panel application.
  */
 function init(): void {
+  const env = validateEnv();
+
   const connectBtn = document.getElementById('connectBtn') as HTMLButtonElement;
   const wsUrlInput = document.getElementById('wsUrlInput') as HTMLInputElement;
   const indicatorDot = document.querySelector('.indicator-dot') as HTMLElement;
   const indicatorLabel = document.querySelector('.indicator-label') as HTMLElement;
+
+  if (!wsUrlInput.value) {
+    wsUrlInput.value = env.VITE_ROSBRIDGE_URL;
+  }
 
   // Connection state UI updates
   connection.addEventListener('statechange', ((e: CustomEvent<ConnectionEvent>) => {

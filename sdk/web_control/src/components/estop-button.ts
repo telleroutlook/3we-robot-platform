@@ -188,6 +188,7 @@ export class RobotEstopButton extends HTMLElement {
   };
   private onConfirmClick = (): void => {
     this.doReset().catch((e: unknown) => {
+      // eslint-disable-next-line no-console
       console.error('[E-stop] reset failed:', e instanceof Error ? e.message : e);
       this.setVisualState('estopped');
     });
@@ -237,6 +238,7 @@ export class RobotEstopButton extends HTMLElement {
   private onButtonClick(): void {
     if (!this.estopped) {
       this.triggerEstop().catch((e: unknown) => {
+        // eslint-disable-next-line no-console
         console.error('[E-stop] trigger failed:', e instanceof Error ? e.message : e);
         this.setVisualState('estopped');
       });
@@ -257,6 +259,7 @@ export class RobotEstopButton extends HTMLElement {
     } catch (e: unknown) {
       // E-stop UI stays in stopped state for safety, but log the failure prominently.
       // On reconnect, the topic subscription will re-sync actual hardware state.
+      // eslint-disable-next-line no-console
       console.error(
         '[E-stop] Service call failed — UI shows stopped but robot may not have received command:',
         e instanceof Error ? e.message : e
