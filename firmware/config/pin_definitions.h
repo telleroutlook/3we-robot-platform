@@ -94,7 +94,7 @@
 // Note: shares GPIO 9 with US_ECHO_LEFT — docking SKU omits side ultrasonics
 #define CHARGE_ADC_GPIO     9   // ADC1_CH8 on ESP32-S3
 #define CHARGE_ADC_CHANNEL  ADC_CHANNEL_8
-#define CHARGE_ADC_ATTEN    ADC_ATTEN_DB_11
+#define CHARGE_ADC_ATTEN    ADC_ATTEN_DB_12
 
 // Payload bus control (via MCP23017 I2C expander)
 #define MCP23017_ADDR       0x20

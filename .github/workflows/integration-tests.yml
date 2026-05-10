@@ -60,6 +60,8 @@ jobs:
 
       - name: Run integration tests
         shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: |
           source /opt/ros/humble/setup.bash
           source ros2_ws/install/setup.bash

@@ -9,7 +9,7 @@ from launch.actions import (
 )
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -50,12 +50,17 @@ def _launch_setup(context: LaunchContext):
         output="screen",
     )
 
+    headless = context.launch_configurations.get("headless", "false") == "true"
+    gz_args = f"-r {context.launch_configurations['world']}"
+    if headless:
+        gz_args = f"-s -r {context.launch_configurations['world']}"
+
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([pkg_ros_gz_sim, "launch", "gz_sim.launch.py"])
         ),
         launch_arguments={
-            "gz_args": f"-r {context.launch_configurations['world']}",
+            "gz_args": gz_args,
             "on_exit_shutdown": "true",
         }.items(),
     )
@@ -95,6 +100,9 @@ def _launch_setup(context: LaunchContext):
         output="screen",
     )
 
+    use_rviz = (
+        context.launch_configurations.get("use_rviz", "true") == "true" and not headless
+    )
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -104,7 +112,7 @@ def _launch_setup(context: LaunchContext):
                 "use_sim_time": context.launch_configurations["use_sim_time"] == "true",
             }
         ],
-        condition=IfCondition(LaunchConfiguration("use_rviz")),
+        condition=IfCondition(str(use_rviz).lower()),
         output="screen",
     )
 
@@ -150,6 +158,11 @@ def generate_launch_description():
                 "use_sim_time",
                 default_value="true",
                 description="Use simulation (Gazebo) clock",
+            ),
+            DeclareLaunchArgument(
+                "headless",
+                default_value="false",
+                description="Run Gazebo in server-only mode (no GUI)",
             ),
             OpaqueFunction(function=_launch_setup),
         ]

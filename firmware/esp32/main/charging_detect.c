@@ -28,12 +28,12 @@ esp_err_t charging_detect_init(void)
     err = adc_oneshot_config_channel(s_adc_handle, CHARGE_ADC_CHANNEL, &chan_cfg);
     if (err != ESP_OK) return err;
 
-    adc_cali_line_fitting_config_t cali_cfg = {
+    adc_cali_curve_fitting_config_t cali_cfg = {
         .unit_id = ADC_UNIT_1,
         .atten = CHARGE_ADC_ATTEN,
         .bitwidth = ADC_BITWIDTH_12,
     };
-    err = adc_cali_create_scheme_line_fitting(&cali_cfg, &s_cali_handle);
+    err = adc_cali_create_scheme_curve_fitting(&cali_cfg, &s_cali_handle);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "ADC calibration scheme not available - using raw values");
         s_cali_handle = NULL;

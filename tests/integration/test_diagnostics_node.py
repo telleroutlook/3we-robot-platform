@@ -132,6 +132,7 @@ def test_diagnostics_reports_estop(
     ros2_context, test_node, diagnostics_node, collect_topics
 ):
     """Verify diagnostics reflects E-stop state."""
+    import rclpy
     from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
     from std_msgs.msg import Bool
 
@@ -139,7 +140,10 @@ def test_diagnostics_reports_estop(
 
     estop_msg = Bool()
     estop_msg.data = True
-    pub.publish(estop_msg)
+
+    for _ in range(10):
+        pub.publish(estop_msg)
+        rclpy.spin_once(test_node, timeout_sec=0.1)
 
     msgs = collect_topics("/diagnostics", DiagnosticArray, count=3, timeout=5.0)
     assert len(msgs) >= 1
