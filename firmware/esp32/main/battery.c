@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "battery.h"
+#include "adc_manager.h"
 #include "safety.h"
 #include "pin_definitions.h"
 #include "robot_params.h"
@@ -14,7 +15,6 @@
 static const char *TAG = "battery";
 
 static portMUX_TYPE batt_spinlock = portMUX_INITIALIZER_UNLOCKED;
-static adc_oneshot_unit_handle_t adc_handle;
 static adc_cali_handle_t cali_handle;
 static float voltage_avg = 0.0f;
 static float readings[BATT_ADC_SAMPLES];
@@ -23,10 +23,7 @@ static bool initialized = false;
 
 esp_err_t battery_init(void)
 {
-    adc_oneshot_unit_init_cfg_t unit_cfg = {
-        .unit_id = ADC_UNIT_1,
-    };
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&unit_cfg, &adc_handle));
+    adc_oneshot_unit_handle_t adc_handle = adc_manager_get_handle();
 
     adc_oneshot_chan_cfg_t chan_cfg = {
         .atten = BATT_ADC_ATTEN,
@@ -35,7 +32,6 @@ esp_err_t battery_init(void)
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, BATT_ADC_CHANNEL, &chan_cfg));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, BATT_PACK2_ADC_CHANNEL, &chan_cfg));
 
-    // Calibration
     adc_cali_curve_fitting_config_t cali_cfg = {
         .unit_id = ADC_UNIT_1,
         .atten = BATT_ADC_ATTEN,
@@ -59,7 +55,7 @@ float battery_read_voltage(void)
     if (!initialized) return 0.0f;
 
     int raw = 0;
-    adc_oneshot_read(adc_handle, BATT_ADC_CHANNEL, &raw);
+    adc_oneshot_read(adc_manager_get_handle(), BATT_ADC_CHANNEL, &raw);
 
     int mv = 0;
     adc_cali_raw_to_voltage(cali_handle, raw, &mv);
@@ -125,7 +121,7 @@ static float s_pack2_voltage = 0.0f;
 static float battery_pack2_read_voltage_raw(void)
 {
     int raw = 0;
-    adc_oneshot_read(adc_handle, BATT_PACK2_ADC_CHANNEL, &raw);
+    adc_oneshot_read(adc_manager_get_handle(), BATT_PACK2_ADC_CHANNEL, &raw);
     int mv = 0;
     adc_cali_raw_to_voltage(cali_handle, raw, &mv);
     return ((float)mv / 1000.0f) * BATT_VOLTAGE_DIVIDER;

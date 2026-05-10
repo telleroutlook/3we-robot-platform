@@ -16,7 +16,7 @@ from rclpy.action.server import ServerGoalHandle
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Float32
+from std_msgs.msg import Bool
 
 from robot_docking.constants import DockingStage  # noqa: F401
 
@@ -30,35 +30,32 @@ class DockingController(Node):
         self.declare_parameter("approach_waypoint_yaw", 0.0)
         self.declare_parameter("coarse_tag_id", 0)
         self.declare_parameter("fine_tag_id", 1)
-        self.declare_parameter("contact_voltage_threshold", 2.0)
-        self.declare_parameter("contact_confirm_duration_s", 1.0)
         self.declare_parameter("approach_timeout_s", 60.0)
         self.declare_parameter("servo_timeout_s", 30.0)
         self.declare_parameter("max_retries", 2)
         self.declare_parameter("cmd_vel_topic", "/cmd_vel")
-        self.declare_parameter("charging_voltage_topic", "/charging/voltage")
+        self.declare_parameter("contact_confirmed_topic", "/docking/contact_confirmed")
 
         self._stage = DockingStage.IDLE
         self._retries = 0
-        self._contact_start_time: Optional[float] = None
-        self._charging_voltage = 0.0
+        self._contact_confirmed = False
         self._stage_start_time: Optional[float] = None
 
         cmd_vel_topic = (
             self.get_parameter("cmd_vel_topic").get_parameter_value().string_value
         )
-        charging_topic = (
-            self.get_parameter("charging_voltage_topic")
+        contact_topic = (
+            self.get_parameter("contact_confirmed_topic")
             .get_parameter_value()
             .string_value
         )
 
         self._cmd_pub = self.create_publisher(Twist, cmd_vel_topic, 10)
 
-        self._voltage_sub = self.create_subscription(
-            Float32,
-            charging_topic,
-            self._on_voltage,
+        self._contact_sub = self.create_subscription(
+            Bool,
+            contact_topic,
+            self._on_contact,
             10,
         )
 
@@ -103,8 +100,8 @@ class DockingController(Node):
         self.get_logger().info("Dock action cancel requested")
         return CancelResponse.ACCEPT
 
-    def _on_voltage(self, msg: Float32) -> None:
-        self._charging_voltage = msg.data
+    def _on_contact(self, msg: Bool) -> None:
+        self._contact_confirmed = msg.data
 
     def _execute_dock(self, goal_handle: ServerGoalHandle):
         self.get_logger().info("Executing dock action")
@@ -209,26 +206,9 @@ class DockingController(Node):
                 return
 
         if self._stage == DockingStage.CONTACT_VERIFY:
-            threshold = (
-                self.get_parameter("contact_voltage_threshold")
-                .get_parameter_value()
-                .double_value
-            )
-            confirm_duration = (
-                self.get_parameter("contact_confirm_duration_s")
-                .get_parameter_value()
-                .double_value
-            )
-            now = self.get_clock().now().nanoseconds / 1e9
-
-            if self._charging_voltage >= threshold:
-                if self._contact_start_time is None:
-                    self._contact_start_time = now
-                elif now - self._contact_start_time >= confirm_duration:
-                    self.get_logger().info("Contact confirmed — docked!")
-                    self._stage = DockingStage.DOCKED
-            else:
-                self._contact_start_time = None
+            if self._contact_confirmed:
+                self.get_logger().info("Contact confirmed — docked!")
+                self._stage = DockingStage.DOCKED
 
     def _stop_robot(self) -> None:
         self._cmd_pub.publish(Twist())

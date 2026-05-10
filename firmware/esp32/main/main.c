@@ -20,6 +20,7 @@
 #include "captive_portal.h"
 #include "heartbeat_monitor.h"
 #include "external_wdt.h"
+#include "adc_manager.h"
 #include "robot_params.h"
 #include "pin_definitions.h"
 
@@ -178,6 +179,7 @@ void app_main(void)
         ESP_LOGW(TAG, "IMU init failed (0x%x) - running without orientation fusion", imu_ret);
     }
 
+    ESP_ERROR_CHECK(adc_manager_init());
     ESP_ERROR_CHECK(battery_init());
 
     // Heartbeat monitor (Pi 5 power watchdog)

@@ -21,6 +21,12 @@ int mbedtls_mpi_read_binary(mbedtls_mpi *X, const unsigned char *buf, size_t buf
 typedef struct { int id; } mbedtls_ecp_group;
 typedef struct { mbedtls_mpi X; mbedtls_mpi Y; mbedtls_mpi Z; } mbedtls_ecp_point;
 
+typedef struct {
+    mbedtls_ecp_group grp;
+    mbedtls_ecp_point Q;
+    mbedtls_mpi d;
+} mbedtls_ecp_keypair;
+
 int mbedtls_ecp_group_load(mbedtls_ecp_group *grp, int id);
 int mbedtls_ecp_point_read_binary(const mbedtls_ecp_group *grp, mbedtls_ecp_point *P,
                                    const unsigned char *buf, size_t ilen);
@@ -36,6 +42,23 @@ void mbedtls_ecdsa_init(mbedtls_ecdsa_context *ctx);
 void mbedtls_ecdsa_free(mbedtls_ecdsa_context *ctx);
 int mbedtls_ecdsa_verify(mbedtls_ecp_group *grp, const unsigned char *buf, size_t blen,
                           const mbedtls_ecp_point *Q, const mbedtls_mpi *r, const mbedtls_mpi *s);
+
+// --- mbedtls PK ---
+#define MBEDTLS_PK_ECKEY  2
+#define MBEDTLS_MD_SHA256 6
+
+typedef struct { int dummy; } mbedtls_pk_info_t;
+typedef struct { const mbedtls_pk_info_t *pk_info; mbedtls_ecp_keypair ec; } mbedtls_pk_context;
+
+void mbedtls_pk_init(mbedtls_pk_context *ctx);
+void mbedtls_pk_free(mbedtls_pk_context *ctx);
+int mbedtls_pk_setup(mbedtls_pk_context *ctx, const mbedtls_pk_info_t *info);
+const mbedtls_pk_info_t *mbedtls_pk_info_from_type(int pk_type);
+int mbedtls_pk_verify(mbedtls_pk_context *ctx, int md_alg,
+                      const unsigned char *hash, size_t hash_len,
+                      const unsigned char *sig, size_t sig_len);
+
+#define mbedtls_pk_ec(pk) (&(pk).ec)
 
 // --- mbedtls SHA-256 ---
 typedef struct { int dummy; } mbedtls_sha256_context;

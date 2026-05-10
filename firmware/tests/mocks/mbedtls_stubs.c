@@ -62,6 +62,29 @@ int mbedtls_ecdsa_verify(mbedtls_ecp_group *grp, const unsigned char *buf, size_
     return mock_verify_result;
 }
 
+// --- mbedtls PK ---
+static mbedtls_pk_info_t mock_pk_info = {0};
+
+void mbedtls_pk_init(mbedtls_pk_context *ctx) { memset(ctx, 0, sizeof(*ctx)); }
+void mbedtls_pk_free(mbedtls_pk_context *ctx) { memset(ctx, 0, sizeof(*ctx)); }
+
+int mbedtls_pk_setup(mbedtls_pk_context *ctx, const mbedtls_pk_info_t *info) {
+    ctx->pk_info = info;
+    return 0;
+}
+
+const mbedtls_pk_info_t *mbedtls_pk_info_from_type(int pk_type) {
+    (void)pk_type;
+    return &mock_pk_info;
+}
+
+int mbedtls_pk_verify(mbedtls_pk_context *ctx, int md_alg,
+                      const unsigned char *hash, size_t hash_len,
+                      const unsigned char *sig, size_t sig_len) {
+    (void)ctx; (void)md_alg; (void)hash; (void)hash_len; (void)sig; (void)sig_len;
+    return mock_verify_result;
+}
+
 // --- mbedtls SHA-256 ---
 void mbedtls_sha256_init(mbedtls_sha256_context *ctx) { (void)ctx; }
 void mbedtls_sha256_free(mbedtls_sha256_context *ctx) { (void)ctx; }

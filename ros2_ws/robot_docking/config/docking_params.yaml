@@ -11,10 +11,6 @@ docking_controller:
     coarse_tag_id: 0        # Large tag (200mm), tag36h11 family
     fine_tag_id: 1          # Small tag (50mm), tag36h11 family
 
-    # Contact detection
-    contact_voltage_threshold: 2.0   # Volts — above this = contact
-    contact_confirm_duration_s: 1.0  # Seconds of sustained contact
-
     # Timeouts
     approach_timeout_s: 60.0
     servo_timeout_s: 30.0
@@ -22,7 +18,7 @@ docking_controller:
 
     # Topics
     cmd_vel_topic: /cmd_vel
-    charging_voltage_topic: /charging/voltage
+    contact_confirmed_topic: /docking/contact_confirmed
 
 visual_servo:
   ros__parameters:

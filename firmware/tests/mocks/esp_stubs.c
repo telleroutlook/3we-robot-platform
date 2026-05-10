@@ -167,9 +167,24 @@ void mock_reset_pcnt(void) {
 // --- ADC mocks ---
 static int mock_adc_raw = 2048;
 static int mock_adc_mv = 1500;
+static int mock_adc_unit1_init_count = 0;
 
 esp_err_t adc_oneshot_new_unit(const adc_oneshot_unit_init_cfg_t *cfg, adc_oneshot_unit_handle_t *handle) {
-    (void)cfg; *handle = NULL; return ESP_OK;
+    (void)cfg;
+    mock_adc_unit1_init_count++;
+    if (mock_adc_unit1_init_count > 1) return ESP_ERR_INVALID_STATE;
+    *handle = (void*)(intptr_t)1;
+    return ESP_OK;
+}
+
+esp_err_t adc_manager_init(void) {
+    if (mock_adc_unit1_init_count > 0) return ESP_OK;
+    mock_adc_unit1_init_count = 1;
+    return ESP_OK;
+}
+
+adc_oneshot_unit_handle_t adc_manager_get_handle(void) {
+    return (void*)(intptr_t)1;
 }
 esp_err_t adc_oneshot_config_channel(adc_oneshot_unit_handle_t handle, int channel, const adc_oneshot_chan_cfg_t *cfg) {
     (void)handle; (void)channel; (void)cfg; return ESP_OK;

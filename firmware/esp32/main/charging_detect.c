@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "charging_detect.h"
+#include "adc_manager.h"
 #include "pin_definitions.h"
 
 #include "esp_adc/adc_oneshot.h"
@@ -9,23 +10,20 @@
 
 static const char *TAG = "charging";
 
-static adc_oneshot_unit_handle_t s_adc_handle = NULL;
 static adc_cali_handle_t s_cali_handle = NULL;
 static int s_last_voltage_mv = 0;
+static bool s_initialized = false;
 
 esp_err_t charging_detect_init(void)
 {
-    adc_oneshot_unit_init_cfg_t unit_cfg = {
-        .unit_id = ADC_UNIT_1,
-    };
-    esp_err_t err = adc_oneshot_new_unit(&unit_cfg, &s_adc_handle);
-    if (err != ESP_OK) return err;
+    adc_oneshot_unit_handle_t handle = adc_manager_get_handle();
+    if (handle == NULL) return ESP_ERR_INVALID_STATE;
 
     adc_oneshot_chan_cfg_t chan_cfg = {
         .atten = CHARGE_ADC_ATTEN,
         .bitwidth = ADC_BITWIDTH_12,
     };
-    err = adc_oneshot_config_channel(s_adc_handle, CHARGE_ADC_CHANNEL, &chan_cfg);
+    esp_err_t err = adc_oneshot_config_channel(handle, CHARGE_ADC_CHANNEL, &chan_cfg);
     if (err != ESP_OK) return err;
 
     adc_cali_curve_fitting_config_t cali_cfg = {
@@ -39,16 +37,17 @@ esp_err_t charging_detect_init(void)
         s_cali_handle = NULL;
     }
 
+    s_initialized = true;
     ESP_LOGI(TAG, "Charging detect initialized (threshold=%dmV)", CHARGE_CONTACT_THRESHOLD_MV);
     return ESP_OK;
 }
 
 int charging_detect_get_voltage_mv(void)
 {
-    if (s_adc_handle == NULL) return 0;
+    if (!s_initialized) return 0;
 
     int raw = 0;
-    esp_err_t err = adc_oneshot_read(s_adc_handle, CHARGE_ADC_CHANNEL, &raw);
+    esp_err_t err = adc_oneshot_read(adc_manager_get_handle(), CHARGE_ADC_CHANNEL, &raw);
     if (err != ESP_OK) return s_last_voltage_mv;
 
     if (s_cali_handle != NULL) {

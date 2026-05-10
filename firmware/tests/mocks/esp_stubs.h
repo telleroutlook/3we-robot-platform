@@ -158,6 +158,10 @@ esp_err_t adc_cali_create_scheme_line_fitting(const adc_cali_line_fitting_config
 esp_err_t adc_cali_create_scheme_curve_fitting(const adc_cali_curve_fitting_config_t *cfg, adc_cali_handle_t *handle);
 esp_err_t adc_cali_raw_to_voltage(adc_cali_handle_t handle, int raw, int *mv);
 
+// ADC manager stubs
+esp_err_t adc_manager_init(void);
+adc_oneshot_unit_handle_t adc_manager_get_handle(void);
+
 void mock_set_adc_raw(int raw_value);
 void mock_set_adc_voltage_mv(int mv);
 
