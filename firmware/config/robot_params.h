@@ -14,17 +14,25 @@
 #define LX                      (WHEELBASE_MM / 2000.0f)
 #define LY                      (WHEEL_SEPARATION_MM / 2000.0f)
 
-// Encoder
-#define ENCODER_CPR             1440    // Counts per revolution (360 PPR * 4 edges)
-#define GEAR_RATIO              90      // 1:90 reduction
+// Motor / Drivetrain (SKU-dependent, configured via Kconfig)
+#ifdef CONFIG_MOTOR_GEAR_RATIO
+#define GEAR_RATIO              CONFIG_MOTOR_GEAR_RATIO
+#define ENCODER_CPR             (CONFIG_MOTOR_ENCODER_PPR * 4)
+#define MAX_MOTOR_RPM           CONFIG_MOTOR_MAX_RPM
+#define PWM_FREQUENCY_HZ        CONFIG_MOTOR_PWM_FREQ_HZ
+#else
+// Host-side test defaults (N20 motor, Basic/Standard/Pro SKU)
+#define GEAR_RATIO              90
+#define ENCODER_CPR             1440
+#define MAX_MOTOR_RPM           150
+#define PWM_FREQUENCY_HZ        20000
+#endif
 
-// Motor limits
-#define MAX_MOTOR_RPM           150     // Output shaft RPM after gearbox
-#define MAX_LINEAR_VEL          0.37f   // m/s (derived from wheel_radius * max_rpm)
+// Motor limits (derived from configurable parameters)
+#define MAX_LINEAR_VEL          (2.0f * 3.14159265f * WHEEL_RADIUS * (float)MAX_MOTOR_RPM / 60.0f)
 #define MAX_ANGULAR_VEL         3.0f    // rad/s
 
 // PWM
-#define PWM_FREQUENCY_HZ        20000
 #define PWM_RESOLUTION_BITS     8
 #define PWM_MAX_DUTY            ((1 << PWM_RESOLUTION_BITS) - 1)
 

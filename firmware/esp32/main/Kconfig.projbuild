@@ -40,6 +40,44 @@ menu "Robot Platform Configuration"
             bool "Industrial (Automation)"
     endchoice
 
+    menu "Motor / Drivetrain"
+        config MOTOR_GEAR_RATIO
+            int "Gear reduction ratio"
+            default 30 if ROBOT_SKU_INDUSTRIAL
+            default 90
+            help
+                Motor gearbox reduction ratio.
+                N20 motors (Basic/Standard/Pro): 90
+                550 motors (Industrial): 30
+
+        config MOTOR_ENCODER_PPR
+            int "Encoder pulses per revolution (before quadrature)"
+            default 120 if ROBOT_SKU_INDUSTRIAL
+            default 360
+            help
+                Raw encoder PPR before quadrature decoding (x4).
+                N20 Hall encoder: 360 PPR (CPR = 1440)
+                550 Hall encoder: 120 PPR (CPR = 480)
+
+        config MOTOR_MAX_RPM
+            int "Max output shaft RPM"
+            default 200 if ROBOT_SKU_INDUSTRIAL
+            default 150
+            help
+                Maximum RPM at the output shaft (after gearbox).
+                N20 1:90 at 6V: ~150 RPM
+                550 1:30 at 12V: ~200 RPM
+
+        config MOTOR_PWM_FREQ_HZ
+            int "PWM frequency (Hz)"
+            default 15000 if ROBOT_SKU_INDUSTRIAL
+            default 20000
+            help
+                Motor driver PWM frequency.
+                DRV8833 (Basic/Standard/Pro): 20000 Hz
+                BTS7960 (Industrial): 15000 Hz
+    endmenu
+
     menu "Motor PID Tuning"
         config MOTOR_PID_KP
             int "Proportional gain (x100)"
