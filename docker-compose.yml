@@ -27,13 +27,15 @@ services:
     image: eclipse-mosquitto:2
     profiles: ["fleet"]
     ports:
-      - "1883:1883"
+      - "8883:8883"
+      - "127.0.0.1:1883:1883"
     environment:
       - MQTT_USER=${MQTT_USER:-robot}
       - MQTT_PASS=${MQTT_PASS:?MQTT_PASS must be set in .env or environment}
     volumes:
       - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./docker/mosquitto/entrypoint.sh:/entrypoint.sh:ro
+      - ./docker/mosquitto/certs:/mosquitto/certs:ro
       - mosquitto-data:/mosquitto/data
     entrypoint: /entrypoint.sh
 

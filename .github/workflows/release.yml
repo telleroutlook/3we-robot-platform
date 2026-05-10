@@ -80,6 +80,7 @@ jobs:
         run: |
           . $IDF_PATH/export.sh
           mkdir -p managed_components
+          trap 'rm -f secure_boot_signing_key.pem' EXIT
           if [ "${{ matrix.production }}" = "true" ]; then
             if [ -z "$SECURE_BOOT_SIGNING_KEY" ]; then
               echo "::error::SECURE_BOOT_SIGNING_KEY secret is not set"
@@ -93,7 +94,6 @@ jobs:
           fi
           idf.py -DSDKCONFIG_DEFAULTS="$CONFIGS" set-target esp32s3
           idf.py build
-          rm -f secure_boot_signing_key.pem
 
       - name: Upload firmware binary
         uses: actions/upload-artifact@v4
@@ -122,7 +122,7 @@ jobs:
           python -m build
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@fb13cb306901256ace3dab689990e13a5550ffaa  # release/v1
         with:
           packages-dir: sdk/dist/
 
@@ -187,7 +187,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda  # v2
         with:
           body_path: RELEASE_NOTES.md
           files: |

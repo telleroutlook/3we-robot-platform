@@ -108,6 +108,8 @@ static void dns_server_task(void *arg)
             buf[resp_len++] = 0x00; buf[resp_len++] = 0x04; // data length
             buf[resp_len++] = 192;  buf[resp_len++] = 168;
             buf[resp_len++] = 4;    buf[resp_len++] = 1;    // 192.168.4.1
+        } else {
+            buf[6] = 0; buf[7] = 0;
         }
         sendto(sock, buf, resp_len, 0,
                (struct sockaddr *)&client, client_len);
@@ -154,11 +156,17 @@ static esp_err_t handler_post_connect(httpd_req_t *req)
         return ESP_FAIL;
     }
 
-    const char *ssid = ssid_item->valuestring;
-    const char *password = cJSON_IsString(pass_item) ? pass_item->valuestring : "";
+    char ssid_copy[65];
+    char pass_copy[65];
+    strncpy(ssid_copy, ssid_item->valuestring, sizeof(ssid_copy) - 1);
+    ssid_copy[sizeof(ssid_copy) - 1] = '\0';
+    strncpy(pass_copy, cJSON_IsString(pass_item) ? pass_item->valuestring : "",
+            sizeof(pass_copy) - 1);
+    pass_copy[sizeof(pass_copy) - 1] = '\0';
 
-    esp_err_t ret = wifi_provision_store_credentials(ssid, password);
     cJSON_Delete(json);
+
+    esp_err_t ret = wifi_provision_store_credentials(ssid_copy, pass_copy);
 
     if (ret != ESP_OK) {
         httpd_resp_set_type(req, "application/json");
@@ -170,7 +178,7 @@ static esp_err_t handler_post_connect(httpd_req_t *req)
     httpd_resp_send(req, "{\"success\":true,\"message\":\"Credentials saved. Rebooting to connect...\"}", -1);
 
     if (s_done_cb) {
-        s_done_cb(ssid, password);
+        s_done_cb(ssid_copy, pass_copy);
     }
 
     return ESP_OK;

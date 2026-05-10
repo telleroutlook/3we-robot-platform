@@ -381,9 +381,11 @@ class AsyncPayloadClient:
             depth=1,
         )
 
+        loop = self._loop
+
         def _callback(msg: Any) -> None:
             if not queue.full():
-                self._loop.call_soon_threadsafe(queue.put_nowait, msg)
+                loop.call_soon_threadsafe(queue.put_nowait, msg)
 
         subscription = self._node.create_subscription(
             RosBatteryState, "/battery_state", _callback, qos_profile

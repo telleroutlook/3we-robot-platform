@@ -123,6 +123,10 @@ esp_err_t ota_signing_init(const uint8_t pubkey[OTA_PUBKEY_SIZE])
         nvs_close(nvs);
     }
 
+    if (ota_upload_token[0] == '\0') {
+        ESP_LOGW(TAG, "OTA upload token not provisioned - /ota/upload endpoint is disabled");
+    }
+
     initialized = true;
     ESP_LOGI(TAG, "OTA signing initialized (ECDSA P-256 pubkey loaded)");
     return ESP_OK;

@@ -65,7 +65,11 @@ esp_err_t safety_init(void)
         ESP_LOGE(TAG, "ISR service install failed: %s", esp_err_to_name(isr_ret));
         return isr_ret;
     }
-    gpio_isr_handler_add(ESTOP_GPIO, estop_isr, NULL);
+    esp_err_t isr_add_ret = gpio_isr_handler_add(ESTOP_GPIO, estop_isr, NULL);
+    if (isr_add_ret != ESP_OK) {
+        ESP_LOGE(TAG, "E-stop ISR registration failed: %s - relying on polling only",
+                 esp_err_to_name(isr_add_ret));
+    }
 
     // Check initial state (NC button: low = pressed/stopped)
     if (gpio_get_level(ESTOP_GPIO) == 0) {
@@ -279,6 +283,9 @@ void safety_task(void *params)
         }
 
         // Watchdog: if control loop stalls, stop motors
+        portENTER_CRITICAL(&safety_spinlock);
+        current_state = state;
+        portEXIT_CRITICAL(&safety_spinlock);
         if (current_state == SAFETY_NORMAL) {
             portENTER_CRITICAL(&safety_spinlock);
             int64_t last_feed = last_watchdog_feed;
@@ -328,7 +335,9 @@ esp_err_t safety_relay_selftest(void)
             }
             return ESP_ERR_INVALID_STATE;
         }
+        portENTER_CRITICAL(&safety_spinlock);
         relay_fault_count = 0;
+        portEXIT_CRITICAL(&safety_spinlock);
         ESP_LOGI(TAG, "Relay self-test PASSED (feedback=HIGH, relay energized)");
     } else {
         // E-stop is pressed at boot — relay should be de-energized
@@ -347,7 +356,9 @@ esp_err_t safety_relay_selftest(void)
             }
             return ESP_ERR_INVALID_STATE;
         }
+        portENTER_CRITICAL(&safety_spinlock);
         relay_fault_count = 0;
+        portEXIT_CRITICAL(&safety_spinlock);
         ESP_LOGI(TAG, "Relay self-test PASSED (feedback=LOW, E-stop active)");
     }
 

@@ -40,6 +40,33 @@ groups:
           summary: "Motor overcurrent detected ({{ $value }}A)"
           description: "Robot {{ $labels.robot_id }} motor current exceeds safe threshold."
 
+      - alert: CPUTempCritical
+        expr: robot_cpu_temp > 85
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "CPU temperature critical ({{ $value }}°C)"
+          description: "Robot {{ $labels.robot_id }} CPU at thermal throttle threshold."
+
+      - alert: MemoryCritical
+        expr: robot_memory_percent > 95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Memory exhaustion imminent ({{ $value }}%)"
+          description: "Robot {{ $labels.robot_id }} OOM risk — ROS2 nodes may be killed."
+
+      - alert: DiskCritical
+        expr: robot_disk_free_gb < 0.5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk nearly full ({{ $value }}GB free)"
+          description: "Robot {{ $labels.robot_id }} disk critically low."
+
   - name: robot_warning
     rules:
       - alert: BatteryLow

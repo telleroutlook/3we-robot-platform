@@ -17,17 +17,17 @@ alerting:
 scrape_configs:
   - job_name: 'robot-metrics'
     static_configs:
-      - targets: ['localhost:9100']
+      - targets: ['metrics-exporter:9100']
         labels:
           robot_id: 'robot-001'
 
   - job_name: 'ros2-diagnostics'
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['localhost:9101']
+      - targets: ['metrics-exporter:9101']
         labels:
           robot_id: 'robot-001'
 
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['localhost:9102']
+      - targets: ['node-exporter:9102']

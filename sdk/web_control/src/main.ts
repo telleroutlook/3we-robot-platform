@@ -20,10 +20,14 @@ import './components/system-status';
 function init(): void {
   const env = validateEnv();
 
-  const connectBtn = document.getElementById('connectBtn') as HTMLButtonElement;
-  const wsUrlInput = document.getElementById('wsUrlInput') as HTMLInputElement;
-  const indicatorDot = document.querySelector('.indicator-dot') as HTMLElement;
-  const indicatorLabel = document.querySelector('.indicator-label') as HTMLElement;
+  const connectBtn = document.getElementById('connectBtn');
+  const wsUrlInput = document.getElementById('wsUrlInput') as HTMLInputElement | null;
+  const indicatorDot = document.querySelector('.indicator-dot');
+  const indicatorLabel = document.querySelector('.indicator-label');
+
+  if (!connectBtn || !wsUrlInput || !indicatorDot || !indicatorLabel) {
+    return;
+  }
 
   if (!wsUrlInput.value) {
     wsUrlInput.value = env.VITE_ROSBRIDGE_URL;

@@ -70,7 +70,11 @@ class MetricsExporter(Node):
         super().__init__("metrics_exporter")
 
         self.declare_parameter("port", 9101)
+        self.declare_parameter("bind_address", "127.0.0.1")
         port = self.get_parameter("port").get_parameter_value().integer_value
+        bind_addr = (
+            self.get_parameter("bind_address").get_parameter_value().string_value
+        )
 
         self.create_subscription(BatteryState, "/battery_state", self._on_battery, 10)
         self.create_subscription(Twist, "/cmd_vel", self._on_cmd_vel, 10)
@@ -78,7 +82,7 @@ class MetricsExporter(Node):
         self.create_subscription(Imu, "/imu/data", self._on_imu, 10)
         self.create_subscription(Range, "/ultrasonic/front", self._on_range_front, 10)
 
-        self._http_server = HTTPServer(("0.0.0.0", port), MetricsHTTPHandler)
+        self._http_server = HTTPServer((bind_addr, port), MetricsHTTPHandler)
         self._http_thread = threading.Thread(
             target=self._http_server.serve_forever, daemon=True
         )

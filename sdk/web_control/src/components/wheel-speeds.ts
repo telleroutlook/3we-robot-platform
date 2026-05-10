@@ -2,6 +2,7 @@
 
 import type { WheelSpeeds } from '../types';
 import { connection } from '../connection';
+import { wheelSpeedsSchema } from '../schemas';
 
 const TEMPLATE = document.createElement('template');
 TEMPLATE.innerHTML = `
@@ -143,9 +144,10 @@ export class RobotWheelSpeeds extends HTMLElement {
       this.values[w] = shadow.getElementById(`val${w}`) as HTMLElement;
     }
 
-    this.unsubscribe = connection.subscribe<WheelSpeeds>(
+    this.unsubscribe = connection.safeSubscribe(
       '/wheel_speeds',
       'robot_interfaces/WheelSpeeds',
+      wheelSpeedsSchema,
       (msg) => this.onWheelSpeeds(msg)
     );
   }

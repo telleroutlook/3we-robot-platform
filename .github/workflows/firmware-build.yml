@@ -44,6 +44,7 @@ jobs:
         run: |
           . $IDF_PATH/export.sh
           mkdir -p managed_components
+          trap 'rm -f secure_boot_signing_key.pem' EXIT
           if [ "${{ matrix.production }}" = "true" ]; then
             if [ -z "$SECURE_BOOT_SIGNING_KEY" ]; then
               echo "::error::SECURE_BOOT_SIGNING_KEY secret is not set"
@@ -57,4 +58,3 @@ jobs:
           fi
           idf.py -DSDKCONFIG_DEFAULTS="$CONFIGS" set-target esp32s3
           idf.py build
-          rm -f secure_boot_signing_key.pem

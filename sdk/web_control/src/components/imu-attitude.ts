@@ -2,6 +2,7 @@
 
 import type { Imu, Quaternion } from '../types';
 import { connection } from '../connection';
+import { imuSchema } from '../schemas';
 
 const TEMPLATE = document.createElement('template');
 TEMPLATE.innerHTML = `
@@ -183,7 +184,7 @@ export class RobotImuAttitude extends HTMLElement {
     this.pitchEl = shadow.getElementById('pitchValue') as HTMLElement;
     this.yawEl = shadow.getElementById('yawValue') as HTMLElement;
 
-    this.unsubscribe = connection.subscribe<Imu>('/imu/data', 'sensor_msgs/Imu', (msg) =>
+    this.unsubscribe = connection.safeSubscribe('/imu/data', 'sensor_msgs/Imu', imuSchema, (msg) =>
       this.onImuData(msg)
     );
   }

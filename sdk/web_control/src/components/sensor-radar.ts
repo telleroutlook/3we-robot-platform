@@ -2,6 +2,7 @@
 
 import type { Range } from '../types';
 import { connection } from '../connection';
+import { rangeSchema } from '../schemas';
 
 const TEMPLATE = document.createElement('template');
 TEMPLATE.innerHTML = `
@@ -80,6 +81,7 @@ export class RobotSensorRadar extends HTMLElement {
   };
 
   private pendingRender = false;
+  private rafHandle: number | null = null;
   private unsubscribers: Array<() => void> = [];
 
   constructor() {
@@ -97,7 +99,7 @@ export class RobotSensorRadar extends HTMLElement {
     ];
 
     for (const [topic, direction] of topics) {
-      const unsub = connection.subscribe<Range>(topic, 'sensor_msgs/Range', (msg) =>
+      const unsub = connection.safeSubscribe(topic, 'sensor_msgs/Range', rangeSchema, (msg) =>
         this.onRange(direction, msg)
       );
       this.unsubscribers.push(unsub);
@@ -111,6 +113,11 @@ export class RobotSensorRadar extends HTMLElement {
       unsub();
     }
     this.unsubscribers = [];
+    if (this.rafHandle !== null) {
+      cancelAnimationFrame(this.rafHandle);
+      this.rafHandle = null;
+      this.pendingRender = false;
+    }
   }
 
   private onRange(direction: string, msg: Range): void {
@@ -119,8 +126,9 @@ export class RobotSensorRadar extends HTMLElement {
     this.sensors[direction] = { range, maxRange };
     if (!this.pendingRender) {
       this.pendingRender = true;
-      requestAnimationFrame(() => {
+      this.rafHandle = requestAnimationFrame(() => {
         this.pendingRender = false;
+        this.rafHandle = null;
         this.render();
       });
     }

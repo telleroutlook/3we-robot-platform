@@ -2,6 +2,7 @@
 
 import type { EmergencyStopState } from '../types';
 import { connection } from '../connection';
+import { emergencyStopStateSchema } from '../schemas';
 
 type EstopVisualState = 'normal' | 'estopped' | 'recovery_pending';
 
@@ -216,9 +217,10 @@ export class RobotEstopButton extends HTMLElement {
     cancelBtn.addEventListener('click', this.onCancelClick);
     confirmBtn.addEventListener('click', this.onConfirmClick);
 
-    this.unsubscribe = connection.subscribe<EmergencyStopState>(
+    this.unsubscribe = connection.safeSubscribe(
       '/emergency_stop_state',
       'robot_interfaces/EmergencyStopState',
+      emergencyStopStateSchema,
       (msg) => this.onEstopState(msg)
     );
   }

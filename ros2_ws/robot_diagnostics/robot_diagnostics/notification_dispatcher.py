@@ -137,8 +137,19 @@ class NotificationDispatcher(Node):
         templates = self._config.get("templates", {})
         template = templates.get(template_name, {})
 
-        title = template.get("title", "[{severity}] {event_type}").format(**event)
-        body = template.get("body", "{details}").format(**event)
+        safe_fields = {
+            "severity": str(event.get("severity", "")),
+            "event_type": str(event.get("event_type", "")),
+            "robot_id": str(event.get("robot_id", "")),
+            "details": str(event.get("details", "")),
+            "timestamp": str(event.get("timestamp", "")),
+            "battery_percent": str(event.get("battery_percent", "")),
+        }
+
+        title = template.get("title", "[{severity}] {event_type}").format_map(
+            safe_fields
+        )
+        body = template.get("body", "{details}").format_map(safe_fields)
 
         return {
             "title": title,

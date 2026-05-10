@@ -2,6 +2,7 @@
 
 import type { BatteryState } from '../types';
 import { connection } from '../connection';
+import { batteryStateSchema } from '../schemas';
 
 const TEMPLATE = document.createElement('template');
 TEMPLATE.innerHTML = `
@@ -178,9 +179,10 @@ export class RobotBatteryGauge extends HTMLElement {
     this.voltageEl = shadow.getElementById('voltage') as HTMLElement;
     this.currentEl = shadow.getElementById('current') as HTMLElement;
 
-    this.unsubscribe = connection.subscribe<BatteryState>(
+    this.unsubscribe = connection.safeSubscribe(
       '/battery_state',
       'sensor_msgs/BatteryState',
+      batteryStateSchema,
       (msg) => this.onBatteryUpdate(msg)
     );
   }

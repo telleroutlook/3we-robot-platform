@@ -311,7 +311,7 @@ function toggleConnection() {
   if (robot.connected) {
     robot.disconnect();
   } else {
-    const url = document.getElementById("wsUrl").value;
+    const url = document.getElementById("wsUrl").value.trim();
     robot.connect(url);
   }
 }

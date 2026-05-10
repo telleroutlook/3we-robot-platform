@@ -47,4 +47,4 @@ inhibit_rules:
       severity: 'critical'
     target_match:
       severity: 'warning'
-    equal: ['robot_id', 'alertname']
+    equal: ['robot_id']

@@ -138,6 +138,12 @@ def cmd_flash(args: argparse.Namespace) -> None:
 
         nvs_size = args.nvs_size or "0x6000"
 
+        try:
+            int(nvs_size, 0)
+        except ValueError:
+            print(f"Error: invalid nvs_size: {nvs_size!r}")
+            sys.exit(1)
+
         print(f"Generating NVS partition binary ({nvs_size} bytes)...")
         result = subprocess.run(
             [
@@ -176,6 +182,12 @@ def cmd_flash(args: argparse.Namespace) -> None:
             sys.exit(1)
 
         nvs_offset = args.nvs_offset or "0x9000"
+
+        try:
+            int(nvs_offset, 0)
+        except ValueError:
+            print(f"Error: invalid nvs_offset: {nvs_offset!r}")
+            sys.exit(1)
 
         print(f"Flashing NVS to device at offset {nvs_offset}...")
         flash_cmd = [
@@ -226,8 +238,14 @@ def cmd_batch(args: argparse.Namespace) -> None:
                 print("Warning: Row missing device_id/id/mac, skipping")
                 continue
 
-            safe_name = device_id.replace(":", "-").replace("/", "-")
+            safe_name = device_id.replace(":", "-").replace("/", "-").replace("\\", "-")
             output_file = output_dir / f"{safe_name}.json"
+
+            try:
+                output_file.resolve().relative_to(output_dir.resolve())
+            except ValueError:
+                print(f"Warning: Skipping device_id with unsafe path: {device_id!r}")
+                continue
 
             if output_file.exists() and not args.force:
                 print(f"  Skip (exists): {output_file}")

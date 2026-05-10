@@ -2,6 +2,7 @@
 
 import type { PayloadState, PayloadPowerRequest, PayloadPowerResponse } from '../types';
 import { connection } from '../connection';
+import { payloadStateSchema } from '../schemas';
 
 const TEMPLATE = document.createElement('template');
 TEMPLATE.innerHTML = `
@@ -183,13 +184,13 @@ export class RobotPayloadPanel extends HTMLElement {
   private unsubscribe: (() => void) | null = null;
   private currentPayloadId = '';
   private on5vClick = (): void => {
-    this.toggleRail('5V', this.toggle5v);
+    void this.toggleRail('5V', this.toggle5v);
   };
   private on12vClick = (): void => {
-    this.toggleRail('12V', this.toggle12v);
+    void this.toggleRail('12V', this.toggle12v);
   };
   private onVbatClick = (): void => {
-    this.toggleRail('VBAT', this.toggleVbat);
+    void this.toggleRail('VBAT', this.toggleVbat);
   };
   private onKeydown = (e: KeyboardEvent): void => {
     if (e.key === ' ' || e.key === 'Enter') {
@@ -226,9 +227,10 @@ export class RobotPayloadPanel extends HTMLElement {
       el.addEventListener('keydown', this.onKeydown);
     });
 
-    this.unsubscribe = connection.subscribe<PayloadState>(
+    this.unsubscribe = connection.safeSubscribe(
       '/payload_state',
       'robot_interfaces/PayloadState',
+      payloadStateSchema,
       (msg) => this.onPayloadState(msg)
     );
   }

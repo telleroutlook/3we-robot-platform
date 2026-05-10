@@ -62,15 +62,19 @@ class DockingController(Node):
         )
 
         cb_group = ReentrantCallbackGroup()
-        self._action_server = ActionServer(
-            self,
-            self._get_dock_action_type(),
-            "dock",
-            execute_callback=self._execute_dock,
-            goal_callback=self._goal_callback,
-            cancel_callback=self._cancel_callback,
-            callback_group=cb_group,
-        )
+        dock_action_type = self._get_dock_action_type()
+        if dock_action_type is None:
+            self._action_server = None
+        else:
+            self._action_server = ActionServer(
+                self,
+                dock_action_type,
+                "dock",
+                execute_callback=self._execute_dock,
+                goal_callback=self._goal_callback,
+                cancel_callback=self._cancel_callback,
+                callback_group=cb_group,
+            )
 
         self._timer = self.create_timer(0.1, self._control_loop)
         self._goal_handle: Optional[ServerGoalHandle] = None

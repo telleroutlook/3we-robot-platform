@@ -109,8 +109,9 @@ static int dtls_psk_callback(void *parameter, mbedtls_ssl_context *ssl_ctx,
             if (session_idx >= 0) {
                 sessions[session_idx].priority = operator_table[i].priority;
                 sessions[session_idx].role = operator_table[i].role;
-                memcpy(sessions[session_idx].identity, operator_table[i].identity,
-                       sizeof(sessions[session_idx].identity));
+                strncpy(sessions[session_idx].identity, operator_table[i].identity,
+                        sizeof(sessions[session_idx].identity) - 1);
+                sessions[session_idx].identity[sizeof(sessions[session_idx].identity) - 1] = '\0';
             }
 
             return mbedtls_ssl_set_hs_psk(ssl_ctx,
@@ -126,8 +127,9 @@ static int dtls_psk_callback(void *parameter, mbedtls_ssl_context *ssl_ctx,
         if (session_idx >= 0) {
             sessions[session_idx].priority = 0;
             sessions[session_idx].role = DTLS_ROLE_OPERATOR;
-            memcpy(sessions[session_idx].identity, current_config.psk_identity,
-                   sizeof(sessions[session_idx].identity));
+            strncpy(sessions[session_idx].identity, current_config.psk_identity,
+                    sizeof(sessions[session_idx].identity) - 1);
+            sessions[session_idx].identity[sizeof(sessions[session_idx].identity) - 1] = '\0';
         }
 
         return mbedtls_ssl_set_hs_psk(ssl_ctx, current_config.psk_key,
