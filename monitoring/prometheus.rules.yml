@@ -1,0 +1,99 @@
+# SPDX-License-Identifier: Apache-2.0
+# Prometheus alert rules for robot platform fleet monitoring.
+
+groups:
+  - name: robot_critical
+    rules:
+      - alert: BatteryCritical
+        expr: robot_battery_percent < 10
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Battery critically low ({{ $value }}%)"
+          description: "Robot {{ $labels.robot_id }} battery below 10%. Immediate docking required."
+
+      - alert: EmergencyStopActive
+        expr: robot_estop_active == 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Emergency stop active for >5 minutes"
+          description: "Robot {{ $labels.robot_id }} E-stop has been triggered for over 5 minutes. Manual intervention required."
+
+      - alert: CommunicationLost
+        expr: up{job="ros2-diagnostics"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Robot telemetry lost"
+          description: "No metrics received from robot {{ $labels.robot_id }} for over 2 minutes."
+
+      - alert: MotorOvercurrent
+        expr: robot_motor_current_amps > 3.0
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Motor overcurrent detected ({{ $value }}A)"
+          description: "Robot {{ $labels.robot_id }} motor current exceeds safe threshold."
+
+  - name: robot_warning
+    rules:
+      - alert: BatteryLow
+        expr: robot_battery_percent < 20
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Battery low ({{ $value }}%)"
+          description: "Robot {{ $labels.robot_id }} battery below 20%. Schedule return to dock."
+
+      - alert: CPUTempHigh
+        expr: robot_cpu_temp > 75
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU temperature elevated ({{ $value }}°C)"
+          description: "Robot {{ $labels.robot_id }} companion computer running hot."
+
+      - alert: MemoryPressure
+        expr: robot_memory_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage high ({{ $value }}%)"
+          description: "Robot {{ $labels.robot_id }} memory pressure may impact performance."
+
+      - alert: WiFiSignalWeak
+        expr: robot_wifi_rssi < -75
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WiFi signal weak ({{ $value }} dBm)"
+          description: "Robot {{ $labels.robot_id }} WiFi RSSI below acceptable threshold."
+
+      - alert: DiskSpaceLow
+        expr: robot_disk_free_gb < 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space low ({{ $value }}GB free)"
+          description: "Robot {{ $labels.robot_id }} running low on storage."
+
+  - name: robot_info
+    rules:
+      - alert: TopicRateDropped
+        expr: rate(robot_topic_messages_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: info
+        annotations:
+          summary: "ROS2 topic {{ $labels.topic }} stopped publishing"
+          description: "Robot {{ $labels.robot_id }} topic {{ $labels.topic }} has zero message rate."

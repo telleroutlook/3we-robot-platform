@@ -9,7 +9,13 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        ("share/" + package_name + "/config", ["config/health_thresholds.yaml"]),
+        (
+            "share/" + package_name + "/config",
+            [
+                "config/health_thresholds.yaml",
+                "config/notifications.yaml",
+            ],
+        ),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
@@ -23,6 +29,7 @@ setup(
             "diagnostics_node = robot_diagnostics.diagnostics_node:main",
             "mqtt_bridge_node = robot_diagnostics.mqtt_bridge_node:main",
             "health_monitor_node = robot_diagnostics.health_monitor_node:main",
+            "notification_dispatcher = robot_diagnostics.notification_dispatcher:main",
         ],
     },
 )

@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+# Notification channel configuration for robot platform alerts.
+# All webhook URLs come from environment variables — never commit secrets.
+
+channels:
+  - name: primary
+    type: webhook
+    url: ${NOTIFY_WEBHOOK_URL}
+    secret: ${NOTIFY_WEBHOOK_SECRET}
+    format: json
+    template: default
+    severity_filter: [critical, warning]
+
+throttling:
+  duplicate_window_seconds: 60
+  quiet_hours:
+    start: "22:00"
+    end: "08:00"
+    allowed_levels: [critical]
+
+templates:
+  default:
+    title: "[{severity}] {robot_id}: {event_type}"
+    body: |
+      Robot: {robot_id}
+      Event: {event_type}
+      Severity: {severity}
+      Time: {timestamp}
+      Details: {details}
+      Battery: {battery_percent}%

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Navigation stack launch: Nav2 + optional SLAM."""
+"""Navigation stack launch: Dual-EKF localization + Nav2 + optional SLAM."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
@@ -17,6 +17,8 @@ def generate_launch_description():
         [pkg_bringup, "config", "nav2_params.yaml"]
     )
     slam_params_file = PathJoinSubstitution([pkg_bringup, "config", "slam_params.yaml"])
+    ekf_local_config = PathJoinSubstitution([pkg_bringup, "config", "ekf_local.yaml"])
+    ekf_global_config = PathJoinSubstitution([pkg_bringup, "config", "ekf_global.yaml"])
 
     use_slam_arg = DeclareLaunchArgument(
         "use_slam",
@@ -38,6 +40,40 @@ def generate_launch_description():
         "params_file",
         default_value=default_nav2_params,
         description="Path to Nav2 parameters file",
+    )
+
+    use_ekf_arg = DeclareLaunchArgument(
+        "use_ekf",
+        default_value="true",
+        description="Enable dual-EKF sensor fusion (robot_localization)",
+    )
+
+    # EKF Local: odom frame fusion (encoder + IMU angular velocity)
+    ekf_local_node = Node(
+        package="robot_localization",
+        executable="ekf_node",
+        name="ekf_local_node",
+        parameters=[
+            ekf_local_config,
+            {"use_sim_time": LaunchConfiguration("use_sim_time")},
+        ],
+        remappings=[("odometry/filtered", "/odometry/local")],
+        condition=IfCondition(LaunchConfiguration("use_ekf")),
+        output="screen",
+    )
+
+    # EKF Global: map frame fusion (encoder + IMU yaw + ArUco vision)
+    ekf_global_node = Node(
+        package="robot_localization",
+        executable="ekf_node",
+        name="ekf_global_node",
+        parameters=[
+            ekf_global_config,
+            {"use_sim_time": LaunchConfiguration("use_sim_time")},
+        ],
+        remappings=[("odometry/filtered", "/odometry/global")],
+        condition=IfCondition(LaunchConfiguration("use_ekf")),
+        output="screen",
     )
 
     # Nav2 bringup
@@ -73,6 +109,9 @@ def generate_launch_description():
             map_file_arg,
             use_sim_time_arg,
             params_file_arg,
+            use_ekf_arg,
+            ekf_local_node,
+            ekf_global_node,
             nav2_launch,
             slam_node,
         ]

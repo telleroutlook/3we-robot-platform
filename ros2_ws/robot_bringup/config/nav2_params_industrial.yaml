@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Nav2 parameters for Industrial SKU (500x400mm chassis, 97mm mecanum wheels)
+# Based on doc4 production tuning, scaled for larger platform
 
 bt_navigator:
   ros__parameters:
@@ -35,7 +36,7 @@ controller_server:
 
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.05
+      xy_goal_tolerance: 0.15
       yaw_goal_tolerance: 0.1
       stateful: true
 
@@ -45,22 +46,23 @@ controller_server:
       max_vel_x: 0.50
       min_vel_y: -0.50
       max_vel_y: 0.50
-      max_vel_theta: 2.0
+      max_vel_theta: 1.5
       min_speed_xy: 0.0
       max_speed_xy: 0.50
       min_speed_theta: 0.0
       acc_lim_x: 0.8
       acc_lim_y: 0.8
-      acc_lim_theta: 2.5
+      acc_lim_theta: 2.0
       decel_lim_x: -1.2
       decel_lim_y: -1.2
       decel_lim_theta: -3.0
-      vx_samples: 20
+      vx_samples: 10
       vy_samples: 10
       vtheta_samples: 20
       sim_time: 1.7
       linear_granularity: 0.05
       angular_granularity: 0.025
+      trans_stopped_velocity: 0.1
       critics:
         - RotateToGoal
         - Oscillation
@@ -79,16 +81,18 @@ planner_server:
   ros__parameters:
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner"
-      tolerance: 0.5
-      use_astar: false
-      allow_unknown: false
+      plugin: "smac_planner/SmacPlanner2D"
+      tolerance: 0.125
+      allow_unknown: true
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      max_planning_time: 2.0
 
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 5.0
-      publish_frequency: 2.0
+      update_frequency: 10.0
+      publish_frequency: 5.0
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
@@ -100,12 +104,35 @@ local_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
-        observation_sources: ultrasonic
-        ultrasonic:
+        observation_sources: ultrasonic_front ultrasonic_left ultrasonic_right ultrasonic_back
+        ultrasonic_front:
           topic: /ultrasonic/front
           clearing: true
           marking: true
           data_type: "Range"
+          obstacle_max_range: 3.0
+          max_obstacle_height: 0.8
+        ultrasonic_left:
+          topic: /ultrasonic/left
+          clearing: true
+          marking: true
+          data_type: "Range"
+          obstacle_max_range: 3.0
+          max_obstacle_height: 0.8
+        ultrasonic_right:
+          topic: /ultrasonic/right
+          clearing: true
+          marking: true
+          data_type: "Range"
+          obstacle_max_range: 3.0
+          max_obstacle_height: 0.8
+        ultrasonic_back:
+          topic: /ultrasonic/back
+          clearing: false
+          marking: true
+          data_type: "Range"
+          obstacle_max_range: 3.0
+          max_obstacle_height: 0.8
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
@@ -114,8 +141,8 @@ local_costmap:
 global_costmap:
   global_costmap:
     ros__parameters:
-      update_frequency: 1.0
-      publish_frequency: 1.0
+      update_frequency: 5.0
+      publish_frequency: 2.0
       global_frame: map
       robot_base_frame: base_link
       robot_radius: 0.32
@@ -128,12 +155,35 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
-        observation_sources: ultrasonic
-        ultrasonic:
+        observation_sources: ultrasonic_front ultrasonic_left ultrasonic_right ultrasonic_back
+        ultrasonic_front:
           topic: /ultrasonic/front
           clearing: true
           marking: true
           data_type: "Range"
+          obstacle_max_range: 3.0
+          max_obstacle_height: 0.8
+        ultrasonic_left:
+          topic: /ultrasonic/left
+          clearing: true
+          marking: true
+          data_type: "Range"
+          obstacle_max_range: 3.0
+          max_obstacle_height: 0.8
+        ultrasonic_right:
+          topic: /ultrasonic/right
+          clearing: true
+          marking: true
+          data_type: "Range"
+          obstacle_max_range: 3.0
+          max_obstacle_height: 0.8
+        ultrasonic_back:
+          topic: /ultrasonic/back
+          clearing: false
+          marking: true
+          data_type: "Range"
+          obstacle_max_range: 3.0
+          max_obstacle_height: 0.8
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
@@ -141,7 +191,9 @@ global_costmap:
 
 behavior_server:
   ros__parameters:
-    behavior_plugins: ["spin", "backup", "wait"]
+    behavior_plugins: ["clear_costmap", "spin", "backup", "wait"]
+    clear_costmap:
+      plugin: "nav2_behaviors::ClearEntireCostmap"
     spin:
       plugin: "nav2_behaviors::Spin"
     backup:
