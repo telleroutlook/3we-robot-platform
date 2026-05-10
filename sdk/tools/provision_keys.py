@@ -245,6 +245,7 @@ def cmd_batch(args: argparse.Namespace) -> None:
             }
 
             output_file.write_text(json.dumps(manifest, indent=2) + "\n")
+            os.chmod(output_file, 0o600)
 
             private_key_path = output_file.with_suffix(".key.pem")
             private_key_path.write_bytes(ota_private_pem)

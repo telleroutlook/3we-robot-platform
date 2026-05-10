@@ -212,9 +212,10 @@ export class RosbridgeConnection extends EventTarget {
         }
       }
     } else if (msg.op === 'service_response') {
-      const pending = this.pendingServices.get(msg.id ?? '');
+      if (!msg.id) return;
+      const pending = this.pendingServices.get(msg.id);
       if (pending) {
-        this.pendingServices.delete(msg.id ?? '');
+        this.pendingServices.delete(msg.id);
         if (msg.result) {
           pending.resolve(msg.values);
         } else {
@@ -270,13 +271,13 @@ export class RosbridgeConnection extends EventTarget {
     this.missedPongs = 0;
     this.heartbeatTimer = setInterval(() => {
       if (!this.isConnected()) return;
-      this.missedPongs++;
       if (this.missedPongs >= this.maxMissedPongs) {
         this.stopHeartbeat();
         this.ws?.close();
         return;
       }
       this.ws?.send(JSON.stringify({ op: 'ping' }));
+      this.missedPongs++;
     }, this.heartbeatIntervalMs);
   }
 

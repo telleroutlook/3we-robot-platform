@@ -7,7 +7,7 @@ from sensor_msgs.msg import Image
 from vision_msgs.msg import Detection2D, Detection2DArray, ObjectHypothesisWithPose
 from cv_bridge import CvBridge
 
-import numpy as np
+import numpy as np  # noqa: F401
 
 
 class HailoInferenceNode(Node):
@@ -43,8 +43,10 @@ class HailoInferenceNode(Node):
 
         self._bridge = CvBridge()
         self._latest_frame: np.ndarray | None = None
+        self._frame_lock = __import__("threading").Lock()
         self._hailo_available = False
         self._hef_model = None
+        self._vdevice = None
         self._passthrough_log_counter = 0
 
         # Attempt to import Hailo runtime
@@ -108,7 +110,9 @@ class HailoInferenceNode(Node):
 
     def _image_callback(self, msg: Image) -> None:
         """Store the latest camera frame."""
-        self._latest_frame = self._bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
+        frame = self._bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
+        with self._frame_lock:
+            self._latest_frame = frame
 
     def _inference_callback(self) -> None:
         """Run inference on the latest frame or log passthrough status."""
@@ -120,7 +124,9 @@ class HailoInferenceNode(Node):
                 )
             return
 
-        if self._latest_frame is None:
+        with self._frame_lock:
+            frame = self._latest_frame
+        if frame is None:
             return
 
         if self._hef_model is None:
@@ -149,6 +155,16 @@ class HailoInferenceNode(Node):
         det.bbox.size_x = w
         det.bbox.size_y = h
         return det
+
+    def destroy_node(self) -> None:
+        """Release Hailo device resources before node destruction."""
+        if self._vdevice is not None:
+            try:
+                self._vdevice.release()
+            except Exception as exc:
+                self.get_logger().warning(f"Failed to release Hailo VDevice: {exc}")
+            self._vdevice = None
+        super().destroy_node()
 
 
 def main(args=None) -> None:

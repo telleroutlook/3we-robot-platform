@@ -31,6 +31,12 @@ def generate_launch_description():
         "use_sim_time", default_value="false", description="Use simulation clock"
     )
 
+    map_arg = DeclareLaunchArgument(
+        "map",
+        default_value="",
+        description="Path to map YAML file (required when use_slam=false)",
+    )
+
     serial_port_arg = DeclareLaunchArgument(
         "serial_port",
         default_value="/dev/ttyUSB0",
@@ -68,6 +74,7 @@ def generate_launch_description():
         launch_arguments={
             "use_slam": LaunchConfiguration("use_slam"),
             "use_sim_time": LaunchConfiguration("use_sim_time"),
+            "map": LaunchConfiguration("map"),
         }.items(),
         condition=IfCondition(LaunchConfiguration("use_nav")),
     )
@@ -77,6 +84,7 @@ def generate_launch_description():
             use_nav_arg,
             use_slam_arg,
             use_sim_time_arg,
+            map_arg,
             serial_port_arg,
             robot_state_publisher,
             hardware_launch,

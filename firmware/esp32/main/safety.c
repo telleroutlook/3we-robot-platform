@@ -237,14 +237,15 @@ void safety_task(void *params)
         portEXIT_CRITICAL(&safety_spinlock);
         int relay_fb = gpio_get_level(SAFETY_RELAY_FB);
         if (current_state == SAFETY_NORMAL && relay_fb == 0) {
-            relay_fault_count++;
             portENTER_CRITICAL(&safety_spinlock);
+            relay_fault_count++;
+            uint8_t fault_count = relay_fault_count;
             state = SAFETY_ESTOPPED;
             portEXIT_CRITICAL(&safety_spinlock);
             motor_stop_all();
             notify_state_change();
             ESP_LOGE(TAG, "RELAY FAULT: relay unexpectedly de-energized in NORMAL state");
-            if (relay_fault_count >= 3) {
+            if (fault_count >= 3) {
                 portENTER_CRITICAL(&safety_spinlock);
                 state = SAFETY_RELAY_FAULT;
                 portEXIT_CRITICAL(&safety_spinlock);
@@ -253,9 +254,12 @@ void safety_task(void *params)
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: hardware damage suspected - service required");
             }
         } else if (current_state == SAFETY_ESTOPPED && relay_fb != 0) {
+            portENTER_CRITICAL(&safety_spinlock);
             relay_fault_count++;
+            uint8_t fault_count = relay_fault_count;
+            portEXIT_CRITICAL(&safety_spinlock);
             ESP_LOGE(TAG, "RELAY FAULT: relay energized while E-stopped - possible welded contact");
-            if (relay_fault_count >= 3) {
+            if (fault_count >= 3) {
                 portENTER_CRITICAL(&safety_spinlock);
                 state = SAFETY_RELAY_FAULT;
                 portEXIT_CRITICAL(&safety_spinlock);
@@ -266,7 +270,9 @@ void safety_task(void *params)
         } else if (current_state == SAFETY_RELAY_FAULT) {
             motor_stop_all();
         } else {
+            portENTER_CRITICAL(&safety_spinlock);
             relay_fault_count = 0;
+            portEXIT_CRITICAL(&safety_spinlock);
         }
 
         // Watchdog: if control loop stalls, stop motors
@@ -363,9 +369,8 @@ esp_err_t safety_clear_relay_fault(void)
         return ESP_ERR_INVALID_STATE;
     }
     state = SAFETY_ESTOPPED;
-    portEXIT_CRITICAL(&safety_spinlock);
-
     relay_fault_count = 0;
+    portEXIT_CRITICAL(&safety_spinlock);
 
     nvs_handle_t nvs;
     esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs);

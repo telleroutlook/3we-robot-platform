@@ -206,9 +206,11 @@ bool dtls_session_was_resumed(void)
     return session_resumed;
 }
 
+#define DTLS_MAX_CMD_SIZE 512
+
 void dtls_task(void *params)
 {
-    uint8_t buf[256];
+    uint8_t buf[DTLS_MAX_CMD_SIZE];
 
     while (running) {
         // Wait for client connection
@@ -240,7 +242,9 @@ void dtls_task(void *params)
         }
 
         mbedtls_ssl_session resumed_session;
+        mbedtls_ssl_session_init(&resumed_session);
         session_resumed = (mbedtls_ssl_get_session(&ssl, &resumed_session) == 0);
+        mbedtls_ssl_session_free(&resumed_session);
         connected = true;
         ESP_LOGI(TAG, "DTLS client connected (cipher: %s, resumed: %s)",
                  mbedtls_ssl_get_ciphersuite(&ssl),

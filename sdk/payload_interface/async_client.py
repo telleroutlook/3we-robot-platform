@@ -204,10 +204,22 @@ class AsyncPayloadClient:
             def _done_callback(rclpy_future: Any) -> None:
                 exc = rclpy_future.exception()
                 if exc is not None:
-                    loop.call_soon_threadsafe(asyncio_future.set_exception, exc)
+                    loop.call_soon_threadsafe(
+                        lambda: (
+                            None
+                            if asyncio_future.done()
+                            else asyncio_future.set_exception(exc)
+                        )
+                    )
                 else:
                     result = rclpy_future.result()
-                    loop.call_soon_threadsafe(asyncio_future.set_result, result)
+                    loop.call_soon_threadsafe(
+                        lambda: (
+                            None
+                            if asyncio_future.done()
+                            else asyncio_future.set_result(result)
+                        )
+                    )
 
             future.add_done_callback(_done_callback)
 
@@ -261,7 +273,13 @@ class AsyncPayloadClient:
         def _goal_response_callback(future: Any) -> None:
             goal_handle = future.result()
             if not goal_handle.accepted:
-                loop.call_soon_threadsafe(asyncio_future.set_result, False)
+                loop.call_soon_threadsafe(
+                    lambda: (
+                        None
+                        if asyncio_future.done()
+                        else asyncio_future.set_result(False)
+                    )
+                )
                 return
 
             result_future = goal_handle.get_result_async()
@@ -270,7 +288,13 @@ class AsyncPayloadClient:
                 result = result_future.result()
                 # action_msgs/GoalStatus.STATUS_SUCCEEDED == 4
                 success = result.status == 4
-                loop.call_soon_threadsafe(asyncio_future.set_result, success)
+                loop.call_soon_threadsafe(
+                    lambda: (
+                        None
+                        if asyncio_future.done()
+                        else asyncio_future.set_result(success)
+                    )
+                )
 
             result_future.add_done_callback(_result_callback)
 

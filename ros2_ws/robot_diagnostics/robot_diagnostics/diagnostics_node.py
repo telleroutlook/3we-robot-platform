@@ -25,6 +25,8 @@ class DiagnosticsNode(Node):
         self.declare_parameter("robot_id", "")
 
         rate = self.get_parameter("publish_rate_hz").value
+        if rate <= 0.0:
+            raise ValueError(f"publish_rate_hz must be positive, got {rate}")
         self._robot_id = (
             self.get_parameter("robot_id").value or self._get_default_robot_id()
         )
@@ -143,7 +145,7 @@ class DiagnosticsNode(Node):
         status.name = f"{self._robot_id}/safety"
 
         if self._estop_active:
-            status.level = DiagnosticStatus.WARN
+            status.level = DiagnosticStatus.ERROR
             status.message = "E-STOP ACTIVE"
         else:
             status.level = DiagnosticStatus.OK

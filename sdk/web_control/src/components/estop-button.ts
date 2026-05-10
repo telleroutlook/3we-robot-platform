@@ -187,7 +187,10 @@ export class RobotEstopButton extends HTMLElement {
     this.hideConfirm();
   };
   private onConfirmClick = (): void => {
-    this.doReset();
+    this.doReset().catch((e: unknown) => {
+      console.error('[E-stop] reset failed:', e instanceof Error ? e.message : e);
+      this.setVisualState('estopped');
+    });
   };
 
   get visualState(): EstopVisualState {
@@ -233,7 +236,10 @@ export class RobotEstopButton extends HTMLElement {
 
   private onButtonClick(): void {
     if (!this.estopped) {
-      this.triggerEstop();
+      this.triggerEstop().catch((e: unknown) => {
+        console.error('[E-stop] trigger failed:', e instanceof Error ? e.message : e);
+        this.setVisualState('estopped');
+      });
     } else {
       this.showConfirm();
     }
@@ -249,8 +255,13 @@ export class RobotEstopButton extends HTMLElement {
     try {
       await connection.callService('/emergency_stop', 'std_srvs/SetBool', { data: true });
     } catch (e: unknown) {
-      // eslint-disable-next-line no-console
-      console.error('[E-stop] Service call failed:', e instanceof Error ? e.message : e);
+      // E-stop UI stays in stopped state for safety, but log the failure prominently.
+      // On reconnect, the topic subscription will re-sync actual hardware state.
+      console.error(
+        '[E-stop] Service call failed — UI shows stopped but robot may not have received command:',
+        e instanceof Error ? e.message : e
+      );
+      this.btn.textContent = 'ESTOPPED — SEND FAILED';
     }
   }
 

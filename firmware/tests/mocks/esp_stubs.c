@@ -74,6 +74,10 @@ esp_err_t nvs_erase_key(nvs_handle_t handle, const char *key) {
     (void)handle; (void)key;
     return ESP_OK;
 }
+esp_err_t nvs_get_str(nvs_handle_t handle, const char *key, char *out, size_t *length) {
+    (void)handle; (void)key; (void)out; (void)length;
+    return ESP_ERR_NOT_FOUND;
+}
 
 // --- PCNT mocks ---
 static int mock_pcnt_counts[4] = {0};

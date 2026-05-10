@@ -174,6 +174,8 @@ int mbedtls_ssl_write(mbedtls_ssl_context *ssl, const unsigned char *buf, size_t
     return (int)len;
 }
 int mbedtls_ssl_session_reset(mbedtls_ssl_context *ssl) { (void)ssl; return 0; }
+void mbedtls_ssl_session_init(mbedtls_ssl_session *session) { memset(session, 0, sizeof(*session)); }
+void mbedtls_ssl_session_free(mbedtls_ssl_session *session) { (void)session; }
 int mbedtls_ssl_close_notify(mbedtls_ssl_context *ssl) { (void)ssl; return 0; }
 const char *mbedtls_ssl_get_ciphersuite(const mbedtls_ssl_context *ssl) {
     (void)ssl; return "TLS-PSK-WITH-AES-128-GCM-SHA256";

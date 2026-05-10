@@ -197,7 +197,6 @@ static esp_err_t perform_ota_from_url(const char *url)
 
     err = esp_ota_end(ota_handle);
     if (err != ESP_OK) {
-        esp_ota_abort(ota_handle);
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "OTA end failed");
         return err;
     }
@@ -220,6 +219,14 @@ static esp_err_t perform_ota_from_url(const char *url)
 
 static esp_err_t handler_ota_upload(httpd_req_t *req)
 {
+    // Require OTA token in Authorization header for local upload security
+    char auth_hdr[128] = {0};
+    esp_err_t hdr_err = httpd_req_get_hdr_value_str(req, "Authorization", auth_hdr, sizeof(auth_hdr));
+    if (hdr_err != ESP_OK || !ota_signing_check_upload_token(auth_hdr)) {
+        httpd_resp_send_err(req, HTTPD_401_UNAUTHORIZED, "Unauthorized");
+        return ESP_FAIL;
+    }
+
     if (req->content_len == 0 || req->content_len > OTA_MAX_IMAGE_SIZE) {
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid size");
         return ESP_FAIL;
@@ -327,7 +334,6 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
 
     err = esp_ota_end(ota_handle);
     if (err != ESP_OK) {
-        esp_ota_abort(ota_handle);
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "OTA end failed");
         httpd_resp_set_type(req, "application/json");
         httpd_resp_send(req, "{\"success\":false,\"error\":\"OTA finalize failed\"}", -1);
@@ -398,8 +404,11 @@ esp_err_t ota_update_start_from_url(const char *url)
         return ESP_ERR_INVALID_STATE;
     }
 
+    if (s_mutex) xSemaphoreTake(s_mutex, portMAX_DELAY);
     strncpy(s_pending_url, url, OTA_MAX_URL_LEN - 1);
+    s_pending_url[OTA_MAX_URL_LEN - 1] = '\0';
     s_update_requested = true;
+    if (s_mutex) xSemaphoreGive(s_mutex);
     return ESP_OK;
 }
 
@@ -417,9 +426,19 @@ void ota_update_task(void *params)
     (void)params;
 
     while (1) {
+        bool should_update = false;
+        char url_copy[OTA_MAX_URL_LEN] = {0};
+
+        if (s_mutex) xSemaphoreTake(s_mutex, portMAX_DELAY);
         if (s_update_requested) {
             s_update_requested = false;
-            perform_ota_from_url(s_pending_url);
+            memcpy(url_copy, s_pending_url, OTA_MAX_URL_LEN);
+            should_update = true;
+        }
+        if (s_mutex) xSemaphoreGive(s_mutex);
+
+        if (should_update) {
+            perform_ota_from_url(url_copy);
         }
         vTaskDelay(pdMS_TO_TICKS(500));
     }

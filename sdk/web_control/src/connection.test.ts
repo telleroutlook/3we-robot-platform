@@ -480,7 +480,7 @@ describe('RosbridgeConnection', () => {
       await vi.advanceTimersByTimeAsync(1);
       await connected;
 
-      vi.advanceTimersByTime(30001);
+      vi.advanceTimersByTime(40001);
 
       const ws = MockWebSocket.instances[0];
       expect(ws.readyState).toBe(WS_CLOSED);

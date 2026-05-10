@@ -96,6 +96,8 @@ int mbedtls_ssl_handshake(mbedtls_ssl_context *ssl);
 int mbedtls_ssl_read(mbedtls_ssl_context *ssl, unsigned char *buf, size_t len);
 int mbedtls_ssl_write(mbedtls_ssl_context *ssl, const unsigned char *buf, size_t len);
 int mbedtls_ssl_session_reset(mbedtls_ssl_context *ssl);
+void mbedtls_ssl_session_init(mbedtls_ssl_session *session);
+void mbedtls_ssl_session_free(mbedtls_ssl_session *session);
 int mbedtls_ssl_close_notify(mbedtls_ssl_context *ssl);
 const char *mbedtls_ssl_get_ciphersuite(const mbedtls_ssl_context *ssl);
 int mbedtls_ssl_set_hs_psk(mbedtls_ssl_context *ssl, const unsigned char *psk, size_t psk_len);

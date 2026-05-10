@@ -30,6 +30,7 @@ bool ota_verify_image_hash(const uint8_t computed_hash[OTA_HASH_SIZE],
                            const ota_image_header_t *header);
 esp_err_t ota_apply_update(const uint8_t *image_data, size_t total_size);
 uint32_t ota_get_current_version(void);
+bool ota_signing_check_upload_token(const char *auth_header);
 
 #ifdef UNIT_TEST_BUILD
 void ota_signing_reset_for_test(void);

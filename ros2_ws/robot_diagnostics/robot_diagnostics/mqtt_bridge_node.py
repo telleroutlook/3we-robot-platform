@@ -88,10 +88,19 @@ class MqttBridgeNode(Node):
         host = host_port[0]
         port = int(host_port[1]) if len(host_port) > 1 else 1883
 
-        self._mqtt_client = mqtt.Client(
-            client_id=f"robot-{self._robot_id}",
-            protocol=mqtt.MQTTv5,
-        )
+        try:
+            from paho.mqtt.enums import CallbackAPIVersion
+
+            self._mqtt_client = mqtt.Client(
+                client_id=f"robot-{self._robot_id}",
+                protocol=mqtt.MQTTv5,
+                callback_api_version=CallbackAPIVersion.VERSION1,
+            )
+        except (ImportError, AttributeError):
+            self._mqtt_client = mqtt.Client(
+                client_id=f"robot-{self._robot_id}",
+                protocol=mqtt.MQTTv5,
+            )
 
         if self._username:
             self._mqtt_client.username_pw_set(self._username, self._password)

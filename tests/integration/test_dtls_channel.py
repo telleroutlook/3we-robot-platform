@@ -178,7 +178,7 @@ class TestDTLSChannel:
         received = messages[0]
         assert abs(received.linear.x - frame.linear_x) < 0.05
 
-    def test_unauthenticated_connection_rejected(self) -> None:
+    def test_unauthenticated_connection_rejected(self, test_node: Any) -> None:
         """Sending raw unframed data should not produce valid commands.
 
         The ESP32 DTLS endpoint should reject packets that do not follow
@@ -192,11 +192,16 @@ class TestDTLSChannel:
         try:
             sock.sendto(garbage, (DTLS_HOST, DTLS_PORT))
         except OSError:
-            pass  # Network unreachable is acceptable in test environments
+            pytest.skip(f"Network unreachable: {DTLS_HOST}:{DTLS_PORT}")
         finally:
             sock.close()
 
-        # The test passes if no crash occurs (endpoint silently discards)
+        # Verify no cmd_vel command was produced from the garbage packet
+        messages = topic_collector(test_node, "/cmd_vel", timeout=3.0, count=1)
+        assert len(messages) == 0, (
+            "Unauthenticated garbage produced a /cmd_vel message — "
+            "DTLS endpoint is not filtering malformed frames"
+        )
 
     def test_frame_with_zero_velocity(self, test_node: Any) -> None:
         """A zero-velocity frame should be accepted (used for stopping)."""

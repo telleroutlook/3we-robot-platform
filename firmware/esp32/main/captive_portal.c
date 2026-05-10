@@ -197,8 +197,11 @@ esp_err_t captive_portal_start(const captive_portal_config_t *config)
     s_done_cb = config ? config->on_credentials_received : NULL;
     uint8_t channel = (config && config->wifi_channel) ? config->wifi_channel : 6;
 
-    // Initialize network interface if not done
-    ESP_ERROR_CHECK(esp_netif_init());
+    // Initialize network interface if not already done by main
+    esp_err_t ni_ret = esp_netif_init();
+    if (ni_ret != ESP_OK && ni_ret != ESP_ERR_INVALID_STATE) {
+        ESP_ERROR_CHECK(ni_ret);
+    }
     esp_netif_create_default_wifi_ap();
 
     wifi_init_config_t wifi_cfg = WIFI_INIT_CONFIG_DEFAULT();

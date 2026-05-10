@@ -17,10 +17,41 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "nvs_flash.h"
+#include "nvs.h"
+
 static const char *TAG = "ota_sign";
 
 static uint8_t stored_pubkey[OTA_PUBKEY_SIZE];
 static bool initialized = false;
+static char ota_upload_token[65] = {0};
+
+static int constant_time_compare(const void *a, const void *b, size_t len)
+{
+    const volatile uint8_t *x = (const volatile uint8_t *)a;
+    const volatile uint8_t *y = (const volatile uint8_t *)b;
+    volatile uint8_t diff = 0;
+    for (size_t i = 0; i < len; i++) {
+        diff |= x[i] ^ y[i];
+    }
+    return diff == 0;
+}
+
+bool ota_signing_check_upload_token(const char *auth_header)
+{
+    if (!auth_header || ota_upload_token[0] == '\0') return false;
+
+    const char *prefix = "Bearer ";
+    size_t prefix_len = 7;
+    if (strncmp(auth_header, prefix, prefix_len) != 0) return false;
+
+    const char *token = auth_header + prefix_len;
+    size_t token_len = strlen(token);
+    size_t expected_len = strlen(ota_upload_token);
+    if (token_len != expected_len) return false;
+
+    return constant_time_compare(token, ota_upload_token, expected_len);
+}
 
 static bool ecdsa_p256_verify(const uint8_t *hash, size_t hash_len,
                               const uint8_t *signature, const uint8_t *pubkey)
@@ -81,6 +112,17 @@ esp_err_t ota_signing_init(const uint8_t pubkey[OTA_PUBKEY_SIZE])
 {
     if (!pubkey) return ESP_ERR_INVALID_ARG;
     memcpy(stored_pubkey, pubkey, OTA_PUBKEY_SIZE);
+
+    // Load upload token from NVS
+    nvs_handle_t nvs;
+    if (nvs_open("ota", NVS_READONLY, &nvs) == ESP_OK) {
+        size_t len = sizeof(ota_upload_token) - 1;
+        if (nvs_get_str(nvs, "upload_token", ota_upload_token, &len) != ESP_OK) {
+            ota_upload_token[0] = '\0';
+        }
+        nvs_close(nvs);
+    }
+
     initialized = true;
     ESP_LOGI(TAG, "OTA signing initialized (ECDSA P-256 pubkey loaded)");
     return ESP_OK;
@@ -208,7 +250,6 @@ esp_err_t ota_apply_update(const uint8_t *image_data, size_t total_size)
     err = esp_ota_end(ota_handle);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "OTA end failed: %s", esp_err_to_name(err));
-        esp_ota_abort(ota_handle);
         return err;
     }
 

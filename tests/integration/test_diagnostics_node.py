@@ -149,7 +149,7 @@ def test_diagnostics_reports_estop(
         for status in diag.status:
             if "safety" in status.name:
                 estop_found = True
-                assert status.level == DiagnosticStatus.WARN
+                assert status.level == DiagnosticStatus.ERROR
                 assert "E-STOP" in status.message
                 break
 
