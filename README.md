@@ -151,7 +151,10 @@ robot-platform/
 ├── ros2_ws/                    # ROS2 workspace
 │   ├── robot_bringup/          #   Launch files, Nav2/SLAM config
 │   ├── robot_description/      #   URDF model (Xacro)
-│   └── robot_interfaces/       #   Custom msg/srv definitions
+│   ├── robot_diagnostics/      #   Health monitoring, metrics
+│   ├── robot_interfaces/       #   Custom msg/srv definitions
+│   ├── robot_perception/       #   Camera + AI inference (Hailo)
+│   └── robot_simulation/       #   Gazebo simulation
 │
 ├── hardware/                   # Hardware design
 │   ├── pcb/                    #   PCB specs, PBC-34 pinout
@@ -162,6 +165,7 @@ robot-platform/
 │   ├── payload_interface/      #   Python communication library
 │   ├── tools/                  #   EEPROM validator, diagnostics
 │   ├── examples/               #   Reference implementations
+│   ├── web_control/            #   TypeScript Web Components (Lit)
 │   └── web_basic/              #   Browser-based teleop UI
 │
 └── docs/                       # Documentation

@@ -1,6 +1,6 @@
 # Web Control API Reference
 
-The web control interface provides 7 custom Web Components for robot teleoperation and monitoring. Components connect to the robot via the [rosbridge WebSocket protocol](rosbridge_guide.md).
+The web control interface provides 8 custom Web Components for robot teleoperation and monitoring. Components connect to the robot via the [rosbridge WebSocket protocol](rosbridge_guide.md).
 
 ## Setup
 
@@ -25,6 +25,7 @@ npm run dev      # development server with hot reload
 <robot-payload-panel></robot-payload-panel>
 <robot-wheel-speeds></robot-wheel-speeds>
 <robot-imu-attitude></robot-imu-attitude>
+<robot-system-status></robot-system-status>
 ```
 
 ### Connection
@@ -215,6 +216,28 @@ Real-time wheel speed indicator for all 4 motors.
 - Roll, pitch, yaw angles in degrees
 - Uses CSS 3D transforms for visualization
 - Falls back gracefully when IMU is unavailable
+
+---
+
+### `<robot-system-status>`
+
+Aggregated system health overview from ROS2 diagnostics.
+
+| Property | Description |
+|----------|-------------|
+| ROS topic (subscribe) | `/diagnostics` (`diagnostic_msgs/msg/DiagnosticArray`) |
+
+**Display:**
+- Grid of subsystem status indicators (motors, IMU, battery, comms, etc.)
+- Color-coded severity: green (OK), amber (WARN), red (ERROR), gray (STALE)
+- Shows subsystem name and diagnostic message
+- Dims automatically if no update received within 5 seconds (stale detection)
+
+**CSS Custom Properties:**
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `--color-surface-raised` | `#f5f5f5` | Item background color |
 
 ---
 

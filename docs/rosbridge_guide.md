@@ -51,7 +51,7 @@ Default port: **9090** (WebSocket)
 The robot bringup launch file includes rosbridge:
 
 ```bash
-ros2 launch robot_bringup bringup.launch.py
+ros2 launch robot_bringup robot.launch.py
 ```
 
 ### Custom Port

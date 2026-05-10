@@ -61,7 +61,7 @@ colcon build --symlink-install
 source install/setup.bash
 
 # Launch the full robot stack
-ros2 launch robot_bringup bringup.launch.py
+ros2 launch robot_bringup robot.launch.py
 
 # Launch simulation
 ros2 launch robot_simulation gazebo.launch.py

@@ -71,7 +71,10 @@ firmware/       → ESP32 firmware source, build configs
 ros2_ws/        → ROS2 workspace (colcon packages)
   robot_bringup/     → Launch files, parameter configs
   robot_description/ → URDF/Xacro, meshes
+  robot_diagnostics/ → Health monitoring, metrics exporter
   robot_interfaces/  → Custom msg/srv/action definitions
+  robot_perception/  → Camera + AI inference (Hailo)
+  robot_simulation/  → Gazebo simulation
 hardware/       → Hardware design files
   pcb/          → KiCad projects (schematic + layout)
   structure/    → Mechanical CAD exports, drawings
@@ -79,7 +82,12 @@ hardware/       → Hardware design files
 sdk/            → Payload developer toolkit
   payload_interface/ → Library for payload communication
   examples/     → Reference payload implementations
-  web_basic/    → Minimal web control interface
+  tools/        → CLI tools (eeprom_validator, provision_keys)
+  web_control/  → TypeScript Web Components (Lit-style)
+  web_basic/    → Minimal zero-dependency teleop page
+monitoring/     → Prometheus + Grafana observability stack
+scripts/        → Automation (setup, validate, release)
+tests/          → Integration and hardware validation tests
 docs/           → User-facing documentation
 ```
 
@@ -91,7 +99,7 @@ These constraints must never be violated regardless of feature requirements:
 2. **Safety relay interlock** — Motor driver power must pass through the safety relay. No alternative power path is permitted.
 3. **Payload isolation** — Payload code runs in a sandboxed context. It cannot directly access motor control, safety circuits, or core system configuration.
 4. **OTA integrity** — Firmware updates must be cryptographically signed. Unsigned images must be rejected at the bootloader level.
-5. **Communication encryption** — Control commands transmitted over wireless links must be encrypted (DTLS 1.3 or equivalent).
+5. **Communication encryption** — Control commands transmitted over wireless links must be encrypted (DTLS 1.2 or equivalent).
 
 ## Build & Test
 
@@ -110,12 +118,12 @@ idf.py flash monitor
 cd ros2_ws
 colcon build --symlink-install
 source install/setup.bash
-ros2 launch robot_bringup bringup.launch.py
+ros2 launch robot_bringup robot.launch.py
 ```
 
 ### Testing
 
-- Firmware: Unity test framework via `idf.py` test runner
+- Firmware: Unity test framework, host-side build via gcc Makefile
 - ROS2: `colcon test` with pytest and gtest
 - SDK: pytest for Python, browser testing for web components
 
@@ -125,13 +133,13 @@ Run these checks (in order) to verify cross-layer consistency after any code cha
 Quick alias: `make all` runs lint + test + build from root.
 
 ```bash
-# 1. Firmware — host-side unit tests (152 tests)
+# 1. Firmware — host-side unit tests (177 tests)
 cd firmware/tests && make clean && make && ./test_runner
 
 # 2. SDK web_control — TypeScript type-check
 cd sdk/web_control && npx tsc --noEmit
 
-# 3. SDK web_control — unit tests (28 tests, vitest)
+# 3. SDK web_control — unit tests (41 tests, vitest)
 cd sdk/web_control && npx vitest run
 
 # 4. SDK web_control — Playwright E2E (53 tests)
@@ -140,7 +148,7 @@ cd sdk/web_control && npx playwright test
 # 5. SDK web_control — lint & format
 cd sdk/web_control && npx eslint src/ && npx prettier --check 'src/**/*.ts'
 
-# 6. Python SDK — tests (76 tests, pytest)
+# 6. Python SDK — tests (118 tests, pytest)
 cd sdk && python3 -m pytest tests/ -v
 
 # 7. Python SDK — format and lint

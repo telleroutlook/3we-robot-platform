@@ -151,7 +151,10 @@ robot-platform/
 ├── ros2_ws/                    # ROS2 工作空间
 │   ├── robot_bringup/          #   启动文件、Nav2/SLAM 配置
 │   ├── robot_description/      #   URDF 模型 (Xacro)
-│   └── robot_interfaces/       #   自定义消息/服务定义
+│   ├── robot_diagnostics/      #   健康监控、指标导出
+│   ├── robot_interfaces/       #   自定义消息/服务定义
+│   ├── robot_perception/       #   摄像头 + AI 推理 (Hailo)
+│   └── robot_simulation/       #   Gazebo 仿真
 │
 ├── hardware/                   # 硬件设计
 │   ├── pcb/                    #   PCB 规格、PBC-34 引脚表
@@ -162,6 +165,7 @@ robot-platform/
 │   ├── payload_interface/      #   Python 通信库
 │   ├── tools/                  #   EEPROM 验证工具
 │   ├── examples/               #   参考实现
+│   ├── web_control/            #   TypeScript Web 组件 (Lit)
 │   └── web_basic/              #   浏览器遥控界面
 │
 └── docs/                       # 文档

@@ -22,10 +22,12 @@ pip install -e ".[dev]"
 ## Usage
 
 ```python
-from payload_interface import PayloadProtocol
+from payload_interface import PayloadInterface
 
-protocol = PayloadProtocol(bus=1, address=0x50)
-protocol.read_capability_flags()
+iface = PayloadInterface(i2c_bus=1, eeprom_addr=0x50)
+descriptor = iface.discover()
+if descriptor:
+    print(f"Payload: {descriptor.name} ({descriptor.payload_id})")
 ```
 
 ## License
