@@ -166,8 +166,8 @@ robot-platform/
 │
 └── docs/                       # Documentation
     ├── assembly_guide.md       #   Hardware assembly
-    ├── firmware_flash.md       #   Build & flash guide
-    ├── payload_dev_guide.md    #   Payload development tutorial
+    ├── firmware_guide.md        #   Build & flash guide
+    ├── pbc34_payload_guide.md  #   Payload development reference
     ├── compliance_checklist.md #   Regulatory compliance
     └── performance_benchmarks.md
 ```

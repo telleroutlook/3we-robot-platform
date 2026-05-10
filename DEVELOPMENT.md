@@ -27,21 +27,17 @@ This guide helps you set up a development environment and contribute to the robo
 
 ### Firmware (ESP32-S3)
 
+For the complete firmware guide (prerequisites, menuconfig, OTA, troubleshooting), see [docs/firmware_guide.md](docs/firmware_guide.md).
+
 ```bash
 # Source ESP-IDF environment
 . $HOME/esp/esp-idf/export.sh
 
-# Build (default SKU: standard)
+# Build and flash
 cd firmware/esp32
 idf.py set-target esp32s3
 idf.py build
-
-# Flash and monitor
 idf.py -p /dev/ttyUSB0 flash monitor
-
-# Build specific SKU variant
-cp ../config/sdkconfig.defaults.pro sdkconfig.defaults
-idf.py fullclean && idf.py build
 
 # Run unit tests on host (no hardware needed)
 cd firmware/tests
@@ -165,12 +161,11 @@ tests/              → Hardware validation test plan and scripts
 
 ### Firmware Serial Monitor
 
+See [docs/firmware_guide.md](docs/firmware_guide.md#monitor) for full details. Quick reference:
+
 ```bash
 idf.py -p /dev/ttyUSB0 monitor
-
-# Filter specific component logs
 idf.py monitor --filter "safety"
-idf.py monitor --filter "uros"
 ```
 
 ### ROS2 Diagnostics
@@ -200,14 +195,7 @@ ros2 doctor
 
 ### micro-ROS Agent
 
-```bash
-# Start agent on host (matches firmware's serial transport)
-ros2 run micro_ros_agent micro_ros_agent serial \
-    --dev /dev/ttyUSB0 --baudrate 921600
-
-# Or UDP transport (if configured in firmware)
-ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
-```
+See [docs/firmware_guide.md](docs/firmware_guide.md#micro-ros-agent-setup-raspberry-pi) for setup details.
 
 ## IDE Setup
 

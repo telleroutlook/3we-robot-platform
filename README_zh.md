@@ -166,8 +166,8 @@ robot-platform/
 │
 └── docs/                       # 文档
     ├── assembly_guide.md       #   硬件组装指南
-    ├── firmware_flash.md       #   编译与烧录指南
-    ├── payload_dev_guide.md    #   载荷开发教程
+    ├── firmware_guide.md        #   编译与烧录指南
+    ├── pbc34_payload_guide.md  #   载荷开发完整参考
     ├── compliance_checklist.md #   法规合规检查清单
     └── performance_benchmarks.md
 ```

@@ -2,8 +2,9 @@
 
 # Competitive Analysis / 竞品分析
 
-> **Last updated**: 2025-01  
-> This document compares the Robot Platform against prominent open-source and commercial mobile robot platforms.
+> **Last updated**: 2025-01 | **Status**: Archived reference (may be outdated)  
+> This document compares the Robot Platform against prominent open-source and commercial mobile robot platforms.  
+> Competitor specs change frequently. Verify against vendor sites before citing.
 
 ---
 

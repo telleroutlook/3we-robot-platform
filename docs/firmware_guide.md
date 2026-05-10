@@ -1,6 +1,6 @@
-# Firmware Build and Flash Guide
+# Firmware Guide
 
-Instructions for building and flashing the ESP32-S3 firmware.
+Complete guide for building, flashing, configuring, and debugging the ESP32-S3 firmware.
 
 ## Prerequisites
 
@@ -32,6 +32,9 @@ The firmware depends on [micro-ROS for ESP32](https://github.com/micro-ROS/micro
 ## Build
 
 ```bash
+# Source ESP-IDF environment
+. $HOME/esp/esp-idf/export.sh
+
 cd firmware/esp32
 
 # Set target chip
@@ -39,22 +42,28 @@ idf.py set-target esp32s3
 
 # (Optional) Configure options
 idf.py menuconfig
-# Navigate to: Robot Platform Configuration
-#   - Select SKU variant
-#   - Set Wi-Fi credentials
-#   - Adjust PID gains if needed
 
-# Build
+# Build (default SKU: standard)
 idf.py build
 ```
 
-Expected output:
-```
-Project build complete. To flash, run this command:
-  idf.py -p (PORT) flash
+### SKU Variants
+
+Available: `basic`, `standard`, `pro`, `industrial`
+
+```bash
+# Build specific SKU variant
+cp ../config/sdkconfig.defaults.pro sdkconfig.defaults
+idf.py fullclean && idf.py build
 ```
 
-Build artifacts are in `firmware/esp32/build/`.
+### Host-Side Unit Tests (no hardware needed)
+
+```bash
+cd firmware/tests
+make clean && make
+./test_runner
+```
 
 ---
 
@@ -65,9 +74,9 @@ Build artifacts are in `firmware/esp32/build/`.
 Connect USB-C cable between your computer and the ESP32-S3 programming port.
 
 If using UART header instead:
-- TX → USB-UART adapter RX
-- RX → USB-UART adapter TX
-- GND → GND
+- TX -> USB-UART adapter RX
+- RX -> USB-UART adapter TX
+- GND -> GND
 - Hold BOOT button during reset to enter download mode
 
 ### Flash Command
@@ -76,7 +85,7 @@ If using UART header instead:
 idf.py -p /dev/ttyUSB0 flash
 ```
 
-Replace `/dev/ttyUSB0` with your actual port:
+Port names by platform:
 - Linux: `/dev/ttyUSB0` or `/dev/ttyACM0`
 - macOS: `/dev/cu.usbserial-*` or `/dev/cu.SLAB_USBtoUART`
 - Windows: `COM3` (check Device Manager)
@@ -102,47 +111,16 @@ I (xxx) main: All systems initialized. Robot ready.
 
 Exit monitor: `Ctrl+]`
 
----
-
-## micro-ROS Agent Setup (Raspberry Pi)
-
-On the Raspberry Pi 5, install and run the micro-ROS agent:
+### Filtering Logs
 
 ```bash
-# Install (one-time)
-sudo apt install ros-humble-micro-ros-agent
-
-# Run agent
-ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyAMA0 -b 921600
-```
-
-### Verify Communication
-
-In another terminal:
-```bash
-# List topics (should show firmware publishers)
-ros2 topic list
-
-# Expected topics:
-#   /odom
-#   /ultrasonic/front
-#   /ultrasonic/back
-#   /ultrasonic/left
-#   /ultrasonic/right
-#   /battery_state
-#   /wheel_speeds
-#   /cmd_vel
-
-# Echo odometry
-ros2 topic echo /odom
-
-# Send a velocity command
-ros2 topic pub /cmd_vel geometry_msgs/Twist "{linear: {x: 0.1, y: 0.0, z: 0.0}, angular: {z: 0.0}}"
+idf.py monitor --filter "safety"
+idf.py monitor --filter "uros"
 ```
 
 ---
 
-## Configuration via menuconfig
+## Configuration (menuconfig)
 
 Key options in `Robot Platform Configuration`:
 
@@ -159,7 +137,40 @@ Key options in `Robot Platform Configuration`:
 
 ---
 
-## OTA Update (Future)
+## micro-ROS Agent Setup (Raspberry Pi)
+
+```bash
+# Install (one-time)
+sudo apt install ros-humble-micro-ros-agent
+
+# Run agent (serial transport)
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyAMA0 -b 921600
+
+# Or UDP transport (if configured in firmware)
+ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+```
+
+### Verify Communication
+
+```bash
+ros2 topic list
+
+# Expected topics:
+#   /odom
+#   /ultrasonic/front, /back, /left, /right
+#   /battery_state
+#   /wheel_speeds
+#   /cmd_vel
+
+ros2 topic echo /odom
+
+ros2 topic pub /cmd_vel geometry_msgs/Twist \
+  "{linear: {x: 0.1, y: 0.0, z: 0.0}, angular: {z: 0.0}}"
+```
+
+---
+
+## OTA Update
 
 Over-the-air firmware updates via ESP-IDF's native OTA mechanism:
 
@@ -168,7 +179,7 @@ Over-the-air firmware updates via ESP-IDF's native OTA mechanism:
 3. Upload signed binary to OTA server
 4. Trigger update via ROS2 service or HTTP endpoint
 
-**Note**: OTA requires the firmware to be built with two OTA partitions and secure boot enabled. This is planned for v0.2.0.
+OTA requires two OTA partitions and secure boot. See [fleet_ota_strategy.md](fleet_ota_strategy.md) for production deployment.
 
 ---
 

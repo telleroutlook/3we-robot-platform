@@ -1,5 +1,9 @@
 # Regulatory Compliance Checklist
 
+> **Status**: In progress (v0.1.0) — checked items are implemented in hardware/firmware design.  
+> Unchecked items require third-party lab testing before certification filing.  
+> See GitHub Issues labeled `compliance` for tracking.
+
 ## EU Radio Equipment Directive (RED) 2014/53/EU
 
 ### Article 3.1(a) — Safety (EN 62368-1)

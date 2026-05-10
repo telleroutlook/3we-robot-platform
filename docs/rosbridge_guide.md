@@ -1,5 +1,7 @@
 # Rosbridge Integration Guide
 
+> See also: [web_control_api.md](web_control_api.md) for the Web Components that use this connection, and [ros2_interface_reference.md](ros2_interface_reference.md) for the complete topic/service definitions.
+
 ## What is Rosbridge?
 
 [rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite) provides a JSON-based WebSocket interface to ROS2. It allows browser-based applications (and any WebSocket client) to subscribe to topics, publish messages, and call services without a native ROS2 installation.

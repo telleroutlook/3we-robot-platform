@@ -1,5 +1,7 @@
 # SLAM Alternatives
 
+> See also: [ros2_interface_reference.md](ros2_interface_reference.md) for the navigation topic/service definitions.
+
 ## Why slam_toolbox is Optional
 
 The `slam_toolbox` package is licensed under **LGPL-2.1**. While the LGPL is a
