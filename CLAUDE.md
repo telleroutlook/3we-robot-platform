@@ -72,6 +72,7 @@ ros2_ws/        → ROS2 workspace (colcon packages)
   robot_bringup/     → Launch files, parameter configs
   robot_description/ → URDF/Xacro, meshes
   robot_diagnostics/ → Health monitoring, metrics exporter
+  robot_docking/     → Autonomous docking
   robot_interfaces/  → Custom msg/srv/action definitions
   robot_perception/  → Camera + AI inference (Hailo)
   robot_simulation/  → Gazebo simulation
@@ -133,16 +134,16 @@ Run these checks (in order) to verify cross-layer consistency after any code cha
 Quick alias: `make all` runs lint + test + build from root.
 
 ```bash
-# 1. Firmware — host-side unit tests (243 tests)
+# 1. Firmware — host-side unit tests (247 tests)
 cd firmware/tests && make clean && make && ./test_runner
 
 # 2. SDK web_control — TypeScript type-check
 cd sdk/web_control && npx tsc --noEmit
 
-# 3. SDK web_control — unit tests (60 tests, vitest)
+# 3. SDK web_control — unit tests (63 tests, vitest)
 cd sdk/web_control && npx vitest run
 
-# 4. SDK web_control — Playwright E2E (53 tests)
+# 4. SDK web_control — Playwright E2E (60 tests)
 cd sdk/web_control && npx playwright test
 
 # 5. SDK web_control — lint & format

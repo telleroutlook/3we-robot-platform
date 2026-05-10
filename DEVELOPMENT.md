@@ -45,7 +45,7 @@ make clean && make
 ./test_runner
 ```
 
-Available SKU variants: `basic`, `standard`, `pro`, `industrial`
+Available SKU variants: `basic`, `standard`, `industrial`
 
 ### ROS2 Packages
 

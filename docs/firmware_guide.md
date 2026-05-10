@@ -49,11 +49,11 @@ idf.py build
 
 ### SKU Variants
 
-Available: `basic`, `standard`, `pro`, `industrial`
+Available: `basic`, `standard`, `industrial`
 
 ```bash
-# Build specific SKU variant
-cp ../config/sdkconfig.defaults.pro sdkconfig.defaults
+# Build specific SKU variant (from firmware/esp32/ directory)
+cp sdkconfig.defaults.industrial sdkconfig.defaults
 idf.py fullclean && idf.py build
 ```
 
