@@ -38,7 +38,7 @@ flowchart TD
         H3[IMU BNO055]
         H4[4x Ultrasonic Sensors]
         H5[Safety Relay + E-stop Button]
-        H6[Battery 3S LiPo]
+        H6[Battery 2S 18650 — 7.4V]
     end
 
     P1 --> P2
@@ -142,7 +142,7 @@ flowchart TD
     RELAY[Safety Relay — OPEN]
     MOTOR_OFF[Motor Driver Power CUT]
     WDG[Software Watchdog — 500ms Timeout]
-    CMD_TO[cmd_vel Timeout — 1000ms]
+    CMD_TO[cmd_vel Timeout — 500ms]
 
     BTN -->|"Hardware interrupt"| GPIO
     GPIO --> STATE
