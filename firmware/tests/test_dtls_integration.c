@@ -29,8 +29,9 @@ static void setUp_dtls_integration(void) {
 }
 
 static void test_recv_callback(const uint8_t *data, size_t len,
+                               uint8_t session_id,
                                const char *peer_addr, uint16_t peer_port) {
-    (void)peer_addr; (void)peer_port;
+    (void)session_id; (void)peer_addr; (void)peer_port;
     if (len <= sizeof(recv_buf)) {
         memcpy(recv_buf, data, len);
         recv_len = len;
@@ -97,8 +98,8 @@ void test_dtls_recv_callback_dispatches_data(void) {
     mock_ssl_set_psk_cb_capture(1);
     mock_ssl_set_accept_max_calls(1);
 
-    // Simulate incoming motor command data, then peer disconnect
-    const unsigned char motor_cmd[] = {0x01, 0x02, 0x64, 0x00, 0xC8};
+    // Simulate incoming motor command data (type 0x10 = APPLICATION), then peer disconnect
+    const unsigned char motor_cmd[] = {0x10, 0x02, 0x64, 0x00, 0xC8};
     mock_ssl_set_read_data(motor_cmd, sizeof(motor_cmd));
 
     dtls_set_recv_callback(test_recv_callback);

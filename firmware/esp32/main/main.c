@@ -45,7 +45,7 @@ static const char *TAG = "main";
 #define TASK_STACK_SENSORS   3072
 #define TASK_STACK_BATTERY   2048
 #define TASK_STACK_MICROROS  16384
-#define TASK_STACK_DTLS      8192
+#define TASK_STACK_DTLS      12288
 #define TASK_STACK_PAYLOAD   3072
 #define TASK_STACK_THERMAL   2048
 #define TASK_STACK_UDP       4096
@@ -215,6 +215,8 @@ void app_main(void)
         .psk_key_len = 16,
         .handshake_timeout_ms = 10000,
         .session_timeout_ms = 60000,
+        .max_sessions = DTLS_MAX_SESSIONS,
+        .authority_idle_timeout_ms = DTLS_AUTHORITY_IDLE_MS,
     };
 
     // Derive PSK identity from device MAC for per-unit isolation
@@ -246,6 +248,8 @@ void app_main(void)
         dtls_ret = dtls_init(&dtls_cfg);
         if (dtls_ret != ESP_OK) {
             ESP_LOGW(TAG, "DTLS init failed - encrypted channel unavailable");
+        } else {
+            dtls_load_operators_from_nvs();
         }
     }
 

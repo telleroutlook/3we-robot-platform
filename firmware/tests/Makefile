@@ -16,6 +16,7 @@ SRCS = test_runner.c \
        test_ota_signing.c \
        test_dtls_transport.c \
        test_dtls_integration.c \
+       test_dtls_authority.c \
        test_ultrasonic_estop.c \
        test_payload_hotplug.c \
        test_canbus.c \
@@ -46,7 +47,8 @@ SRCS = test_runner.c \
        $(FIRMWARE_SRC)/imu.c \
        $(FIRMWARE_SRC)/thermal_monitor.c \
        $(FIRMWARE_SRC)/i2c_bus.c \
-       $(FIRMWARE_SRC)/udp_transport.c
+       $(FIRMWARE_SRC)/udp_transport.c \
+       $(FIRMWARE_SRC)/dtls_authority.c
 
 BUILD_DIR = build
 TARGET = $(BUILD_DIR)/test_runner

@@ -104,3 +104,12 @@ int mock_close(int fd)
     (void)fd;
     return 0;
 }
+
+int mock_select(int nfds, fd_set *readfds, fd_set *writefds,
+                fd_set *exceptfds, struct timeval *timeout)
+{
+    (void)writefds; (void)exceptfds; (void)timeout;
+    (void)nfds;
+    if (!readfds) return 0;
+    return 1;
+}

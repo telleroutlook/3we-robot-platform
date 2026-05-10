@@ -206,6 +206,31 @@ extern void test_upload_set_boot_partition_failure(void);
 extern void test_upload_success_triggers_reboot(void);
 extern void test_upload_writes_correct_firmware_data(void);
 
+// test_dtls_authority.c
+extern void test_authority_init_sets_no_holder(void);
+extern void test_authority_init_no_one_is_holder(void);
+extern void test_authority_request_grants_when_empty(void);
+extern void test_authority_request_grants_different_session_when_empty(void);
+extern void test_authority_request_same_session_returns_granted(void);
+extern void test_authority_request_preempts_lower_priority(void);
+extern void test_authority_request_denied_equal_priority(void);
+extern void test_authority_request_denied_lower_priority(void);
+extern void test_authority_request_rejects_invalid_session(void);
+extern void test_authority_request_null_preempted_does_not_crash(void);
+extern void test_authority_release_clears_holder(void);
+extern void test_authority_release_wrong_session_no_effect(void);
+extern void test_authority_release_when_empty_no_effect(void);
+extern void test_authority_disconnect_releases_holder(void);
+extern void test_authority_disconnect_non_holder_no_effect(void);
+extern void test_authority_feed_updates_timestamp(void);
+extern void test_authority_feed_no_holder_is_noop(void);
+extern void test_authority_check_idle_no_holder_returns_false(void);
+extern void test_authority_check_idle_no_feed_yet_returns_false(void);
+extern void test_authority_check_idle_within_timeout_returns_false(void);
+extern void test_authority_check_idle_expired_releases_and_returns_true(void);
+extern void test_authority_check_idle_exact_boundary_not_expired(void);
+extern void test_authority_sequence_preempt_release_rerequest(void);
+
 // test_microros_messages.c
 extern void test_fk_all_wheels_forward_gives_pure_vx(void);
 extern void test_fk_zero_wheels_gives_zero_velocity(void);
@@ -460,6 +485,31 @@ int main(void)
     RUN_TEST(test_battery_percentage_bounded);
     RUN_TEST(test_battery_percentage_boundary_zero);
     RUN_TEST(test_battery_percentage_boundary_full);
+
+    // DTLS authority state machine
+    RUN_TEST(test_authority_init_sets_no_holder);
+    RUN_TEST(test_authority_init_no_one_is_holder);
+    RUN_TEST(test_authority_request_grants_when_empty);
+    RUN_TEST(test_authority_request_grants_different_session_when_empty);
+    RUN_TEST(test_authority_request_same_session_returns_granted);
+    RUN_TEST(test_authority_request_preempts_lower_priority);
+    RUN_TEST(test_authority_request_denied_equal_priority);
+    RUN_TEST(test_authority_request_denied_lower_priority);
+    RUN_TEST(test_authority_request_rejects_invalid_session);
+    RUN_TEST(test_authority_request_null_preempted_does_not_crash);
+    RUN_TEST(test_authority_release_clears_holder);
+    RUN_TEST(test_authority_release_wrong_session_no_effect);
+    RUN_TEST(test_authority_release_when_empty_no_effect);
+    RUN_TEST(test_authority_disconnect_releases_holder);
+    RUN_TEST(test_authority_disconnect_non_holder_no_effect);
+    RUN_TEST(test_authority_feed_updates_timestamp);
+    RUN_TEST(test_authority_feed_no_holder_is_noop);
+    RUN_TEST(test_authority_check_idle_no_holder_returns_false);
+    RUN_TEST(test_authority_check_idle_no_feed_yet_returns_false);
+    RUN_TEST(test_authority_check_idle_within_timeout_returns_false);
+    RUN_TEST(test_authority_check_idle_expired_releases_and_returns_true);
+    RUN_TEST(test_authority_check_idle_exact_boundary_not_expired);
+    RUN_TEST(test_authority_sequence_preempt_release_rerequest);
 
     return UNITY_END();
 }

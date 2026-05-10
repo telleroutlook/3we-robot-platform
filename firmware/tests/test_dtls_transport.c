@@ -62,8 +62,9 @@ void test_dtls_send_rejects_when_not_connected(void) {
 
 static bool callback_invoked = false;
 static void test_recv_cb(const uint8_t *data, size_t len,
+                         uint8_t session_id,
                          const char *peer_addr, uint16_t peer_port) {
-    (void)data; (void)len; (void)peer_addr; (void)peer_port;
+    (void)data; (void)len; (void)session_id; (void)peer_addr; (void)peer_port;
     callback_invoked = true;
 }
 

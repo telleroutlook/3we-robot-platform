@@ -48,6 +48,8 @@ int mock_recvfrom(int sockfd, void *buf, size_t len, int flags,
 int mock_setsockopt(int sockfd, int level, int optname,
                     const void *optval, socklen_t optlen);
 int mock_close(int fd);
+int mock_select(int nfds, fd_set *readfds, fd_set *writefds,
+                fd_set *exceptfds, struct timeval *timeout);
 
 #define socket  mock_socket
 #define bind    mock_bind
@@ -55,6 +57,7 @@ int mock_close(int fd);
 #define recvfrom mock_recvfrom
 #define setsockopt mock_setsockopt
 #define close   mock_close
+#define select  mock_select
 
 static inline char *inet_ntoa_r(struct in_addr addr, char *buf, int buflen) {
     (void)addr; (void)buflen;
