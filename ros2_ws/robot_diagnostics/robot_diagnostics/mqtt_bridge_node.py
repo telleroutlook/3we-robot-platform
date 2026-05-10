@@ -132,24 +132,61 @@ class MqttBridgeNode(Node):
             except Exception as exc:
                 self.get_logger().warn(f"MQTT reconnect failed: {exc}")
 
+    def _diagnostic_level_to_otel_severity(self, level: int) -> tuple[int, str]:
+        """Map ROS2 diagnostic level to OTel severity (number, text)."""
+        severity_map = {
+            0: (9, "INFO"),  # OK
+            1: (13, "WARN"),  # WARN
+            2: (17, "ERROR"),  # ERROR
+            3: (13, "WARN"),  # STALE
+        }
+        return severity_map.get(level, (9, "INFO"))
+
     def _on_diagnostics(self, msg: DiagnosticArray) -> None:
         if not self._connected or self._mqtt_client is None:
             return
 
-        payload = {
-            "timestamp": time.time(),
-            "robot_id": self._robot_id,
-            "status": [],
+        timestamp_ns = int(time.time() * 1_000_000_000)
+        resource = {
+            "service.name": "robot_diagnostics",
+            "service.instance.id": self._robot_id,
+            "robot.id": self._robot_id,
         }
 
+        log_records = []
         for status in msg.status:
-            entry = {
-                "name": status.name,
-                "level": status.level,
-                "message": status.message,
-                "values": {kv.key: kv.value for kv in status.values},
-            }
-            payload["status"].append(entry)
+            severity_number, severity_text = self._diagnostic_level_to_otel_severity(
+                status.level
+            )
+            log_records.append(
+                {
+                    "timeUnixNano": timestamp_ns,
+                    "severityNumber": severity_number,
+                    "severityText": severity_text,
+                    "body": status.message,
+                    "attributes": {
+                        "diagnostics.name": status.name,
+                        "diagnostics.level": status.level,
+                        "diagnostics.values": {
+                            kv.key: kv.value for kv in status.values
+                        },
+                    },
+                }
+            )
+
+        payload = {
+            "resourceLogs": [
+                {
+                    "resource": resource,
+                    "scopeLogs": [
+                        {
+                            "scope": {"name": "robot_diagnostics.mqtt_bridge"},
+                            "logRecords": log_records,
+                        }
+                    ],
+                }
+            ],
+        }
 
         topic = f"{self._topic_prefix}{self._robot_id}/diagnostics"
         self._mqtt_client.publish(
