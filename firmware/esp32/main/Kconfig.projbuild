@@ -78,6 +78,35 @@ menu "Robot Platform Configuration"
                 BTS7960 (Industrial): 15000 Hz
     endmenu
 
+    menu "Chassis Geometry"
+        config CHASSIS_WHEEL_RADIUS_MM_X10
+            int "Wheel radius (mm x10, e.g. 240 = 24.0mm)"
+            default 485 if ROBOT_SKU_INDUSTRIAL
+            default 240
+            help
+                Wheel radius in tenths of mm (Kconfig int limitation).
+                48mm wheel (Basic/Standard/Pro): 240 (= 24.0mm)
+                97mm wheel (Industrial): 485 (= 48.5mm)
+
+        config CHASSIS_TRACK_WIDTH_MM
+            int "Track width (mm, left-right wheel center distance)"
+            default 320 if ROBOT_SKU_INDUSTRIAL
+            default 200
+            help
+                Distance between left and right wheel centers.
+                Basic/Standard/Pro (300x250 chassis): 200mm
+                Industrial (500x400 chassis): 320mm
+
+        config CHASSIS_WHEELBASE_MM
+            int "Wheelbase (mm, front-rear axle distance)"
+            default 300 if ROBOT_SKU_INDUSTRIAL
+            default 180
+            help
+                Distance between front and rear axle centers.
+                Basic/Standard/Pro (300x250 chassis): 180mm
+                Industrial (500x400 chassis): 300mm
+    endmenu
+
     menu "Motor PID Tuning"
         config MOTOR_PID_KP
             int "Proportional gain (x100)"

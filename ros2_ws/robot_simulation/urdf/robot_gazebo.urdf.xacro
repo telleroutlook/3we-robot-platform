@@ -10,6 +10,17 @@
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot_platform_gazebo">
 
+  <!-- SKU-configurable parameters forwarded to base description -->
+  <xacro:arg name="chassis_length" default="0.300"/>
+  <xacro:arg name="chassis_width" default="0.250"/>
+  <xacro:arg name="chassis_height" default="0.080"/>
+  <xacro:arg name="chassis_mass" default="2.5"/>
+  <xacro:arg name="wheel_radius" default="0.024"/>
+  <xacro:arg name="wheel_width" default="0.040"/>
+  <xacro:arg name="wheel_mass" default="0.15"/>
+  <xacro:arg name="wheelbase" default="0.180"/>
+  <xacro:arg name="track_width" default="0.200"/>
+
   <!-- Include the base robot description -->
   <xacro:include filename="$(find robot_description)/urdf/robot.urdf.xacro"/>
 

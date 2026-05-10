@@ -38,10 +38,44 @@ WHEEL_JOINTS = [
     "rear_right_wheel_joint",
 ]
 
+SKU_PARAMS = {
+    "standard": {},
+    "industrial": {
+        "chassis_length": "0.500",
+        "chassis_width": "0.400",
+        "chassis_height": "0.100",
+        "chassis_mass": "3.5",
+        "wheel_radius": "0.0485",
+        "wheel_width": "0.060",
+        "wheel_mass": "0.35",
+        "wheelbase": "0.300",
+        "track_width": "0.320",
+    },
+}
+
+EXPECTED_DIMENSIONS = {
+    "standard": {"chassis": (0.300, 0.250, 0.080), "wheel_radius": 0.024},
+    "industrial": {"chassis": (0.500, 0.400, 0.100), "wheel_radius": 0.0485},
+}
+
+
+@pytest.fixture(params=["standard", "industrial"], scope="module")
+def sku_urdf(request) -> tuple[str, ET.Element]:
+    """Process the Xacro file with SKU-specific args and return (sku, parsed XML)."""
+    try:
+        import xacro
+    except ImportError:
+        pytest.skip("xacro package not available")
+
+    mappings = SKU_PARAMS[request.param]
+    doc = xacro.process_file(str(XACRO_FILE), mappings=mappings)
+    xml_str = doc.toprettyxml(indent="  ")
+    return request.param, ET.fromstring(xml_str)
+
 
 @pytest.fixture(scope="module")
 def urdf_xml() -> ET.Element:
-    """Process the Xacro file and return parsed XML root."""
+    """Process the Xacro file with defaults (Basic/Standard/Pro)."""
     try:
         import xacro
     except ImportError:
@@ -88,9 +122,12 @@ def test_wheel_joints_are_continuous(urdf_xml: ET.Element) -> None:
         assert xyz == ["0", "1", "0"], f"{name} axis should be [0,1,0], got {xyz}"
 
 
-def test_chassis_dimensions(urdf_xml: ET.Element) -> None:
+def test_chassis_dimensions(sku_urdf: tuple[str, ET.Element]) -> None:
+    sku, root = sku_urdf
+    expected = EXPECTED_DIMENSIONS[sku]["chassis"]
+
     base_link = None
-    for link in urdf_xml.findall("link"):
+    for link in root.findall("link"):
         if link.get("name") == "base_link":
             base_link = link
             break
@@ -99,18 +136,29 @@ def test_chassis_dimensions(urdf_xml: ET.Element) -> None:
     box = base_link.find(".//visual/geometry/box")
     assert box is not None
     size = [float(v) for v in box.get("size", "").split()]
-    assert abs(size[0] - 0.300) < 0.001
-    assert abs(size[1] - 0.250) < 0.001
-    assert abs(size[2] - 0.080) < 0.001
+    assert abs(size[0] - expected[0]) < 0.001, (
+        f"[{sku}] length {size[0]} != {expected[0]}"
+    )
+    assert abs(size[1] - expected[1]) < 0.001, (
+        f"[{sku}] width {size[1]} != {expected[1]}"
+    )
+    assert abs(size[2] - expected[2]) < 0.001, (
+        f"[{sku}] height {size[2]} != {expected[2]}"
+    )
 
 
-def test_wheel_radius(urdf_xml: ET.Element) -> None:
-    for link in urdf_xml.findall("link"):
+def test_wheel_radius(sku_urdf: tuple[str, ET.Element]) -> None:
+    sku, root = sku_urdf
+    expected_r = EXPECTED_DIMENSIONS[sku]["wheel_radius"]
+
+    for link in root.findall("link"):
         if link.get("name") in WHEEL_LINKS:
             cylinder = link.find(".//visual/geometry/cylinder")
             assert cylinder is not None, f"Wheel {link.get('name')} missing cylinder"
             radius = float(cylinder.get("radius", "0"))
-            assert abs(radius - 0.024) < 0.001
+            assert abs(radius - expected_r) < 0.001, (
+                f"[{sku}] {link.get('name')} radius {radius} != {expected_r}"
+            )
 
 
 def test_all_links_have_inertia(urdf_xml: ET.Element) -> None:

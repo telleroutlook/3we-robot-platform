@@ -2,11 +2,20 @@
 #ifndef ROBOT_PARAMS_H
 #define ROBOT_PARAMS_H
 
-// Chassis geometry (mm)
+// Chassis geometry (mm) — SKU-dependent via Kconfig
 #define NUM_WHEELS              4
+
+#ifdef CONFIG_CHASSIS_WHEEL_RADIUS_MM_X10
+#define WHEEL_RADIUS_MM         (CONFIG_CHASSIS_WHEEL_RADIUS_MM_X10 / 10.0f)
+#define WHEEL_SEPARATION_MM     ((float)CONFIG_CHASSIS_TRACK_WIDTH_MM)
+#define WHEELBASE_MM            ((float)CONFIG_CHASSIS_WHEELBASE_MM)
+#else
+// Host-side test defaults (Basic/Standard/Pro: 300x250mm chassis + 48mm wheels)
 #define WHEEL_RADIUS_MM         24.0f
 #define WHEEL_SEPARATION_MM    200.0f   // Track width (left-right center distance)
 #define WHEELBASE_MM           180.0f   // Front-rear axle distance
+#endif
+
 #define ROLLER_ANGLE_DEG        45.0f
 
 // Derived (meters)

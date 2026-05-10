@@ -1,51 +1,50 @@
 # SPDX-License-Identifier: Apache-2.0
 """Top-level launch file for robot-platform."""
 
-from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch import LaunchContext, LaunchDescription
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+)
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import (
-    Command,
-    FindExecutable,
-    LaunchConfiguration,
-    PathJoinSubstitution,
-)
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+INDUSTRIAL_XACRO_ARGS = (
+    " chassis_length:=0.500 chassis_width:=0.400 chassis_height:=0.100"
+    " chassis_mass:=3.5 wheel_radius:=0.0485 wheel_width:=0.060"
+    " wheel_mass:=0.35 wheelbase:=0.300 track_width:=0.320"
+)
 
-def generate_launch_description():
+
+def _launch_setup(context: LaunchContext):
+    import subprocess
+
+    sku = context.launch_configurations["sku"]
+    use_sim_time = context.launch_configurations["use_sim_time"]
+    serial_port = context.launch_configurations["serial_port"]
+
     pkg_bringup = FindPackageShare("robot_bringup")
     pkg_description = FindPackageShare("robot_description")
 
-    use_nav_arg = DeclareLaunchArgument(
-        "use_nav", default_value="false", description="Launch Nav2 navigation stack"
+    xacro_path = PathJoinSubstitution([pkg_description, "urdf", "robot.urdf.xacro"])
+    xacro_path_str = (
+        subprocess.check_output(
+            ["ros2", "pkg", "prefix", "robot_description"], text=True
+        ).strip()
+        + "/share/robot_description/urdf/robot.urdf.xacro"
     )
 
-    use_slam_arg = DeclareLaunchArgument(
-        "use_slam", default_value="false", description="Launch SLAM toolbox for mapping"
-    )
+    xacro_cmd = f"xacro {xacro_path_str}"
+    if sku == "industrial":
+        xacro_cmd += INDUSTRIAL_XACRO_ARGS
 
-    use_sim_time_arg = DeclareLaunchArgument(
-        "use_sim_time", default_value="false", description="Use simulation clock"
+    robot_description_content = subprocess.check_output(
+        xacro_cmd, shell=True, text=True
     )
-
-    map_arg = DeclareLaunchArgument(
-        "map",
-        default_value="",
-        description="Path to map YAML file (required when use_slam=false)",
-    )
-
-    serial_port_arg = DeclareLaunchArgument(
-        "serial_port",
-        default_value="/dev/ttyUSB0",
-        description="Serial port for micro-ROS agent",
-    )
-
-    # Robot description (deferred xacro processing via Command substitution)
-    xacro_file = PathJoinSubstitution([pkg_description, "urdf", "robot.urdf.xacro"])
-    robot_description_content = Command([FindExecutable(name="xacro"), " ", xacro_file])
 
     robot_state_publisher = Node(
         package="robot_state_publisher",
@@ -53,41 +52,72 @@ def generate_launch_description():
         parameters=[
             {
                 "robot_description": robot_description_content,
-                "use_sim_time": LaunchConfiguration("use_sim_time"),
+                "use_sim_time": use_sim_time == "true",
             }
         ],
     )
 
-    # Hardware launch
     hardware_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([pkg_bringup, "launch", "hardware.launch.py"])
         ),
-        launch_arguments={"serial_port": LaunchConfiguration("serial_port")}.items(),
+        launch_arguments={"serial_port": serial_port}.items(),
     )
 
-    # Navigation launch (conditional)
+    nav_params_file = (
+        "nav2_params_industrial.yaml" if sku == "industrial" else "nav2_params.yaml"
+    )
     navigation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([pkg_bringup, "launch", "navigation.launch.py"])
         ),
         launch_arguments={
-            "use_slam": LaunchConfiguration("use_slam"),
-            "use_sim_time": LaunchConfiguration("use_sim_time"),
-            "map": LaunchConfiguration("map"),
+            "use_slam": context.launch_configurations["use_slam"],
+            "use_sim_time": use_sim_time,
+            "map": context.launch_configurations["map"],
+            "params_file": PathJoinSubstitution(
+                [pkg_bringup, "config", nav_params_file]
+            ),
         }.items(),
         condition=IfCondition(LaunchConfiguration("use_nav")),
     )
 
+    return [robot_state_publisher, hardware_launch, navigation_launch]
+
+
+def generate_launch_description():
     return LaunchDescription(
         [
-            use_nav_arg,
-            use_slam_arg,
-            use_sim_time_arg,
-            map_arg,
-            serial_port_arg,
-            robot_state_publisher,
-            hardware_launch,
-            navigation_launch,
+            DeclareLaunchArgument(
+                "sku",
+                default_value="standard",
+                description="Robot SKU variant (basic|standard|pro|industrial)",
+            ),
+            DeclareLaunchArgument(
+                "use_nav",
+                default_value="false",
+                description="Launch Nav2 navigation stack",
+            ),
+            DeclareLaunchArgument(
+                "use_slam",
+                default_value="false",
+                description="Launch SLAM toolbox for mapping",
+            ),
+            DeclareLaunchArgument(
+                "use_sim_time",
+                default_value="false",
+                description="Use simulation clock",
+            ),
+            DeclareLaunchArgument(
+                "map",
+                default_value="",
+                description="Path to map YAML file (required when use_slam=false)",
+            ),
+            DeclareLaunchArgument(
+                "serial_port",
+                default_value="/dev/ttyUSB0",
+                description="Serial port for micro-ROS agent",
+            ),
+            OpaqueFunction(function=_launch_setup),
         ]
     )

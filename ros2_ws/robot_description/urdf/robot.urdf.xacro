@@ -2,20 +2,27 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot_platform">
 
-  <!-- Parameters -->
-  <xacro:property name="chassis_length" value="0.300"/>
-  <xacro:property name="chassis_width" value="0.250"/>
-  <xacro:property name="chassis_height" value="0.080"/>
-  <xacro:property name="chassis_mass" value="2.5"/>
+  <!-- SKU-configurable parameters (defaults = Basic/Standard/Pro) -->
+  <xacro:arg name="chassis_length" default="0.300"/>
+  <xacro:arg name="chassis_width" default="0.250"/>
+  <xacro:arg name="chassis_height" default="0.080"/>
+  <xacro:arg name="chassis_mass" default="2.5"/>
+  <xacro:arg name="wheel_radius" default="0.024"/>
+  <xacro:arg name="wheel_width" default="0.040"/>
+  <xacro:arg name="wheel_mass" default="0.15"/>
+  <xacro:arg name="wheelbase" default="0.180"/>
+  <xacro:arg name="track_width" default="0.200"/>
 
-  <xacro:property name="wheel_radius" value="0.024"/>
-  <xacro:property name="wheel_width" value="0.040"/>
-  <xacro:property name="wheel_mass" value="0.15"/>
-
-  <xacro:property name="wheelbase" value="0.180"/>
-  <xacro:property name="track_width" value="0.200"/>
-
-  <xacro:property name="ground_clearance" value="0.025"/>
+  <xacro:property name="chassis_length" value="$(arg chassis_length)"/>
+  <xacro:property name="chassis_width" value="$(arg chassis_width)"/>
+  <xacro:property name="chassis_height" value="$(arg chassis_height)"/>
+  <xacro:property name="chassis_mass" value="$(arg chassis_mass)"/>
+  <xacro:property name="wheel_radius" value="$(arg wheel_radius)"/>
+  <xacro:property name="wheel_width" value="$(arg wheel_width)"/>
+  <xacro:property name="wheel_mass" value="$(arg wheel_mass)"/>
+  <xacro:property name="wheelbase" value="$(arg wheelbase)"/>
+  <xacro:property name="track_width" value="$(arg track_width)"/>
+  <xacro:property name="ground_clearance" value="${wheel_radius + 0.001}"/>
 
   <!-- Materials -->
   <material name="dark_grey">

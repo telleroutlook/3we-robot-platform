@@ -7,7 +7,9 @@ CAN1,MCP2515-I/SO,SOIC-18,Microchip,MCP2515-I/SO,1,12.00,LCSC,CAN bus controller
 CAN2,TJA1050T,SOIC-8,NXP,TJA1050T,1,4.50,LCSC,CAN transceiver
 MOT1-4,550 Gear Motor 1:30,-,-,-,4,45.00,Taobao,12V rated (replaces N20)
 DRV1-2,BTS7960,Module,-,BTS7960,2,18.00,Taobao,43A H-bridge (replaces DRV8833)
-ENC1,IP54 Enclosure 350x280x120,-,-,-,1,180.00,Taobao,Aluminum sealed chassis
+WHL1-4,97mm Mecanum Wheel,-,-,-,4,65.00,Taobao,Aluminum hub + PU rollers (replaces 48mm)
+BRK1-4,550 Motor Bracket 37mm,-,-,-,4,12.00,Taobao,CNC aluminum mount for 550 motors
+ENC1,IP54 Enclosure 500x400x100,-,-,-,1,280.00,Taobao,Aluminum sealed chassis (upgraded from 350x280x120)
 SEAL1,Cable Gland PG9,-,-,-,6,3.00,Taobao,IP68 rated cable entries
 CON1,XT60 Battery Connector,-,-,-,2,5.00,LCSC,High-current (replaces XT30)
 RLY2,Redundant Safety Relay,-,-,-,1,15.00,Taobao,Second safety channel
