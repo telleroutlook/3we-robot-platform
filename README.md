@@ -92,7 +92,7 @@ An open-source omnidirectional mobile robot platform designed for<br/>
 | Building a robot platform from scratch takes months | Complete open-source stack: hardware → firmware → ROS2 → SDK, ready to customize |
 | Most platforms have closed hardware designs | Fully open PCB (KiCad) + mechanical drawings under CERN-OHL-P |
 | No standard payload interface exists | PBC-34 hot-plug bus with EEPROM auto-discovery — plug in your sensor and go |
-| Education platforms don't scale to industry | 4 SKUs from classroom (Basic) to factory floor (Industrial) — same codebase |
+| Education platforms don't scale to industry | 3 SKUs from classroom (Basic) to factory floor (Industrial) — same codebase |
 | Security is bolted on as an afterthought | DTLS 1.2 encrypted comms + signed OTA + hardware E-stop from day one |
 
 ### Who Is This For?
@@ -106,13 +106,18 @@ An open-source omnidirectional mobile robot platform designed for<br/>
 
 ## ✦ Product Line
 
-| | **Basic** | **Standard** | **Pro** | **Industrial** |
-|:--|:--:|:--:|:--:|:--:|
-| **Target** | Education | Research | Commercial | Industrial |
-| **AI** | — | Hailo-8L (13 TOPS) | Hailo-8 (26 TOPS) | Hailo-8 (26 TOPS) |
-| **Connectivity** | Wi-Fi + BLE | Wi-Fi + BLE | + 4G | + 5G + LoRa |
-| **CAN Bus** | — | — | — | MCP2515 + TJA1050 |
-| **Protection** | IP20 | IP20 | IP40 | IP65 |
+| | **Basic** | **Standard** | **Industrial** |
+|:--|:--:|:--:|:--:|
+| **Target** | Education | Research / Development | Industrial deployment |
+| **Chassis** | 300×250 mm | 400×320 mm | 500×400 mm |
+| **Wheels** | 48 mm Mecanum | 65 mm Mecanum | 97 mm Mecanum |
+| **Payload** | 1 kg | 5 kg | 15 kg |
+| **AI** | — | Hailo-8L (13 TOPS) | Hailo-8 (26 TOPS) |
+| **Connectivity** | Wi-Fi + BLE | Wi-Fi + BLE | + 5G + LoRa |
+| **CAN Bus** | — | — | MCP2515 + TJA1050 |
+| **Protection** | IP20 | IP20 | IP54 |
+
+Optional add-ons for Standard: Hailo-8 upgrade, 4G modem, LD06 LiDAR, rear camera.
 
 <br/>
 
@@ -159,7 +164,7 @@ robot-platform/
 ├── hardware/                   # Hardware design
 │   ├── pcb/                    #   PCB specs, PBC-34 pinout
 │   ├── structure/              #   Mechanical drawings
-│   └── bom/                    #   Bill of materials (4 SKUs)
+│   └── bom/                    #   Bill of materials (3 SKUs + optional add-ons)
 │
 ├── sdk/                        # Payload developer toolkit
 │   ├── payload_interface/      #   Python communication library
@@ -238,7 +243,7 @@ ros2 launch robot_bringup robot.launch.py
 | **Mecanum Drive** | 4-wheel omnidirectional | Differential | Configurable | Mecanum | Mecanum |
 | **Payload System** | PBC-34 hot-plug bus | USB/serial | None | GPIO header | None |
 | **Encrypted Comms** | DTLS 1.2 | None | None | None | None |
-| **Multi-SKU** | 4 variants (1 codebase) | Single | Single | 2 variants | Single |
+| **Multi-SKU** | 3 variants (1 codebase) | Single | Single | 2 variants | Single |
 | **Web Control UI** | Built-in (TypeScript) | Via RViz | None | ROSbot UI | App only |
 | **HW Safety Relay** | ISO 13850 + self-test | Software only | None | Software only | None |
 

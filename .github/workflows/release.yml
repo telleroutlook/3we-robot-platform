@@ -61,9 +61,6 @@ jobs:
           - sku: ROBOT_SKU_STANDARD
             sku_suffix: standard
             production: false
-          - sku: ROBOT_SKU_PRO
-            sku_suffix: pro
-            production: false
           - sku: ROBOT_SKU_INDUSTRIAL
             sku_suffix: industrial
             production: false

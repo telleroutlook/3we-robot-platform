@@ -33,9 +33,7 @@ menu "Robot Platform Configuration"
         config ROBOT_SKU_BASIC
             bool "Basic (Education/Hobby)"
         config ROBOT_SKU_STANDARD
-            bool "Standard (Research/Prototyping)"
-        config ROBOT_SKU_PRO
-            bool "Pro (Commercial)"
+            bool "Standard (Research/Development)"
         config ROBOT_SKU_INDUSTRIAL
             bool "Industrial (Automation)"
     endchoice
@@ -44,10 +42,12 @@ menu "Robot Platform Configuration"
         config MOTOR_GEAR_RATIO
             int "Gear reduction ratio"
             default 30 if ROBOT_SKU_INDUSTRIAL
+            default 50 if ROBOT_SKU_STANDARD
             default 90
             help
                 Motor gearbox reduction ratio.
-                N20 motors (Basic/Standard/Pro): 90
+                N20 motors (Basic): 90
+                N20 motors (Standard): 50
                 550 motors (Industrial): 30
 
         config MOTOR_ENCODER_PPR
@@ -62,11 +62,13 @@ menu "Robot Platform Configuration"
         config MOTOR_MAX_RPM
             int "Max output shaft RPM"
             default 200 if ROBOT_SKU_INDUSTRIAL
+            default 180 if ROBOT_SKU_STANDARD
             default 150
             help
                 Maximum RPM at the output shaft (after gearbox).
-                N20 1:90 at 6V: ~150 RPM
-                550 1:30 at 12V: ~200 RPM
+                N20 1:90 at 6V (Basic): ~150 RPM
+                N20 1:50 at 6V (Standard): ~180 RPM
+                550 1:30 at 12V (Industrial): ~200 RPM
 
         config MOTOR_PWM_FREQ_HZ
             int "PWM frequency (Hz)"
@@ -74,7 +76,7 @@ menu "Robot Platform Configuration"
             default 20000
             help
                 Motor driver PWM frequency.
-                DRV8833 (Basic/Standard/Pro): 20000 Hz
+                DRV8833 (Basic/Standard): 20000 Hz
                 BTS7960 (Industrial): 15000 Hz
     endmenu
 
@@ -82,28 +84,34 @@ menu "Robot Platform Configuration"
         config CHASSIS_WHEEL_RADIUS_MM_X10
             int "Wheel radius (mm x10, e.g. 240 = 24.0mm)"
             default 485 if ROBOT_SKU_INDUSTRIAL
+            default 325 if ROBOT_SKU_STANDARD
             default 240
             help
                 Wheel radius in tenths of mm (Kconfig int limitation).
-                48mm wheel (Basic/Standard/Pro): 240 (= 24.0mm)
+                48mm wheel (Basic): 240 (= 24.0mm)
+                65mm wheel (Standard): 325 (= 32.5mm)
                 97mm wheel (Industrial): 485 (= 48.5mm)
 
         config CHASSIS_TRACK_WIDTH_MM
             int "Track width (mm, left-right wheel center distance)"
             default 320 if ROBOT_SKU_INDUSTRIAL
+            default 260 if ROBOT_SKU_STANDARD
             default 200
             help
                 Distance between left and right wheel centers.
-                Basic/Standard/Pro (300x250 chassis): 200mm
+                Basic (300x250 chassis): 200mm
+                Standard (400x320 chassis): 260mm
                 Industrial (500x400 chassis): 320mm
 
         config CHASSIS_WHEELBASE_MM
             int "Wheelbase (mm, front-rear axle distance)"
             default 300 if ROBOT_SKU_INDUSTRIAL
+            default 240 if ROBOT_SKU_STANDARD
             default 180
             help
                 Distance between front and rear axle centers.
-                Basic/Standard/Pro (300x250 chassis): 180mm
+                Basic (300x250 chassis): 180mm
+                Standard (400x320 chassis): 240mm
                 Industrial (500x400 chassis): 300mm
     endmenu
 

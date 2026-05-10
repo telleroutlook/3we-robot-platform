@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - KiCad 8 PCB schematic and layout (DRV8833, ESP32-S3, power management, PBC-34 connector)
   - Custom footprint library (PBC-34, XT30)
   - 7 DXF mechanical drawings (chassis, motor bracket, payload plate)
-  - 4 SKU BOMs (basic, standard, pro, industrial)
+  - 3 SKU BOMs (basic, standard, industrial) + optional add-ons
   - DRC validation scripts and Gerber generation
 - 23 firmware unit tests (Unity framework, host-side compilation)
 - Playwright E2E test suite for web_control (7 spec files)

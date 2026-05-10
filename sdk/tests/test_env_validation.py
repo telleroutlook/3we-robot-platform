@@ -13,7 +13,7 @@ class TestRobotEnv:
         assert env.robot_target_sku == "standard"
 
     def test_valid_sku_variants(self) -> None:
-        for sku in ("basic", "standard", "pro", "industrial"):
+        for sku in ("basic", "standard", "industrial"):
             env = RobotEnv(robot_target_sku=sku)
             assert env.robot_target_sku == sku
 
@@ -53,12 +53,12 @@ class TestLoadEnv:
 
     def test_load_custom_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ROS_DOMAIN_ID", "42")
-        monkeypatch.setenv("ROBOT_TARGET_SKU", "pro")
+        monkeypatch.setenv("ROBOT_TARGET_SKU", "industrial")
         monkeypatch.setenv("MQTT_BROKER_URL", "mqtts://fleet.example.com:8883")
 
         env = load_env()
         assert env.ros_domain_id == 42
-        assert env.robot_target_sku == "pro"
+        assert env.robot_target_sku == "industrial"
         assert env.mqtt_broker_url == "mqtts://fleet.example.com:8883"
 
     def test_load_invalid_domain_id(self, monkeypatch: pytest.MonkeyPatch) -> None:

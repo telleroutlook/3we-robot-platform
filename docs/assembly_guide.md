@@ -16,7 +16,7 @@ Step-by-step hardware assembly instructions for the robot-platform.
 Before starting, verify you have all components from the appropriate BOM file:
 - `hardware/bom/bom_basic.csv` (Basic SKU)
 - `hardware/bom/bom_standard.csv` (Standard SKU - includes everything in Basic)
-- `hardware/bom/bom_pro.csv` (Pro SKU)
+- `hardware/bom/bom_optional_addons.csv` (Optional add-ons: Hailo-8 upgrade, 4G, LiDAR, rear camera)
 - `hardware/bom/bom_industrial.csv` (Industrial SKU)
 
 ---

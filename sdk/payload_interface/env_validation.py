@@ -34,7 +34,7 @@ class RobotEnv:
     robot_target_sku: str = "standard"
 
     _valid_skus: tuple[str, ...] = field(
-        default=("basic", "standard", "pro", "industrial"),
+        default=("basic", "standard", "industrial"),
         repr=False,
         compare=False,
     )

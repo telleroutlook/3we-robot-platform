@@ -1,8 +1,7 @@
 Reference,Value,Package,Manufacturer,MPN,Quantity,Unit_Price_CNY,Supplier,Notes
-AI2,Hailo-8 M.2 Module,M.2 2242,Hailo,HAILO-8-M2,1,980.00,Hailo,26 TOPS (replaces Hailo-8L)
+AI2,Hailo-8 M.2 Module,M.2 2242,Hailo,HAILO-8-M2,1,980.00,Hailo,26 TOPS (upgrade from Hailo-8L)
 4G1,SIM7600CE-T,Mini-PCIe,SIMCom,SIM7600CE-T,1,168.00,LCSC,4G LTE Cat-4 modem
 ANT1,4G LTE Antenna SMA,-,-,-,1,15.00,Taobao,700-2700MHz omnidirectional
 SIM1,Nano-SIM Holder,-,-,-,1,2.00,LCSC,Push-push type
 LIDAR1,LD06 LiDAR,Module,LDRobot,LD06,1,120.00,Taobao,360° 12m range @ 10Hz
 CAM2,USB Camera (rear),USB,Various,-,1,65.00,Taobao,720P rear-facing
-BAT3,2S 18650 Pack (3rd),Pack,-,-,1,35.00,Taobao,Maximum runtime config

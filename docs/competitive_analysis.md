@@ -29,7 +29,7 @@
 
 | Platform | PCB Design | Mechanical CAD | License | Manufacturability |
 |:---------|:---:|:---:|:---:|:---:|
-| **This Project** | Full KiCad source | Full drawings | CERN-OHL-P v2 | BOM for 4 SKUs |
+| **This Project** | Full KiCad source | Full drawings | CERN-OHL-P v2 | BOM for 3 SKUs |
 | TurtleBot 4 | Closed (Create 3 base) | URDF only | — | Must buy assembled |
 | Linorobot2 | Reference schematic | 3D-printed parts | MIT | DIY-friendly |
 | ROSbot XL | Closed | STEP export only | Proprietary | Must buy assembled |
@@ -68,7 +68,7 @@
 
 | Platform | Payload Interface | Hot-plug | Auto-Discovery | Power Management | Multi-SKU |
 |:---------|:---:|:---:|:---:|:---:|:---:|
-| **This Project** | PBC-34 bus (I2C+SPI+UART+Power) | Yes | EEPROM identification | Sequenced, budget-managed | 4 SKUs |
+| **This Project** | PBC-34 bus (I2C+SPI+UART+Power) | Yes | EEPROM identification | Sequenced, budget-managed | 3 SKUs |
 | TurtleBot 4 | USB + Create 3 port | No | None | None | 2 configs |
 | Linorobot2 | Breadboard / GPIO | No | None | None | Single |
 | ROSbot XL | GPIO header + USB | No | None | Basic | 2 configs |
@@ -79,16 +79,16 @@
 
 ### Scalability (Education → Industry)
 
-| Platform | Education | Research | Commercial | Industrial |
-|:---------|:---:|:---:|:---:|:---:|
-| **This Project** | Basic SKU | Standard SKU | Pro SKU (4G) | Industrial SKU (5G, CAN, IP65) |
-| TurtleBot 4 | Lite version | Standard | — | — |
-| Linorobot2 | Good fit | Good fit | — | — |
-| ROSbot XL | — | Good fit | Possible | — |
-| Yahboom X3 | Good fit | Limited | — | — |
-| JetBot | Good fit | Limited | — | — |
-| OpenMower | — | Niche | — | — |
-| Rover Zero | — | Possible | Good fit | Outdoor |
+| Platform | Education | Research / Development | Industrial |
+|:---------|:---:|:---:|:---:|
+| **This Project** | Basic SKU | Standard SKU | Industrial SKU (5G, CAN, IP54) |
+| TurtleBot 4 | Lite version | Standard | — |
+| Linorobot2 | Good fit | Good fit | — |
+| ROSbot XL | — | Good fit | — |
+| Yahboom X3 | Good fit | Limited | — |
+| JetBot | Good fit | Limited | — |
+| OpenMower | — | Niche | — |
+| Rover Zero | — | Possible | Outdoor |
 
 ---
 
@@ -122,7 +122,7 @@
 
 2. **Security-First Architecture** — The only open-source mobile robot with DTLS encrypted communication, cryptographically signed OTA, and hardware safety interlocks meeting ISO 13850.
 
-3. **Single Codebase, Four Products** — Build-time SKU selection via `sdkconfig` overlays means one repository produces platforms ranging from $200 classroom kits to IP65 industrial units.
+3. **Single Codebase, Three Products** — Build-time SKU selection via `sdkconfig` overlays means one repository produces platforms ranging from $120 classroom kits to IP54 industrial units.
 
 4. **Full-Stack Openness** — From KiCad schematics to ROS2 launch files to TypeScript web UI — everything is open, auditable, and forkable under permissive licenses.
 
@@ -159,7 +159,7 @@
 
 | 平台 | PCB 设计 | 机械 CAD | 许可证 | 可制造性 |
 |:-----|:---:|:---:|:---:|:---:|
-| **本项目** | 完整 KiCad 源文件 | 完整图纸 | CERN-OHL-P v2 | 4 个 SKU 的 BOM |
+| **本项目** | 完整 KiCad 源文件 | 完整图纸 | CERN-OHL-P v2 | 3 个 SKU 的 BOM |
 | TurtleBot 4 | 闭源（Create 3 底盘） | 仅 URDF | — | 需购买成品 |
 | Linorobot2 | 参考原理图 | 3D 打印零件 | MIT | DIY 友好 |
 | ROSbot XL | 闭源 | 仅 STEP 导出 | 专有 | 需购买成品 |
@@ -198,7 +198,7 @@
 
 | 平台 | 载荷接口 | 热插拔 | 自动发现 | 电源管理 | 多 SKU |
 |:-----|:---:|:---:|:---:|:---:|:---:|
-| **本项目** | PBC-34 总线 (I2C+SPI+UART+Power) | 支持 | EEPROM 识别 | 时序控制、功率预算 | 4 个 SKU |
+| **本项目** | PBC-34 总线 (I2C+SPI+UART+Power) | 支持 | EEPROM 识别 | 时序控制、功率预算 | 3 个 SKU |
 | TurtleBot 4 | USB + Create 3 端口 | 不支持 | 无 | 无 | 2 种配置 |
 | Linorobot2 | 面包板 / GPIO | 不支持 | 无 | 无 | 单一 |
 | ROSbot XL | GPIO 排针 + USB | 不支持 | 无 | 基础 | 2 种配置 |
@@ -209,16 +209,16 @@
 
 ### 可扩展性（教育 → 工业）
 
-| 平台 | 教育 | 科研 | 商业 | 工业 |
-|:-----|:---:|:---:|:---:|:---:|
-| **本项目** | Basic SKU | Standard SKU | Pro SKU (4G) | Industrial SKU (5G, CAN, IP65) |
-| TurtleBot 4 | Lite 版本 | Standard | — | — |
-| Linorobot2 | 适合 | 适合 | — | — |
-| ROSbot XL | — | 适合 | 可能 | — |
-| Yahboom X3 | 适合 | 有限 | — | — |
-| JetBot | 适合 | 有限 | — | — |
-| OpenMower | — | 细分领域 | — | — |
-| Rover Zero | — | 可能 | 适合 | 户外 |
+| 平台 | 教育 | 科研 / 开发 | 工业 |
+|:-----|:---:|:---:|:---:|
+| **本项目** | Basic SKU | Standard SKU | Industrial SKU (5G, CAN, IP54) |
+| TurtleBot 4 | Lite 版本 | Standard | — |
+| Linorobot2 | 适合 | 适合 | — |
+| ROSbot XL | — | 适合 | — |
+| Yahboom X3 | 适合 | 有限 | — |
+| JetBot | 适合 | 有限 | — |
+| OpenMower | — | 细分领域 | — |
+| Rover Zero | — | 可能 | 户外 |
 
 ---
 
@@ -252,7 +252,7 @@
 
 2. **安全优先架构** —— 唯一提供 DTLS 加密通信、密码学签名 OTA 和符合 ISO 13850 硬件安全互锁的开源移动机器人。
 
-3. **一套代码，四款产品** —— 通过 `sdkconfig` 叠加层在编译时选择 SKU，同一仓库可生产从 $200 教学套件到 IP65 工业单元的全线产品。
+3. **一套代码，三款产品** —— 通过 `sdkconfig` 叠加层在编译时选择 SKU，同一仓库可生产从 ¥900 教学套件到 IP54 工业单元的全线产品。
 
 4. **全栈开放** —— 从 KiCad 原理图到 ROS2 启动文件再到 TypeScript Web 界面 —— 一切开放、可审计、可 Fork，采用宽松许可证。
 

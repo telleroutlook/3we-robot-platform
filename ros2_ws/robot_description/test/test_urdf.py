@@ -39,7 +39,17 @@ WHEEL_JOINTS = [
 ]
 
 SKU_PARAMS = {
-    "standard": {},
+    "standard": {
+        "chassis_length": "0.400",
+        "chassis_width": "0.320",
+        "chassis_height": "0.080",
+        "chassis_mass": "1.8",
+        "wheel_radius": "0.0325",
+        "wheel_width": "0.040",
+        "wheel_mass": "0.15",
+        "wheelbase": "0.240",
+        "track_width": "0.260",
+    },
     "industrial": {
         "chassis_length": "0.500",
         "chassis_width": "0.400",
@@ -54,7 +64,7 @@ SKU_PARAMS = {
 }
 
 EXPECTED_DIMENSIONS = {
-    "standard": {"chassis": (0.300, 0.250, 0.080), "wheel_radius": 0.024},
+    "standard": {"chassis": (0.400, 0.320, 0.080), "wheel_radius": 0.0325},
     "industrial": {"chassis": (0.500, 0.400, 0.100), "wheel_radius": 0.0485},
 }
 
@@ -75,7 +85,7 @@ def sku_urdf(request) -> tuple[str, ET.Element]:
 
 @pytest.fixture(scope="module")
 def urdf_xml() -> ET.Element:
-    """Process the Xacro file with defaults (Basic/Standard/Pro)."""
+    """Process the Xacro file with defaults (Basic)."""
     try:
         import xacro
     except ImportError:

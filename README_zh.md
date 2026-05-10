@@ -92,7 +92,7 @@
 | 从零搭建机器人平台需要数月时间 | 完整开源技术栈：硬件 → 固件 → ROS2 → SDK，开箱即用可定制 |
 | 多数平台硬件设计闭源 | 完全开放 PCB（KiCad）+ 机械图纸，采用 CERN-OHL-P 许可 |
 | 没有标准化的载荷接口 | PBC-34 热插拔总线 + EEPROM 自动识别 —— 插入传感器即刻工作 |
-| 教育平台无法扩展到工业场景 | 4 个 SKU 从教室（Basic）到工厂（Industrial）—— 同一代码库 |
+| 教育平台无法扩展到工业场景 | 3 个 SKU 从教室（Basic）到工厂（Industrial）—— 同一代码库 |
 | 安全性往往是事后补救 | DTLS 1.2 加密通信 + 签名 OTA + 硬件急停，从第一天就内置 |
 
 ### 适合谁？
@@ -106,13 +106,18 @@
 
 ## ✦ 产品线
 
-| | **Basic** | **Standard** | **Pro** | **Industrial** |
-|:--|:--:|:--:|:--:|:--:|
-| **定位** | 教育 | 科研 | 商业 | 工业 |
-| **AI 算力** | — | Hailo-8L (13 TOPS) | Hailo-8 (26 TOPS) | Hailo-8 (26 TOPS) |
-| **通信** | Wi-Fi + BLE | Wi-Fi + BLE | + 4G | + 5G + LoRa |
-| **CAN 总线** | — | — | — | MCP2515 + TJA1050 |
-| **防护等级** | IP20 | IP20 | IP40 | IP65 |
+| | **Basic** | **Standard** | **Industrial** |
+|:--|:--:|:--:|:--:|
+| **定位** | 教育 | 科研 / 开发 | 工业部署 |
+| **底盘** | 300×250 mm | 400×320 mm | 500×400 mm |
+| **轮径** | 48 mm 麦轮 | 65 mm 麦轮 | 97 mm 麦轮 |
+| **载荷** | 1 kg | 5 kg | 15 kg |
+| **AI 算力** | — | Hailo-8L (13 TOPS) | Hailo-8 (26 TOPS) |
+| **通信** | Wi-Fi + BLE | Wi-Fi + BLE | + 5G + LoRa |
+| **CAN 总线** | — | — | MCP2515 + TJA1050 |
+| **防护等级** | IP20 | IP20 | IP54 |
+
+Standard 可选附件：Hailo-8 升级、4G 模组、LD06 激光雷达、后置摄像头。
 
 <br/>
 
@@ -159,7 +164,7 @@ robot-platform/
 ├── hardware/                   # 硬件设计
 │   ├── pcb/                    #   PCB 规格、PBC-34 引脚表
 │   ├── structure/              #   结构设计图纸
-│   └── bom/                    #   物料清单（4 个 SKU）
+│   └── bom/                    #   物料清单（3 个 SKU + 可选附件）
 │
 ├── sdk/                        # 载荷开发工具包
 │   ├── payload_interface/      #   Python 通信库
@@ -238,7 +243,7 @@ ros2 launch robot_bringup robot.launch.py
 | **麦轮驱动** | 四轮全向 | 差速 | 可配置 | 麦轮 | 麦轮 |
 | **载荷系统** | PBC-34 热插拔总线 | USB/串口 | 无 | GPIO 排针 | 无 |
 | **加密通信** | DTLS 1.2 | 无 | 无 | 无 | 无 |
-| **多 SKU** | 4 个变体（同一代码库） | 单一 | 单一 | 2 个变体 | 单一 |
+| **多 SKU** | 3 个变体（同一代码库） | 单一 | 单一 | 2 个变体 | 单一 |
 | **Web 控制** | 内置（TypeScript） | 需 RViz | 无 | ROSbot UI | 仅 App |
 | **硬件安全继电器** | ISO 13850 + 自检 | 仅软件 | 无 | 仅软件 | 无 |
 

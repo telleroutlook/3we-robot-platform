@@ -5,7 +5,11 @@ HAT1,Hailo AI HAT+,HAT,Raspberry Pi,SC1213,1,198.00,Pimoroni,M.2 carrier for Pi 
 CAM1,USB Fisheye Camera 170°,USB,Various,-,1,85.00,Taobao,1080P global shutter
 PS1,TPS5430DDAR,SOIC-8,Texas Instruments,TPS5430DDAR,1,4.50,LCSC,5V/3A payload buck
 PS2,XL6009E1,SOP-8,XLSEMI,XL6009E1,1,2.80,LCSC,12V/3A boost converter
-BAT2,2S 18650 Pack (extra),Pack,-,-,1,35.00,Taobao,Extended runtime pack
+BAT2,2S 18650 Pack (2nd),Pack,-,-,1,35.00,Taobao,Extended runtime pack
+BAT3,2S 18650 Pack (3rd),Pack,-,-,1,35.00,Taobao,Maximum runtime / rear ballast
 COOL1,5V Fan 30x30mm,-,-,-,1,8.00,Taobao,Pi 5 active cooling
 USB1,USB 3.0 Hub 4-port,Module,-,-,1,25.00,Taobao,Internal hub for peripherals
 CABLE1,UART to USB adapter,-,-,CP2102N,1,8.50,LCSC,Pi5 to ESP32 serial bridge
+W1-W4,65mm Mecanum Wheel,-,-,-,4,35.00,Taobao,Aluminum hub with PU rollers
+MOUNT1,M4 Threaded Insert,-,-,-,12,0.50,LCSC,Press-fit for payload mounting
+MOUNT2,M4×10 Socket Head Screw,-,-,-,8,0.20,LCSC,Payload attachment hardware

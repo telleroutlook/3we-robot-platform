@@ -12,7 +12,7 @@ A clear description of what the bug is.
 
 ## Environment
 
-- **Hardware SKU**: [Basic / Standard / Pro / Industrial]
+- **Hardware SKU**: [Basic / Standard / Industrial]
 - **Firmware Version**: [e.g., v0.1.0]
 - **ROS2 Distro**: [e.g., Humble]
 - **OS**: [e.g., Ubuntu 22.04]
