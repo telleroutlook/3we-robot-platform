@@ -19,8 +19,8 @@ jobs:
        contains(github.event.comment.body, 'I have read the CLA Document and I hereby sign the CLA'))
     steps:
       - name: CLA Assistant
-        # contributor-assistant/github-action v2.6.1
-        uses: contributor-assistant/github-action@ca4a40a7ea6ce75c0c4c1548ecf182fba158b5cb
+        # contributor-assistant/github-action v2
+        uses: contributor-assistant/github-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

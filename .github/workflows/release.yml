@@ -12,7 +12,7 @@ jobs:
   test-gate-firmware:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
 
       - name: Run firmware unit tests
         run: cd firmware/tests && make clean && make test
@@ -20,9 +20,9 @@ jobs:
   test-gate-python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -35,9 +35,9 @@ jobs:
   test-gate-web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -74,7 +74,7 @@ jobs:
             sku_suffix: industrial
             production: true
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
 
       - name: Build firmware (${{ matrix.sku_suffix }}${{ matrix.production && '-production' || '' }})
         working-directory: firmware/esp32
@@ -98,7 +98,7 @@ jobs:
           idf.py build
 
       - name: Upload firmware binary
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.sku_suffix }}${{ matrix.production && '-production' || '' }}
           path: firmware/esp32/build/robot_platform_firmware.bin
@@ -111,9 +111,9 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -124,7 +124,7 @@ jobs:
           python -m build
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3d6ba38048
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: sdk/dist/
 
@@ -132,9 +132,9 @@ jobs:
     needs: [test-gate-firmware, test-gate-python, test-gate-web]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -145,7 +145,7 @@ jobs:
           npm run build
 
       - name: Upload web dist
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        uses: actions/upload-artifact@v4
         with:
           name: web-control-dist
           path: sdk/web_control/dist/
@@ -157,12 +157,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Download all artifacts
-        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427
+        uses: actions/download-artifact@v4
         with:
           path: release-artifacts/
 
@@ -189,7 +189,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@69320dbe05506a9a39fc8ae11030b214ec2d1f87
+        uses: softprops/action-gh-release@v2
         with:
           body_path: RELEASE_NOTES.md
           files: |

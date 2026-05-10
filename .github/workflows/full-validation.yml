@@ -13,8 +13,8 @@ jobs:
   firmware-tests:
     runs-on: ubuntu-latest
     steps:
-      # actions/checkout v4.1.1
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      # actions/checkout v4
+      - uses: actions/checkout@v4
 
       - name: Build and run firmware tests
         run: |
@@ -26,11 +26,11 @@ jobs:
   python-sdk:
     runs-on: ubuntu-latest
     steps:
-      # actions/checkout v4.1.1
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      # actions/checkout v4
+      - uses: actions/checkout@v4
 
-      # actions/setup-python v5.0.0
-      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c
+      # actions/setup-python v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -45,11 +45,11 @@ jobs:
   web-control:
     runs-on: ubuntu-latest
     steps:
-      # actions/checkout v4.1.1
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      # actions/checkout v4
+      - uses: actions/checkout@v4
 
-      # actions/setup-node v4.0.1
-      - uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8
+      # actions/setup-node v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -65,11 +65,11 @@ jobs:
   cross-layer:
     runs-on: ubuntu-latest
     steps:
-      # actions/checkout v4.1.1
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      # actions/checkout v4
+      - uses: actions/checkout@v4
 
-      # actions/setup-node v4.0.1
-      - uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8
+      # actions/setup-node v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -82,8 +82,8 @@ jobs:
     runs-on: ubuntu-latest
     container: ros:humble
     steps:
-      # actions/checkout v4.1.1
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      # actions/checkout v4
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -114,8 +114,8 @@ jobs:
     timeout-minutes: 15
     container: ros:humble
     steps:
-      # actions/checkout v4.1.1
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      # actions/checkout v4
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -151,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     container: espressif/idf:v5.2
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@v4
 
       - name: Build production firmware (standard)
         working-directory: firmware/esp32
