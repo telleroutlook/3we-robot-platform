@@ -1,16 +1,39 @@
 # Integration Tests
 
-Integration tests verify cross-layer communication and end-to-end behavior. Unlike unit tests (which run in CI), these require a physical robot or a full ROS2 simulation stack.
+Integration tests verify cross-layer communication and end-to-end behavior.
 
 ## Test Categories
 
-| Category | Description | Requirements |
-|----------|-------------|-------------|
-| Cross-layer | Firmware ↔ ROS2 topic roundtrip | ESP32 + micro_ros_agent |
-| End-to-end | Browser → WebSocket → ROS2 → motor | Full stack running |
-| Hardware-in-loop | Physical sensor validation | Robot powered on |
+| Category | Description | Requirements | Runs in CI? |
+|----------|-------------|-------------|-------------|
+| Simulation | Diagnostics, docking state machine | Gazebo headless | Yes |
+| Cross-layer | Firmware ↔ ROS2 topic roundtrip | ESP32 + micro_ros_agent | No |
+| End-to-end | Browser → WebSocket → ROS2 → motor | Full stack running | No |
+| Hardware-in-loop | Physical sensor validation | Robot powered on | No |
 
-## Prerequisites
+## CI Simulation Tests
+
+These tests run automatically in GitHub Actions using Gazebo in headless mode:
+
+```bash
+# Reproduce locally:
+export QT_QPA_PLATFORM=offscreen
+source /opt/ros/humble/setup.bash
+source ros2_ws/install/setup.bash
+ros2 launch robot_simulation gazebo.launch.py headless:=true &
+sleep 10
+pytest tests/integration/ -m "simulation and not hardware and not fullstack" --timeout=120 -v
+```
+
+Current CI simulation tests:
+- `test_diagnostics_node.py` — Diagnostics node publishes, reports battery state, reports E-stop state
+- Tests marked with `@pytest.mark.simulation`
+
+### Headless Gazebo
+
+The `headless:=true` argument launches Gazebo in server-only mode (`ign gazebo -s`), skipping the GUI. RViz2 is also suppressed. The `QT_QPA_PLATFORM=offscreen` environment variable prevents Qt from attempting X11 connections.
+
+## Prerequisites (Hardware Tests)
 
 - ROS2 Humble installed and sourced
 - Workspace built: `cd ros2_ws && colcon build --symlink-install && source install/setup.bash`
@@ -42,24 +65,14 @@ python3 scripts/run-hardware-validation.py --subsystems motors
 python3 scripts/run-hardware-validation.py --subsystems encoders
 ```
 
-## Future Integration Tests (Planned)
-
-- [ ] E-stop activation → motor power cut verified via encoder silence
-- [ ] Payload hot-plug sequence → PayloadState message published on `/payload/state`
-- [ ] Nav2 goal → robot moves to target (simulation or physical)
-- [ ] DTLS channel → cmd_vel delivered and executed
-- [ ] OTA update → firmware version increments after flash
-- [ ] Battery low → graceful shutdown sequence triggered
-
 ## Relationship to CI Tests
-
-CI tests (`colcon test`, `pytest`, Playwright) validate code correctness without hardware. Integration tests validate physical behavior. Both are necessary; they serve different purposes:
 
 ```
 CI Tests (automated, fast, every PR)
 ├── Unit tests — function-level correctness
 ├── Config tests — YAML/URDF structure validation
-└── E2E web tests — UI component behavior (mocked WebSocket)
+├── E2E web tests — UI component behavior (mocked WebSocket)
+└── Simulation tests — diagnostics, docking state machine (Gazebo headless)
 
 Integration Tests (manual, requires hardware)
 ├── Hardware validation — sensor/actuator verification

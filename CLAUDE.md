@@ -133,13 +133,13 @@ Run these checks (in order) to verify cross-layer consistency after any code cha
 Quick alias: `make all` runs lint + test + build from root.
 
 ```bash
-# 1. Firmware — host-side unit tests (177 tests)
+# 1. Firmware — host-side unit tests (243 tests)
 cd firmware/tests && make clean && make && ./test_runner
 
 # 2. SDK web_control — TypeScript type-check
 cd sdk/web_control && npx tsc --noEmit
 
-# 3. SDK web_control — unit tests (41 tests, vitest)
+# 3. SDK web_control — unit tests (60 tests, vitest)
 cd sdk/web_control && npx vitest run
 
 # 4. SDK web_control — Playwright E2E (53 tests)

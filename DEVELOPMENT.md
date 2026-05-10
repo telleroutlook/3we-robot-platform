@@ -63,8 +63,14 @@ source install/setup.bash
 # Launch the full robot stack
 ros2 launch robot_bringup robot.launch.py
 
-# Launch simulation
+# Launch simulation (with GUI)
 ros2 launch robot_simulation gazebo.launch.py
+
+# Launch simulation (headless, for CI or testing)
+ros2 launch robot_simulation gazebo.launch.py headless:=true
+
+# Launch docking controller
+ros2 launch robot_docking docking.launch.py
 ```
 
 ### Python SDK
@@ -133,14 +139,17 @@ If any step fails, fix before committing. Step 4 catches interface drift between
 
 ```
 firmware/           → ESP32-S3 firmware (C, ESP-IDF)
-  esp32/main/       → Application source (motor, safety, comms, sensors)
+  esp32/main/       → Application source (motor, safety, comms, sensors, OTA, docking)
   config/           → Shared params (robot_params.h, pin_definitions.h)
   tests/            → Host-side unit tests (Unity framework)
 ros2_ws/            → ROS2 workspace
   robot_bringup/    → Launch files, QoS config, parameters
   robot_description/ → URDF/Xacro model
-  robot_interfaces/ → Custom msg/srv definitions
-  robot_simulation/ → Gazebo simulation
+  robot_diagnostics/ → Health monitoring, diagnostics aggregator
+  robot_docking/    → Autonomous docking controller (visual servo + contact verify)
+  robot_interfaces/ → Custom msg/srv/action definitions
+  robot_perception/ → Camera + AI inference (Hailo)
+  robot_simulation/ → Gazebo simulation (headless CI support)
 hardware/           → Hardware design
   pcb/              → KiCad 8 project (4-layer PCB)
   structure/        → Mechanical DXF drawings
@@ -149,12 +158,13 @@ hardware/           → Hardware design
 sdk/                → Developer SDK
   payload_interface/ → Python library for PBC-34 payloads
   examples/         → Reference payload implementations
-  tools/            → CLI tools (eeprom-validator)
+  tools/            → CLI tools (eeprom-validator, provision-keys)
   web_control/      → TypeScript Web Components (Lit-style)
   web_basic/        → Minimal zero-dependency teleop page
 docs/               → User documentation
 scripts/            → Automation (setup, flash, validate, release)
-tests/              → Hardware validation test plan and scripts
+tests/              → Integration and hardware validation tests
+monitoring/         → Prometheus + Grafana observability stack
 ```
 
 ## Debugging Tips

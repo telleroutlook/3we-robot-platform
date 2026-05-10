@@ -179,6 +179,84 @@ bool success
 string message
 ```
 
+### /undock_robot
+
+| Property | Value |
+|----------|-------|
+| Type | `robot_interfaces/srv/UndockRobot` |
+| Behavior | Reverse out of charging dock |
+
+```
+# Request
+float32 reverse_distance    # Meters to reverse after undocking (default 0.3)
+
+# Response
+bool success
+string error_message
+```
+
+## Actions
+
+### /dock
+
+| Property | Value |
+|----------|-------|
+| Type | `robot_interfaces/action/Dock` |
+| Behavior | Navigate to and dock at a charging station |
+
+```
+# Goal
+string dock_id              # Identifier for target dock (empty = nearest)
+
+# Result
+bool success
+string error_message
+float32 total_duration_sec
+
+# Feedback
+uint8 stage                 # Same enum as DockingState.msg
+float32 progress            # 0.0-1.0
+float64 distance_to_dock
+```
+
+Stages: IDLE(0) → APPROACH(1) → VISUAL_SERVO_COARSE(2) → VISUAL_SERVO_FINE(3) → CONTACT_VERIFY(4) → DOCKED(5). UNDOCKING(6) and FAILED(7) are terminal/error states.
+
+## Additional Published Topics
+
+### /docking_state
+
+| Property | Value |
+|----------|-------|
+| Type | `robot_interfaces/msg/DockingState` |
+| Rate | On change |
+| QoS | Reliable, Transient Local, Keep Last 1 |
+
+```
+uint8 IDLE=0
+uint8 APPROACH=1
+uint8 VISUAL_SERVO_COARSE=2
+uint8 VISUAL_SERVO_FINE=3
+uint8 CONTACT_VERIFY=4
+uint8 DOCKED=5
+uint8 UNDOCKING=6
+uint8 FAILED=7
+
+uint8 stage
+float32 progress            # 0.0-1.0 overall progress estimate
+string error_message        # Non-empty when stage==FAILED
+float64 distance_to_dock    # Meters (from visual estimate), -1 if unknown
+```
+
+### /diagnostics
+
+| Property | Value |
+|----------|-------|
+| Type | `diagnostic_msgs/msg/DiagnosticArray` |
+| Rate | 10 Hz (configurable) |
+| QoS | Reliable, Volatile, Keep Last 10 |
+
+Published by `robot_diagnostics` node. Aggregates system, battery, safety, and topic health into standard ROS2 diagnostics format. Status names follow the pattern `{robot_id}/{category}` (e.g., `robot-01/safety`, `robot-01/battery`).
+
 ## Coordinate Frames
 
 ```

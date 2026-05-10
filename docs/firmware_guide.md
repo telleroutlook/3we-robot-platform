@@ -105,6 +105,9 @@ I (xxx) encoder: Encoders initialized (PCNT, 1440 CPR)
 I (xxx) ultrasonic: Ultrasonic sensors initialized (trig=12)
 I (xxx) imu: BNO055 initialized (addr=0x28, NDOF mode)
 I (xxx) battery: Battery ADC initialized (2S, divider=3.0)
+I (xxx) charging: Charging detect initialized (threshold=2000mV)
+I (xxx) heartbeat: Heartbeat monitor initialized (timeout=5000ms)
+I (xxx) ext_wdt: External watchdog feeder started (500ms period)
 I (xxx) uros: micro-ROS initialized (UART 921600 baud)
 I (xxx) main: All systems initialized. Robot ready.
 ```
@@ -180,6 +183,60 @@ Over-the-air firmware updates via ESP-IDF's native OTA mechanism:
 4. Trigger update via ROS2 service or HTTP endpoint
 
 OTA requires two OTA partitions and secure boot. See [fleet_ota_strategy.md](fleet_ota_strategy.md) for production deployment.
+
+### Pre-flight Checks
+
+Before an OTA update is accepted, the firmware runs an automated pre-flight validation (`ota_preflight.c`):
+
+| Check | Threshold | Rationale |
+|-------|-----------|-----------|
+| Battery | ≥ 50% | Prevent power loss during flash |
+| Wi-Fi RSSI | ≥ -70 dBm | Ensure stable download |
+| Motors | Idle | No active motion commands |
+| Thermal | < warning | Prevent overtemp during heavy CPU use |
+| Safety | Not triggered | E-stop must be cleared |
+
+If any check fails, the OTA is rejected with a `fail_reason` string.
+
+### Validation Window
+
+After a successful OTA boot, a 30-second validation window starts. If the firmware does not confirm itself within this period (or if 3 consecutive boot failures occur), the bootloader automatically rolls back to the previous partition.
+
+### Compatibility Matrix
+
+The OTA compatibility module (`ota_compat.c`) enforces protocol version gating. A new firmware image declares a minimum and maximum compatible firmware version, preventing downgrades below the protocol break point.
+
+---
+
+## Heartbeat Monitor
+
+The heartbeat monitor (`heartbeat_monitor.c`) expects periodic messages from the companion computer (Raspberry Pi). If no heartbeat arrives within 5 seconds:
+
+1. Motors are commanded to zero
+2. After 3 consecutive resets within 30 minutes, the safety relay is pulsed off for 3 seconds (hardware-level stop)
+
+This ensures the robot stops if the companion computer crashes or the serial link is severed.
+
+---
+
+## External Watchdog
+
+An external TPS3813 hardware watchdog IC provides a last-resort reset if the ESP32 firmware hangs. The `external_wdt.c` module toggles GPIO 46 at 1 Hz (500ms period). If toggling stops, the TPS3813 triggers a hardware reset.
+
+---
+
+## Charging Contact Detection
+
+The `charging_detect.c` module monitors a pogo-pin voltage on ADC1_CH8 (GPIO 9). It uses the ESP32-S3 curve-fitting calibration scheme for accurate millivolt conversion.
+
+| Parameter | Value |
+|-----------|-------|
+| ADC channel | ADC1_CH8 (GPIO 9) |
+| Attenuation | 12 dB (0–3.3V range) |
+| Contact threshold | 2000 mV |
+| Calibration | Curve fitting (ESP32-S3) |
+
+`charging_detect_is_connected()` returns `true` when the voltage exceeds the threshold, indicating the robot is seated on a charging dock.
 
 ---
 

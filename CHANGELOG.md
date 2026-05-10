@@ -4,6 +4,39 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Firmware — OTA Pre-flight Checks**: Battery ≥50%, Wi-Fi RSSI ≥-70 dBm, motors idle, thermal OK, safety not triggered. 30-second validation window after boot; auto-rollback after 3 consecutive boot failures (`ota_preflight.c`)
+- **Firmware — OTA Compatibility Matrix**: Protocol version gate prevents incompatible firmware from being applied (`ota_compat.c`)
+- **Firmware — Heartbeat Monitor**: 5-second timeout on Raspberry Pi heartbeat. Triggers graceful motor shutdown and safety relay pulse after 3 consecutive resets within 30 minutes (`heartbeat_monitor.c`)
+- **Firmware — External Watchdog**: TPS3813 hardware watchdog feeder task (1 Hz square wave on GPIO 46). Stops toggling = hardware reset (`external_wdt.c`)
+- **Firmware — Charging Contact Detection**: ADC-based pogo pin voltage sense on ADC1_CH8. Uses curve-fitting calibration for ESP32-S3. Threshold 2.0V for contact detection (`charging_detect.c`)
+- **Firmware — Multi-pack Battery Support**: Extended battery module with configurable cell count (2S–6S) and per-cell threshold lookup
+- **ROS2 — `robot_docking` package**: Autonomous docking controller with visual servo (ArUco marker), contact verification via charging ADC, and staged state machine (IDLE → APPROACH → VISUAL_SERVO → CONTACT_VERIFY → DOCKED)
+- **ROS2 — Dock action** (`robot_interfaces/action/Dock`): Navigate to and dock at a named charging station with progress feedback
+- **ROS2 — DockingState message** (`robot_interfaces/msg/DockingState`): 8-stage docking state with distance estimate
+- **ROS2 — UndockRobot service** (`robot_interfaces/srv/UndockRobot`): Reverse out of dock with configurable distance
+- **ROS2 — Health Monitor Node** (`robot_diagnostics/health_monitor_node.py`): Aggregates battery, thermal, connectivity, and topic rate health with configurable thresholds
+- **Gazebo headless mode**: `headless:=true` launch argument runs simulation in server-only mode (`-s` flag), suppresses RViz2 in CI
+- **CI — Integration tests in simulation**: Diagnostics node tests (battery, safety/E-stop) run in Gazebo headless with `QT_QPA_PLATFORM=offscreen`
+
+### Changed
+
+- `pin_definitions.h`: `CHARGE_ADC_ATTEN` changed from deprecated `ADC_ATTEN_DB_11` to `ADC_ATTEN_DB_12`
+- `charging_detect.c`: Switched from `adc_cali_line_fitting` (ESP32 only) to `adc_cali_curve_fitting` (ESP32-S3 compatible)
+- `gazebo.launch.py`: Added `headless` launch argument; RViz2 auto-suppressed when headless
+- Integration test `test_diagnostics_reports_estop`: Publishes E-stop message multiple times with spin to prevent DDS discovery race
+
+### Fixed
+
+- Firmware build failure: ESP32-S3 does not support `adc_cali_line_fitting` scheme (only curve fitting)
+- ROS2 Build workflow: `hashFiles()` syntax error (comma-separated patterns in single string)
+- Integration tests: Gazebo and RViz2 crash on `xcb` display connection in headless CI
+- Integration tests: E-stop diagnostics test race condition (single-publish before DDS discovery)
+- Full Validation workflow: `dtls_authority.c` linker error (missing from CMakeLists.txt)
+
 ## [0.1.0] - 2025-05-09
 
 ### Added
