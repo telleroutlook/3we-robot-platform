@@ -47,6 +47,13 @@ int64_t esp_timer_get_time(void) { return mock_timer_value; }
 void mock_set_timer(int64_t value) { mock_timer_value = value; }
 
 // --- NVS mocks ---
+#define NVS_MOCK_MAX_U8_ENTRIES 8
+static struct { char key[32]; uint8_t value; bool set; } mock_nvs_u8[NVS_MOCK_MAX_U8_ENTRIES] = {0};
+
+void mock_nvs_reset(void) {
+    memset(mock_nvs_u8, 0, sizeof(mock_nvs_u8));
+}
+
 esp_err_t nvs_open(const char *ns, int mode, nvs_handle_t *handle) {
     (void)ns; (void)mode;
     *handle = 1;
@@ -63,12 +70,32 @@ esp_err_t nvs_set_u32(nvs_handle_t handle, const char *key, uint32_t value) {
 }
 esp_err_t nvs_commit(nvs_handle_t handle) { (void)handle; return ESP_OK; }
 esp_err_t nvs_get_u8(nvs_handle_t handle, const char *key, uint8_t *out) {
-    (void)handle; (void)key; (void)out;
+    (void)handle;
+    for (int i = 0; i < NVS_MOCK_MAX_U8_ENTRIES; i++) {
+        if (mock_nvs_u8[i].set && strcmp(mock_nvs_u8[i].key, key) == 0) {
+            *out = mock_nvs_u8[i].value;
+            return ESP_OK;
+        }
+    }
     return ESP_FAIL;
 }
 esp_err_t nvs_set_u8(nvs_handle_t handle, const char *key, uint8_t value) {
-    (void)handle; (void)key; (void)value;
-    return ESP_OK;
+    (void)handle;
+    for (int i = 0; i < NVS_MOCK_MAX_U8_ENTRIES; i++) {
+        if (mock_nvs_u8[i].set && strcmp(mock_nvs_u8[i].key, key) == 0) {
+            mock_nvs_u8[i].value = value;
+            return ESP_OK;
+        }
+    }
+    for (int i = 0; i < NVS_MOCK_MAX_U8_ENTRIES; i++) {
+        if (!mock_nvs_u8[i].set) {
+            strncpy(mock_nvs_u8[i].key, key, sizeof(mock_nvs_u8[i].key) - 1);
+            mock_nvs_u8[i].value = value;
+            mock_nvs_u8[i].set = true;
+            return ESP_OK;
+        }
+    }
+    return ESP_FAIL;
 }
 esp_err_t nvs_erase_key(nvs_handle_t handle, const char *key) {
     (void)handle; (void)key;
@@ -158,3 +185,16 @@ void mock_set_adc_voltage_mv(int mv) { mock_adc_mv = mv; }
 
 // --- FreeRTOS stubs ---
 void vTaskDelay(int ticks) { (void)ticks; }
+
+// --- WiFi mocks ---
+#include "esp_wifi.h"
+static int8_t mock_wifi_rssi_val = -50;
+static int mock_wifi_connected_val = 1;
+
+int esp_wifi_sta_get_ap_info(wifi_ap_record_t *ap_info) {
+    if (!mock_wifi_connected_val) return -1;
+    ap_info->rssi = mock_wifi_rssi_val;
+    return 0;
+}
+void mock_set_wifi_rssi(int8_t rssi) { mock_wifi_rssi_val = rssi; }
+void mock_set_wifi_connected(int connected) { mock_wifi_connected_val = connected; }

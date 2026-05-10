@@ -28,6 +28,8 @@ SRCS = test_runner.c \
        test_captive_portal.c \
        test_ota_update.c \
        test_ota_upload.c \
+       test_ota_preflight.c \
+       test_ota_compat.c \
        test_microros_messages.c \
        mocks/esp_stubs.c \
        mocks/i2c_stubs.c \
@@ -41,6 +43,8 @@ SRCS = test_runner.c \
        $(FIRMWARE_SRC)/encoder.c \
        $(FIRMWARE_SRC)/battery.c \
        $(FIRMWARE_SRC)/ota_signing.c \
+       $(FIRMWARE_SRC)/ota_preflight.c \
+       $(FIRMWARE_SRC)/ota_compat.c \
        $(FIRMWARE_SRC)/dtls_transport.c \
        $(FIRMWARE_SRC)/payload_hotplug.c \
        $(FIRMWARE_SRC)/canbus.c \

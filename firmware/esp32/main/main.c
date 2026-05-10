@@ -12,6 +12,7 @@
 #include "dtls_transport.h"
 #include "ota_signing.h"
 #include "ota_update.h"
+#include "ota_preflight.h"
 #include "payload_hotplug.h"
 #include "thermal_monitor.h"
 #include "udp_transport.h"
@@ -139,13 +140,22 @@ void app_main(void)
         while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
 
-    // OTA rollback confirmation: mark app valid only after safety passes
+    // OTA rollback: track pending verification state for delayed validation
     const esp_partition_t *running = esp_ota_get_running_partition();
     esp_ota_img_states_t ota_state;
+    bool ota_pending_verify = false;
     if (esp_ota_get_state_partition(running, &ota_state) == ESP_OK) {
         if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
-            ESP_LOGI(TAG, "OTA: safety passed, confirming new firmware");
-            esp_ota_mark_app_valid_cancel_rollback();
+            ota_pending_verify = true;
+            ota_preflight_increment_boot_fail();
+            uint8_t fails = ota_preflight_get_boot_fail_count();
+            if (fails >= OTA_PREFLIGHT_MAX_BOOT_FAILURES) {
+                ESP_LOGE(TAG, "OTA: %d consecutive boot failures - NOT confirming firmware", fails);
+                // Watchdog will reset and bootloader will revert to previous partition
+            } else {
+                ESP_LOGI(TAG, "OTA: pending verify (attempt %d/%d) - will confirm after 30s validation",
+                         fails, OTA_PREFLIGHT_MAX_BOOT_FAILURES);
+            }
         }
     }
 
@@ -326,8 +336,25 @@ void app_main(void)
 
     ESP_LOGI(TAG, "All systems initialized. Robot ready.");
 
-    // Main loop: status monitoring only (watchdog is fed from cmd_vel_callback)
+    // Main loop: OTA delayed validation + status monitoring
+    uint32_t uptime_ms = 0;
+    bool ota_confirmed = false;
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(100));
+        uptime_ms += 100;
+
+        // 30-second delayed OTA validation window
+        if (ota_pending_verify && !ota_confirmed &&
+            uptime_ms >= OTA_PREFLIGHT_VALIDATION_TIMEOUT_MS) {
+            uint8_t fails = ota_preflight_get_boot_fail_count();
+            if (fails < OTA_PREFLIGHT_MAX_BOOT_FAILURES &&
+                safety_get_state() == SAFETY_NORMAL &&
+                motor_is_stopped()) {
+                ESP_LOGI(TAG, "OTA: 30s validation passed - confirming new firmware");
+                esp_ota_mark_app_valid_cancel_rollback();
+                ota_preflight_clear_boot_fail();
+                ota_confirmed = true;
+            }
+        }
     }
 }

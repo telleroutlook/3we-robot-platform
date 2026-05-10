@@ -13,6 +13,8 @@ set(SRCS
     "dtls_authority.c"
     "ota_signing.c"
     "ota_update.c"
+    "ota_preflight.c"
+    "ota_compat.c"
     "payload_hotplug.c"
     "canbus.c"
     "thermal_monitor.c"

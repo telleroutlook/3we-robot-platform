@@ -28,6 +28,9 @@ static void safety_test_setUp(void)
     callback_invoked = 0;
     callback_last_state = SAFETY_NORMAL;
 
+    // Clear NVS mock state (prevents relay_fault key from leaking between tests)
+    mock_nvs_reset();
+
     // GPIO 41 released (high = not pressed), relay feedback high (healthy)
     mock_set_gpio_level(ESTOP_GPIO, 1);
     mock_set_gpio_level(SAFETY_RELAY_FB, 1);

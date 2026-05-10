@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "ota_update.h"
 #include "ota_signing.h"
+#include "ota_preflight.h"
+#include "ota_compat.h"
 
 #include "esp_log.h"
 #include "esp_ota_ops.h"
@@ -48,6 +50,13 @@ static void set_progress(ota_status_t status, uint8_t pct,
 
 static esp_err_t perform_ota_from_url(const char *url)
 {
+    // Pre-flight safety gate
+    ota_preflight_result_t preflight = ota_preflight_check();
+    if (!preflight.overall_pass) {
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, preflight.fail_reason);
+        return ESP_ERR_INVALID_STATE;
+    }
+
     set_progress(OTA_STATUS_DOWNLOADING, 0, 0, 0, NULL);
 
     esp_http_client_config_t http_cfg = {
@@ -108,6 +117,13 @@ static esp_err_t perform_ota_from_url(const char *url)
     uint32_t current = ota_get_current_version();
     if (current != UINT32_MAX && header->version <= current) {
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Version rollback rejected");
+        esp_http_client_cleanup(client);
+        return ESP_ERR_INVALID_VERSION;
+    }
+
+    // Check protocol compatibility
+    if (!ota_check_compatibility(header->version)) {
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Protocol version incompatible");
         esp_http_client_cleanup(client);
         return ESP_ERR_INVALID_VERSION;
     }
@@ -232,6 +248,14 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
         return ESP_FAIL;
     }
 
+    // Pre-flight safety gate
+    ota_preflight_result_t preflight = ota_preflight_check();
+    if (!preflight.overall_pass) {
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, preflight.fail_reason);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, preflight.fail_reason);
+        return ESP_FAIL;
+    }
+
     uint8_t *buf = malloc(OTA_BUF_SIZE);
     if (!buf) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Out of memory");
@@ -268,6 +292,14 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
         free(buf);
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Version rollback rejected");
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Version rollback rejected");
+        return ESP_FAIL;
+    }
+
+    // Check protocol compatibility
+    if (!ota_check_compatibility(header.version)) {
+        free(buf);
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Protocol version incompatible");
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Protocol version incompatible");
         return ESP_FAIL;
     }
 

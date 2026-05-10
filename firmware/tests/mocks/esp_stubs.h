@@ -175,4 +175,7 @@ typedef int portMUX_TYPE;
 // UART stub
 #define UART_NUM_1 1
 
+// NVS mock reset (clears all stored u8 values)
+void mock_nvs_reset(void);
+
 #endif // ESP_STUBS_H

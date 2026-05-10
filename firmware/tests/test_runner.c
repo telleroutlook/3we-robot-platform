@@ -189,6 +189,24 @@ extern void test_ota_update_progress_pct_complete(void);
 extern void test_ota_update_rejects_empty_url(void);
 extern void test_ota_update_url_max_length(void);
 
+// test_ota_preflight.c
+extern void test_preflight_result_struct_has_expected_fields(void);
+extern void test_preflight_thresholds_correct(void);
+extern void test_preflight_boot_fail_count_initial_zero(void);
+extern void test_preflight_boot_fail_increment(void);
+extern void test_preflight_boot_fail_clear(void);
+extern void test_preflight_boot_fail_reaches_max(void);
+extern void test_preflight_fail_reason_buffer_size(void);
+
+// test_ota_compat.c
+extern void test_compat_same_protocol_version_passes(void);
+extern void test_compat_v3_compatible_with_v2(void);
+extern void test_compat_v1_incompatible_with_v2(void);
+extern void test_compat_unknown_version_rejected(void);
+extern void test_compat_no_current_version_allows_any(void);
+extern void test_compat_v2_min_boundary(void);
+extern void test_compat_v2_max_boundary(void);
+
 // test_ota_upload.c
 extern void test_upload_rejects_zero_content_length(void);
 extern void test_upload_rejects_oversized_content(void);
@@ -445,6 +463,24 @@ int main(void)
     RUN_TEST(test_ota_update_progress_pct_complete);
     RUN_TEST(test_ota_update_rejects_empty_url);
     RUN_TEST(test_ota_update_url_max_length);
+
+    // OTA preflight
+    RUN_TEST(test_preflight_result_struct_has_expected_fields);
+    RUN_TEST(test_preflight_thresholds_correct);
+    RUN_TEST(test_preflight_boot_fail_count_initial_zero);
+    RUN_TEST(test_preflight_boot_fail_increment);
+    RUN_TEST(test_preflight_boot_fail_clear);
+    RUN_TEST(test_preflight_boot_fail_reaches_max);
+    RUN_TEST(test_preflight_fail_reason_buffer_size);
+
+    // OTA compatibility
+    RUN_TEST(test_compat_same_protocol_version_passes);
+    RUN_TEST(test_compat_v3_compatible_with_v2);
+    RUN_TEST(test_compat_v1_incompatible_with_v2);
+    RUN_TEST(test_compat_unknown_version_rejected);
+    RUN_TEST(test_compat_no_current_version_allows_any);
+    RUN_TEST(test_compat_v2_min_boundary);
+    RUN_TEST(test_compat_v2_max_boundary);
 
     // OTA upload handler
     RUN_TEST(test_upload_rejects_zero_content_length);
