@@ -34,7 +34,24 @@ jobs:
           rosdep update
           rosdep install --from-paths ros2_ws --ignore-src -y --skip-keys="micro_ros_agent"
 
+      - name: Download pre-built workspace
+        id: download-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ros2-build-workspace
+          path: ros2_ws
+        continue-on-error: true
+
+      - name: Cache colcon workspace
+        if: steps.download-artifact.outcome == 'failure'
+        uses: actions/cache@v4
+        with:
+          path: ros2_ws/build
+          key: colcon-${{ runner.os }}-${{ hashFiles('ros2_ws/**/CMakeLists.txt', 'ros2_ws/**/package.xml', 'ros2_ws/**/setup.py') }}
+          restore-keys: colcon-${{ runner.os }}-
+
       - name: Build workspace
+        if: steps.download-artifact.outcome == 'failure'
         shell: bash
         run: |
           source /opt/ros/humble/setup.bash

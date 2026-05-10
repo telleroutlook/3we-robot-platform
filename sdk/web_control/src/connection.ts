@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import type { z } from 'zod';
 import type {
   ConnectionState,
   ConnectionEvent,
@@ -142,6 +143,20 @@ export class RosbridgeConnection extends EventTarget {
         this.sendUnsubscribe(topic);
       }
     };
+  }
+
+  safeSubscribe<T>(
+    topic: string,
+    type: string,
+    schema: z.ZodType<T>,
+    callback: (msg: T) => void
+  ): () => void {
+    return this.subscribe<unknown>(topic, type, (raw) => {
+      const result = schema.safeParse(raw);
+      if (result.success) {
+        callback(result.data);
+      }
+    });
   }
 
   publish(topic: string, type: string, msg: unknown): void {

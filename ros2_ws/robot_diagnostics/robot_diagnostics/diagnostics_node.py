@@ -23,6 +23,8 @@ class DiagnosticsNode(Node):
 
         self.declare_parameter("publish_rate_hz", 1.0)
         self.declare_parameter("robot_id", "")
+        self.declare_parameter("battery_threshold_low", 20.0)
+        self.declare_parameter("battery_threshold_critical", 10.0)
 
         rate = self.get_parameter("publish_rate_hz").value
         if rate <= 0.0:
@@ -30,6 +32,10 @@ class DiagnosticsNode(Node):
         self._robot_id = (
             self.get_parameter("robot_id").value or self._get_default_robot_id()
         )
+        self._battery_low_pct: float = self.get_parameter("battery_threshold_low").value
+        self._battery_critical_pct: float = self.get_parameter(
+            "battery_threshold_critical"
+        ).value
 
         self._start_time = time.monotonic()
         self._battery_state: BatteryState | None = None
@@ -124,10 +130,10 @@ class DiagnosticsNode(Node):
         pct = raw_pct * 100.0 if raw_pct <= 1.0 else raw_pct
         voltage = self._battery_state.voltage
 
-        if pct < 10.0:
+        if pct < self._battery_critical_pct:
             status.level = DiagnosticStatus.ERROR
             status.message = f"Critical: {pct:.0f}%"
-        elif pct < 25.0:
+        elif pct < self._battery_low_pct:
             status.level = DiagnosticStatus.WARN
             status.message = f"Low: {pct:.0f}%"
         else:

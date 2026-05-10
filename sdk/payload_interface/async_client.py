@@ -9,6 +9,9 @@ import threading
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Optional
 
+from .constants import BATTERY_THRESHOLD_CRITICAL, BATTERY_THRESHOLD_LOW
+
+
 try:
     import rclpy
     from rclpy.executors import MultiThreadedExecutor
@@ -389,9 +392,9 @@ class AsyncPayloadClient:
         try:
             msg = await asyncio.wait_for(queue.get(), timeout=5.0)
             percentage = msg.percentage
-            if percentage > 0.2:
+            if percentage > BATTERY_THRESHOLD_LOW:
                 state = "ok"
-            elif percentage > 0.1:
+            elif percentage > BATTERY_THRESHOLD_CRITICAL:
                 state = "low"
             else:
                 state = "critical"

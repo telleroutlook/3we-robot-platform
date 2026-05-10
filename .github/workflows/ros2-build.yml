@@ -25,12 +25,28 @@ jobs:
           rosdep update
           rosdep install --from-paths ros2_ws --ignore-src -y --skip-keys="micro_ros_agent"
 
+      - name: Cache colcon workspace
+        uses: actions/cache@v4
+        with:
+          path: ros2_ws/build
+          key: colcon-${{ runner.os }}-${{ hashFiles('ros2_ws/**/CMakeLists.txt', 'ros2_ws/**/package.xml', 'ros2_ws/**/setup.py') }}
+          restore-keys: colcon-${{ runner.os }}-
+
       - name: Build
         working-directory: ros2_ws
         shell: bash
         run: |
           source /opt/ros/humble/setup.bash
           colcon build --symlink-install
+
+      - name: Upload build workspace
+        uses: actions/upload-artifact@v4
+        with:
+          name: ros2-build-workspace
+          path: |
+            ros2_ws/build
+            ros2_ws/install
+          retention-days: 1
 
       - name: Test
         working-directory: ros2_ws
