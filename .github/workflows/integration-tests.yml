@@ -47,7 +47,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ros2_ws/build
-          key: colcon-${{ runner.os }}-${{ hashFiles('ros2_ws/**/CMakeLists.txt', 'ros2_ws/**/package.xml', 'ros2_ws/**/setup.py') }}
+          key: colcon-${{ runner.os }}-${{ hashFiles('ros2_ws/*/CMakeLists.txt', 'ros2_ws/*/package.xml', 'ros2_ws/*/setup.py') }}
           restore-keys: colcon-${{ runner.os }}-
 
       - name: Build workspace

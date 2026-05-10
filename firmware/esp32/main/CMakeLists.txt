@@ -10,6 +10,7 @@ set(SRCS
     "battery.c"
     "safety.c"
     "dtls_transport.c"
+    "dtls_authority.c"
     "ota_signing.c"
     "ota_update.c"
     "payload_hotplug.c"
