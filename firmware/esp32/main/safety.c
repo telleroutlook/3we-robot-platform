@@ -31,9 +31,10 @@ static uint8_t relay_fault_count = 0;
 
 static void persist_relay_fault(void);
 
-static void notify_state_change(void)
+static void notify_state_change(safety_state_t snapshot)
 {
-    if (user_callback) user_callback(state);
+    safety_callback_t cb = user_callback;
+    if (cb) cb(snapshot);
 }
 
 static void IRAM_ATTR estop_isr(void *arg)
@@ -133,7 +134,7 @@ TESTABLE_WEAK void safety_trigger_estop(void)
         state = SAFETY_ESTOPPED;
         portEXIT_CRITICAL(&safety_spinlock);
         motor_stop_all();
-        notify_state_change();
+        notify_state_change(SAFETY_ESTOPPED);
         ESP_LOGW(TAG, "Software E-stop triggered");
     } else {
         portEXIT_CRITICAL(&safety_spinlock);
@@ -159,7 +160,7 @@ esp_err_t safety_reset(void)
     }
     state = SAFETY_RECOVERY_PENDING;
     portEXIT_CRITICAL(&safety_spinlock);
-    notify_state_change();
+    notify_state_change(SAFETY_RECOVERY_PENDING);
     ESP_LOGI(TAG, "Safety recovery pending - awaiting confirmation");
     return ESP_OK;
 }
@@ -170,7 +171,7 @@ esp_err_t safety_confirm_reset(void)
         portENTER_CRITICAL(&safety_spinlock);
         state = SAFETY_ESTOPPED;
         portEXIT_CRITICAL(&safety_spinlock);
-        notify_state_change();
+        notify_state_change(SAFETY_ESTOPPED);
         ESP_LOGW(TAG, "Confirm failed: E-stop pressed during recovery");
         return ESP_ERR_INVALID_STATE;
     }
@@ -184,14 +185,16 @@ esp_err_t safety_confirm_reset(void)
     state = SAFETY_NORMAL;
     last_watchdog_feed = now;
     portEXIT_CRITICAL(&safety_spinlock);
-    notify_state_change();
+    notify_state_change(SAFETY_NORMAL);
     ESP_LOGI(TAG, "Safety reset confirmed - returning to normal operation");
     return ESP_OK;
 }
 
 void safety_register_callback(safety_callback_t cb)
 {
+    portENTER_CRITICAL(&safety_spinlock);
     user_callback = cb;
+    portEXIT_CRITICAL(&safety_spinlock);
 }
 
 void safety_feed_watchdog(void)
@@ -203,7 +206,7 @@ void safety_feed_watchdog(void)
         state = SAFETY_ESTOPPED;
         portEXIT_CRITICAL(&safety_spinlock);
         motor_stop_all();
-        notify_state_change();
+        notify_state_change(SAFETY_ESTOPPED);
         ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
         return;
     }
@@ -226,7 +229,7 @@ void safety_task(void *params)
                 state = SAFETY_ESTOPPED;
                 portEXIT_CRITICAL(&safety_spinlock);
                 motor_stop_all();
-                notify_state_change();
+                notify_state_change(SAFETY_ESTOPPED);
                 ESP_LOGW(TAG, "Hardware E-stop detected");
             }
         }
@@ -243,13 +246,13 @@ void safety_task(void *params)
             state = SAFETY_ESTOPPED;
             portEXIT_CRITICAL(&safety_spinlock);
             motor_stop_all();
-            notify_state_change();
+            notify_state_change(SAFETY_ESTOPPED);
             ESP_LOGE(TAG, "RELAY FAULT: relay unexpectedly de-energized in NORMAL state");
             if (fault_count >= 3) {
                 portENTER_CRITICAL(&safety_spinlock);
                 state = SAFETY_RELAY_FAULT;
                 portEXIT_CRITICAL(&safety_spinlock);
-                notify_state_change();
+                notify_state_change(SAFETY_RELAY_FAULT);
                 persist_relay_fault();
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: hardware damage suspected - service required");
             }
@@ -263,7 +266,7 @@ void safety_task(void *params)
                 portENTER_CRITICAL(&safety_spinlock);
                 state = SAFETY_RELAY_FAULT;
                 portEXIT_CRITICAL(&safety_spinlock);
-                notify_state_change();
+                notify_state_change(SAFETY_RELAY_FAULT);
                 persist_relay_fault();
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: welded contact confirmed - service required");
             }
@@ -286,7 +289,7 @@ void safety_task(void *params)
                 state = SAFETY_ESTOPPED;
                 portEXIT_CRITICAL(&safety_spinlock);
                 motor_stop_all();
-                notify_state_change();
+                notify_state_change(SAFETY_ESTOPPED);
                 ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
             }
         }
@@ -380,7 +383,7 @@ esp_err_t safety_clear_relay_fault(void)
         nvs_close(nvs);
     }
 
-    notify_state_change();
+    notify_state_change(SAFETY_ESTOPPED);
     ESP_LOGI(TAG, "Relay fault cleared - moved to ESTOPPED (manual reset still required)");
     return ESP_OK;
 }

@@ -197,8 +197,8 @@ class MqttBridgeNode(Node):
 
     def destroy_node(self) -> None:
         if self._mqtt_client is not None:
-            self._mqtt_client.loop_stop()
             self._mqtt_client.disconnect()
+            self._mqtt_client.loop_stop()
         super().destroy_node()
 
 

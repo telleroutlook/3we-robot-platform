@@ -107,7 +107,7 @@ jobs:
         run: |
           make clean
           make test
-          ./test_runner | tee test-output.txt
+          ./build/test_runner | tee test-output.txt
 
       - name: Upload test results
         uses: actions/upload-artifact@v4

@@ -6,11 +6,14 @@
 
 #include "driver/ledc.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 
 #include <math.h>
 #include <string.h>
 
 static const char *TAG = "motor";
+
+static portMUX_TYPE motor_spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 typedef struct {
     uint8_t in1_gpio;
@@ -74,6 +77,13 @@ void motor_set_speed(motor_id_t id, float speed_pct)
     float clamped = fmaxf(-1.0f, fminf(1.0f, speed_pct));
     uint32_t duty = (uint32_t)(fabsf(clamped) * PWM_MAX_DUTY);
 
+    portENTER_CRITICAL(&motor_spinlock);
+
+    if (safety_is_estopped()) {
+        portEXIT_CRITICAL(&motor_spinlock);
+        return;
+    }
+
     if (clamped >= 0.0f) {
         ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch, duty);
         ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch, 0);
@@ -82,17 +92,10 @@ void motor_set_speed(motor_id_t id, float speed_pct)
         ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch, duty);
     }
 
-    // Re-check E-stop before committing PWM to prevent race with motor_stop_all()
-    if (safety_is_estopped()) {
-        ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch, 0);
-        ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch, 0);
-        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch);
-        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch);
-        return;
-    }
-
     ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch);
+
+    portEXIT_CRITICAL(&motor_spinlock);
 
     stopped = false;
 }

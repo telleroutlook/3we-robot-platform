@@ -83,6 +83,7 @@ export class RobotJoystick extends HTMLElement {
 
   private knobX = 0;
   private knobY = 0;
+  private alive = false;
   private active = false;
   private publishTimer: ReturnType<typeof setInterval> | null = null;
   private animFrame: number | null = null;
@@ -100,6 +101,7 @@ export class RobotJoystick extends HTMLElement {
   }
 
   connectedCallback(): void {
+    this.alive = true;
     const shadow = this.shadowRoot;
     if (!shadow) return;
     this.canvas = shadow.getElementById('canvas') as HTMLCanvasElement;
@@ -139,6 +141,7 @@ export class RobotJoystick extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    this.alive = false;
     this.stopPublishing();
     if (this.animFrame !== null) {
       cancelAnimationFrame(this.animFrame);
@@ -212,6 +215,7 @@ export class RobotJoystick extends HTMLElement {
   }
 
   private draw = (): void => {
+    if (!this.alive) return;
     this.animFrame = requestAnimationFrame(this.draw);
     const ctx = this.ctx;
     const w = this.canvas.width;

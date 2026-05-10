@@ -66,6 +66,7 @@ export class RobotSystemStatus extends HTMLElement {
       '/diagnostics',
       'diagnostic_msgs/msg/DiagnosticArray',
       (msg) => {
+        if (msg === null || typeof msg !== 'object') return;
         if (!Array.isArray(msg.status)) return;
         this.statuses = msg.status;
         this.lastUpdate = Date.now();

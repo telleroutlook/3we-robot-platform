@@ -114,8 +114,12 @@ def cmd_flash(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     manifest = json.loads(manifest_path.read_text())
-    psk = bytes.fromhex(manifest["psk_hex"])
-    ota_pubkey = bytes.fromhex(manifest["ota_public_key_der_hex"])
+    try:
+        psk = bytes.fromhex(manifest["psk_hex"])
+        ota_pubkey = bytes.fromhex(manifest["ota_public_key_der_hex"])
+    except (KeyError, ValueError) as exc:
+        print(f"Error: Manifest is malformed or missing keys: {exc}")
+        sys.exit(1)
 
     if len(psk) < PSK_MIN_LENGTH:
         print(f"Error: PSK too short ({len(psk)} bytes, minimum {PSK_MIN_LENGTH})")

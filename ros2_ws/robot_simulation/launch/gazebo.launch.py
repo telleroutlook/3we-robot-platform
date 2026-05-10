@@ -32,13 +32,11 @@ def _launch_setup(context: LaunchContext):
     ).strip()
     xacro_path = f"{sim_pkg_path}/share/robot_simulation/urdf/robot_gazebo.urdf.xacro"
 
-    xacro_cmd = f"xacro {xacro_path}"
+    xacro_args = ["xacro", xacro_path]
     if sku == "industrial":
-        xacro_cmd += INDUSTRIAL_XACRO_ARGS
+        xacro_args += INDUSTRIAL_XACRO_ARGS.split()
 
-    robot_description_content = subprocess.check_output(
-        xacro_cmd, shell=True, text=True
-    )
+    robot_description_content = subprocess.check_output(xacro_args, text=True)
 
     robot_state_publisher_node = Node(
         package="robot_state_publisher",

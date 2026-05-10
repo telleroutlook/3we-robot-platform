@@ -38,13 +38,11 @@ def _launch_setup(context: LaunchContext):
         + "/share/robot_description/urdf/robot.urdf.xacro"
     )
 
-    xacro_cmd = f"xacro {xacro_path_str}"
+    xacro_args = ["xacro", xacro_path_str]
     if sku == "industrial":
-        xacro_cmd += INDUSTRIAL_XACRO_ARGS
+        xacro_args += INDUSTRIAL_XACRO_ARGS.split()
 
-    robot_description_content = subprocess.check_output(
-        xacro_cmd, shell=True, text=True
-    )
+    robot_description_content = subprocess.check_output(xacro_args, text=True)
 
     robot_state_publisher = Node(
         package="robot_state_publisher",

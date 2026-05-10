@@ -262,6 +262,15 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
         return ESP_FAIL;
     }
 
+    // Reject version rollback (consistent with perform_ota_from_url)
+    uint32_t current = ota_get_current_version();
+    if (current != UINT32_MAX && header.version <= current) {
+        free(buf);
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Version rollback rejected");
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Version rollback rejected");
+        return ESP_FAIL;
+    }
+
     const esp_partition_t *update_part = esp_ota_get_next_update_partition(NULL);
     if (!update_part) {
         free(buf);
@@ -399,12 +408,13 @@ esp_err_t ota_update_init(httpd_handle_t httpd)
 esp_err_t ota_update_start_from_url(const char *url)
 {
     if (!url || strlen(url) == 0) return ESP_ERR_INVALID_ARG;
-    if (s_progress.status == OTA_STATUS_DOWNLOADING ||
-        s_progress.status == OTA_STATUS_APPLYING) {
-        return ESP_ERR_INVALID_STATE;
-    }
 
     if (s_mutex) xSemaphoreTake(s_mutex, portMAX_DELAY);
+    if (s_progress.status == OTA_STATUS_DOWNLOADING ||
+        s_progress.status == OTA_STATUS_APPLYING) {
+        if (s_mutex) xSemaphoreGive(s_mutex);
+        return ESP_ERR_INVALID_STATE;
+    }
     strncpy(s_pending_url, url, OTA_MAX_URL_LEN - 1);
     s_pending_url[OTA_MAX_URL_LEN - 1] = '\0';
     s_update_requested = true;

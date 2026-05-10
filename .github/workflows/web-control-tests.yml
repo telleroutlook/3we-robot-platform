@@ -30,6 +30,10 @@ jobs:
         working-directory: sdk/web_control
         run: npx tsc --noEmit
 
+      - name: Run unit tests
+        working-directory: sdk/web_control
+        run: npx vitest run
+
       - name: Install Playwright browsers
         working-directory: sdk/web_control
         run: npx playwright install --with-deps chromium

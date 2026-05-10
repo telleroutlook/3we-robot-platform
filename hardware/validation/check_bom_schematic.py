@@ -69,7 +69,7 @@ def parse_bom(filepath: Path) -> dict[str, set[str]]:
     """
     row_refs: dict[str, set[str]] = {}
 
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         if "Reference" not in (reader.fieldnames or []):
             print("ERROR: 'Reference' column not found in BOM header")
@@ -90,7 +90,7 @@ def parse_schematic_references(filepath: Path) -> set[str]:
     prop_pattern = re.compile(r'\(property\s+"Reference"\s+"([^"#]+)"')
     inst_pattern = re.compile(r'\(reference\s+"([^"#]+)"')
 
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         for line in f:
             for match in prop_pattern.finditer(line):
                 ref = match.group(1)
@@ -170,7 +170,9 @@ def main() -> int:
         print()
     else:
         skipped = sorted((MECHANICAL_REFS | IMPLICIT_REFS) & all_bom_refs)
-        print(f"PASS: All {len(expanded_pcb_refs)} PCB BOM references found in schematic.")
+        print(
+            f"PASS: All {len(expanded_pcb_refs)} PCB BOM references found in schematic."
+        )
         if skipped:
             print(f"  (Excluded mechanical/implicit refs: {skipped})")
         print()

@@ -96,6 +96,7 @@ jobs:
           fi
           idf.py -DSDKCONFIG_DEFAULTS="$CONFIGS" set-target esp32s3
           idf.py build
+          rm -f secure_boot_signing_key.pem
 
       - name: Upload firmware binary
         uses: actions/upload-artifact@v4

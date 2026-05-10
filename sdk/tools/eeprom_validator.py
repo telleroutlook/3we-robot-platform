@@ -312,8 +312,12 @@ def cmd_program(args):
         result.print_report()
         return 1
 
-    bus_num = int(args.bus)
-    eeprom_addr = int(args.address, 0)
+    try:
+        bus_num = int(args.bus)
+        eeprom_addr = int(args.address, 0)
+    except ValueError as exc:
+        print(f"Error: Invalid bus or address: {exc}")
+        return 1
 
     print(f"Programming EEPROM at I2C bus {bus_num}, address 0x{eeprom_addr:02X}")
     print_descriptor(desc)

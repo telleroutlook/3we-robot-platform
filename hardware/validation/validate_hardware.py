@@ -13,7 +13,6 @@ Exit code: 0 = all checks pass, 1 = one or more failures.
 """
 
 import csv
-import os
 import re
 import sys
 from pathlib import Path
@@ -69,20 +68,27 @@ I2C_ADDRESSES = ["0x28", "0x40", "0x20"]
 
 # BOM references that are mechanical/off-board (not in PCB schematic)
 BOM_MECHANICAL_REFS = {
-    "M1", "M2", "M3", "M4",      # N20 gear motors (through-hole connectors instead)
-    "W1", "W2", "W3", "W4",      # Mecanum wheels (mechanical)
-    "BAT1",                        # Battery holder (off-board)
+    "M1",
+    "M2",
+    "M3",
+    "M4",  # N20 gear motors (through-hole connectors instead)
+    "W1",
+    "W2",
+    "W3",
+    "W4",  # Mecanum wheels (mechanical)
+    "BAT1",  # Battery holder (off-board)
 }
 
 # BOM reference mapping (BOM name -> schematic name(s))
 BOM_REF_ALIASES = {
-    "U2": {"U2a", "U2b"},          # BOM lists qty 2, schematic uses U2a/U2b
+    "U2": {"U2a", "U2b"},  # BOM lists qty 2, schematic uses U2a/U2b
 }
 
 # BOM references for passive components absorbed into IC symbols or not
 # separately instantiated on the schematic (inductors inside converter modules)
 BOM_IMPLICIT_REFS = {
-    "L1", "L2",                     # Inductors for MT3608/MP1584EN (inside converter footprints)
+    "L1",
+    "L2",  # Inductors for MT3608/MP1584EN (inside converter footprints)
 }
 
 
@@ -90,7 +96,7 @@ def parse_pin_definitions(filepath: Path) -> dict[str, int]:
     """Parse #define GPIO_NAME NUMBER patterns from pin_definitions.h."""
     pins = {}
     pattern = re.compile(r"^\s*#define\s+(\w+)\s+(\d+)\s*(?://.*)?$")
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         for line in f:
             match = pattern.match(line)
             if match:
@@ -107,7 +113,7 @@ def parse_schematic_net_labels(filepath: Path) -> set[str]:
     labels = set()
     # Match (label "NAME" ...) patterns in KiCad schematic format
     pattern = re.compile(r'\(label\s+"([^"]+)"')
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         for line in f:
             for match in pattern.finditer(line):
                 labels.add(match.group(1))
@@ -119,7 +125,7 @@ def parse_schematic_references(filepath: Path) -> set[str]:
     refs = set()
     # Match (property "Reference" "Uxx" ...) patterns
     pattern = re.compile(r'\(property\s+"Reference"\s+"([^"#]+)"')
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         for line in f:
             for match in pattern.finditer(line):
                 ref = match.group(1)
@@ -132,7 +138,7 @@ def parse_schematic_references(filepath: Path) -> set[str]:
 def parse_bom_references(filepath: Path) -> set[str]:
     """Parse Reference column from BOM CSV, expanding ranges."""
     refs = set()
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         if "Reference" not in (reader.fieldnames or []):
             print("  ERROR: 'Reference' column not found in BOM header")
@@ -176,9 +182,7 @@ def check_pin_to_net_mapping(
             continue
         gpio_num = pin_defines[fw_name]
         if expected_net in net_labels:
-            details.append(
-                f"  OK: {fw_name} (GPIO {gpio_num}) -> net '{expected_net}'"
-            )
+            details.append(f"  OK: {fw_name} (GPIO {gpio_num}) -> net '{expected_net}'")
         else:
             details.append(
                 f"  FAIL: {fw_name} (GPIO {gpio_num}) -> "
@@ -236,7 +240,7 @@ def check_i2c_addresses(filepath: Path) -> tuple[bool, list[str]]:
     passed = True
     details = []
 
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
 
     for addr in I2C_ADDRESSES:
@@ -251,9 +255,7 @@ def check_i2c_addresses(filepath: Path) -> tuple[bool, list[str]]:
                     f"  OK: I2C address {addr} found in schematic (bare form)"
                 )
             else:
-                details.append(
-                    f"  FAIL: I2C address {addr} NOT found in schematic"
-                )
+                details.append(f"  FAIL: I2C address {addr} NOT found in schematic")
                 passed = False
 
     return passed, details

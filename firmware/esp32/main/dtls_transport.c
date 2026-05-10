@@ -18,10 +18,13 @@
 #include "mbedtls/ssl_cache.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 
 #include <string.h>
 
 static const char *TAG = "dtls";
+
+static SemaphoreHandle_t ssl_mutex = NULL;
 
 static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
@@ -68,6 +71,11 @@ esp_err_t dtls_init(const dtls_config_t *config)
         return ESP_ERR_INVALID_ARG;
     }
     memcpy(&current_config, config, sizeof(dtls_config_t));
+
+    if (!ssl_mutex) {
+        ssl_mutex = xSemaphoreCreateMutex();
+        if (!ssl_mutex) return ESP_ERR_NO_MEM;
+    }
 
     mbedtls_ssl_init(&ssl);
     mbedtls_ssl_config_init(&conf);
@@ -183,7 +191,10 @@ esp_err_t dtls_send(const uint8_t *data, size_t len)
 {
     if (!connected) return ESP_ERR_INVALID_STATE;
 
+    xSemaphoreTake(ssl_mutex, portMAX_DELAY);
     int ret = mbedtls_ssl_write(&ssl, data, len);
+    xSemaphoreGive(ssl_mutex);
+
     if (ret < 0) {
         ESP_LOGW(TAG, "Send failed: -0x%04x", -ret);
         return ESP_FAIL;
@@ -252,7 +263,9 @@ void dtls_task(void *params)
 
         // Read loop
         while (connected && running) {
+            xSemaphoreTake(ssl_mutex, portMAX_DELAY);
             ret = mbedtls_ssl_read(&ssl, buf, sizeof(buf));
+            xSemaphoreGive(ssl_mutex);
 
             if (ret == MBEDTLS_ERR_SSL_WANT_READ) {
                 vTaskDelay(pdMS_TO_TICKS(1));

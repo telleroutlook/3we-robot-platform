@@ -197,7 +197,7 @@ class TestDTLSChannel:
             sock.close()
 
         # Verify no cmd_vel command was produced from the garbage packet
-        messages = topic_collector(test_node, "/cmd_vel", timeout=3.0, count=1)
+        messages = topic_collector(test_node, "/cmd_vel", Twist, timeout=3.0, count=1)
         assert len(messages) == 0, (
             "Unauthenticated garbage produced a /cmd_vel message — "
             "DTLS endpoint is not filtering malformed frames"

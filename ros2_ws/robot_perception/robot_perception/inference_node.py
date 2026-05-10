@@ -43,7 +43,7 @@ class HailoInferenceNode(Node):
 
         self._bridge = CvBridge()
         self._latest_frame: np.ndarray | None = None
-        self._frame_lock = __import__("threading").Lock()
+        self._frame_lock = threading.Lock()
         self._hailo_available = False
         self._hef_model = None
         self._vdevice = None
