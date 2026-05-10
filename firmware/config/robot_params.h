@@ -10,7 +10,7 @@
 #define WHEEL_SEPARATION_MM     ((float)CONFIG_CHASSIS_TRACK_WIDTH_MM)
 #define WHEELBASE_MM            ((float)CONFIG_CHASSIS_WHEELBASE_MM)
 #else
-// Host-side test defaults (Basic/Standard/Pro: 300x250mm chassis + 48mm wheels)
+// Host-side test defaults (Basic SKU: 300x250mm chassis + 48mm wheels)
 #define WHEEL_RADIUS_MM         24.0f
 #define WHEEL_SEPARATION_MM    200.0f   // Track width (left-right center distance)
 #define WHEELBASE_MM           180.0f   // Front-rear axle distance
@@ -30,7 +30,7 @@
 #define MAX_MOTOR_RPM           CONFIG_MOTOR_MAX_RPM
 #define PWM_FREQUENCY_HZ        CONFIG_MOTOR_PWM_FREQ_HZ
 #else
-// Host-side test defaults (N20 motor, Basic/Standard/Pro SKU)
+// Host-side test defaults (N20 motor, Basic SKU)
 #define GEAR_RATIO              90
 #define ENCODER_CPR             1440
 #define MAX_MOTOR_RPM           150

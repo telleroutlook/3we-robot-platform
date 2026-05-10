@@ -148,7 +148,7 @@ class TestValidateDescriptor:
 
     def test_high_5v_power_warning(self):
         desc = self._make_valid()
-        desc.power_5v_ma = 3500
+        desc.power_5v_ma = 2500  # >60% of 3000mA limit, triggers warning
         result = validate_descriptor(desc)
         assert result.passed is True
         assert any("high" in w.lower() for w in result.warnings)

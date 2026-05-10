@@ -20,7 +20,7 @@
 | Width | 320 mm |
 | Height (base only) | 80 mm |
 | Height (with payload) | 200 mm max |
-| Ground clearance | 32.5 mm |
+| Ground clearance | 35 mm |
 | Weight (no battery) | 1.8 kg |
 | Weight (fully loaded) | 6.5 kg max |
 | Track width | 260 mm |
@@ -34,7 +34,7 @@
 | Width | 400 mm |
 | Height (base only) | 100 mm |
 | Height (with payload) | 200 mm max |
-| Ground clearance | 48.5 mm |
+| Ground clearance | 52 mm |
 | Weight (no battery) | 3.5 kg |
 | Weight (fully loaded) | 18.5 kg max |
 | Track width | 320 mm |

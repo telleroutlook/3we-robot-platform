@@ -33,8 +33,8 @@ DESCRIPTOR_SIZE = 64
 MAX_PAYLOAD_ID_LEN = 16
 MAX_NAME_LEN = 32
 
-# Power limits per rail
-MAX_5V_MA = 5000
+# Power limits per rail (must match actual hardware supply capability)
+MAX_5V_MA = 3000  # TPS5430DDAR rated at 3A continuous
 MAX_12V_MA = 3000
 
 
@@ -180,7 +180,7 @@ def validate_descriptor(desc: EepromDescriptor) -> ValidationResult:
         result.add_error(
             f"5V power exceeds limit: {desc.power_5v_ma}mA > {MAX_5V_MA}mA"
         )
-    elif desc.power_5v_ma > 3000:
+    elif desc.power_5v_ma > int(MAX_5V_MA * 0.6):
         result.add_warning(
             f"5V power is high: {desc.power_5v_ma}mA (>60% of {MAX_5V_MA}mA budget)"
         )

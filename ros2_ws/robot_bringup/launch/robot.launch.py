@@ -19,6 +19,18 @@ INDUSTRIAL_XACRO_ARGS = (
     " wheel_mass:=0.35 wheelbase:=0.300 track_width:=0.320"
 )
 
+STANDARD_XACRO_ARGS = (
+    " chassis_length:=0.400 chassis_width:=0.320 chassis_height:=0.080"
+    " chassis_mass:=1.8 wheel_radius:=0.0325 wheel_width:=0.045"
+    " wheel_mass:=0.15 wheelbase:=0.240 track_width:=0.260"
+)
+
+BASIC_XACRO_ARGS = (
+    " chassis_length:=0.300 chassis_width:=0.250 chassis_height:=0.080"
+    " chassis_mass:=1.2 wheel_radius:=0.024 wheel_width:=0.035"
+    " wheel_mass:=0.08 wheelbase:=0.180 track_width:=0.200"
+)
+
 
 def _launch_setup(context: LaunchContext):
     import subprocess
@@ -37,8 +49,14 @@ def _launch_setup(context: LaunchContext):
     )
 
     xacro_args = ["xacro", xacro_path_str]
-    if sku == "industrial":
-        xacro_args += INDUSTRIAL_XACRO_ARGS.split()
+    sku_xacro_map = {
+        "basic": BASIC_XACRO_ARGS,
+        "standard": STANDARD_XACRO_ARGS,
+        "pro": STANDARD_XACRO_ARGS,
+        "industrial": INDUSTRIAL_XACRO_ARGS,
+    }
+    if sku in sku_xacro_map:
+        xacro_args += sku_xacro_map[sku].split()
 
     robot_description_content = subprocess.check_output(xacro_args, text=True)
 

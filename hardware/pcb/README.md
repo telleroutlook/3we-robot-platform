@@ -50,7 +50,7 @@ Battery Pack(s) ─── XT30 ──→ P-MOS OR ──→ VBAT Bus (7.4V)
 
 | Pin | Function | Rating | Notes |
 |-----|----------|--------|-------|
-| 1-2 | +5V Power | 5A max | MOSFET soft-start |
+| 1-2 | +5V Power | 3A max | MOSFET soft-start, TPS5430 supply |
 | 3-4 | +12V Power | 3A max | MOSFET soft-start |
 | 5-6 | GND (Power) | — | Wide traces (1mm) |
 | 7 | I2C SDA | 3.3V | Via PCA9546 mux |
