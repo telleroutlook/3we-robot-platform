@@ -42,6 +42,7 @@ class DockingController(Node):
         self._retries = 0
         self._contact_start_time: Optional[float] = None
         self._charging_voltage = 0.0
+        self._stage_start_time: Optional[float] = None
 
         cmd_vel_topic = (
             self.get_parameter("cmd_vel_topic").get_parameter_value().string_value
@@ -109,6 +110,7 @@ class DockingController(Node):
         self.get_logger().info("Executing dock action")
         self._goal_handle = goal_handle
         self._stage = DockingStage.APPROACH
+        self._stage_start_time = self.get_clock().now().nanoseconds / 1e9
         self._retries = 0
 
         start_time = self.get_clock().now().nanoseconds / 1e9
@@ -175,6 +177,36 @@ class DockingController(Node):
     def _control_loop(self) -> None:
         if self._stage == DockingStage.IDLE or self._stage == DockingStage.DOCKED:
             return
+
+        if self._stage == DockingStage.FAILED:
+            return
+
+        now = self.get_clock().now().nanoseconds / 1e9
+
+        if self._stage == DockingStage.APPROACH:
+            timeout = (
+                self.get_parameter("approach_timeout_s")
+                .get_parameter_value()
+                .double_value
+            )
+            if self._stage_start_time and now - self._stage_start_time > timeout:
+                self.get_logger().error("Approach timed out")
+                self._stop_robot()
+                self._stage = DockingStage.FAILED
+                return
+
+        if self._stage in (
+            DockingStage.VISUAL_SERVO_COARSE,
+            DockingStage.VISUAL_SERVO_FINE,
+        ):
+            timeout = (
+                self.get_parameter("servo_timeout_s").get_parameter_value().double_value
+            )
+            if self._stage_start_time and now - self._stage_start_time > timeout:
+                self.get_logger().error("Visual servo timed out")
+                self._stop_robot()
+                self._stage = DockingStage.FAILED
+                return
 
         if self._stage == DockingStage.CONTACT_VERIFY:
             threshold = (

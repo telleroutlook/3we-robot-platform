@@ -69,17 +69,20 @@ static void power_cycle_pi5(void)
     gpio_set_level(PI5_RELAY_GPIO, 1); // Relay ON
 
     int64_t now = esp_timer_get_time();
+
+    // Check window expiry BEFORE incrementing to avoid off-by-one on boundary
+    if (s_reset_count > 0) {
+        int64_t elapsed_us = now - s_first_reset_us;
+        if (elapsed_us > (int64_t)HEARTBEAT_RESET_WINDOW_MS * 1000) {
+            s_reset_count = 0;
+            s_first_reset_us = now;
+        }
+    }
+
     if (s_reset_count == 0) {
         s_first_reset_us = now;
     }
     s_reset_count++;
-
-    // Check if window expired → reset counter
-    int64_t elapsed_us = now - s_first_reset_us;
-    if (elapsed_us > (int64_t)HEARTBEAT_RESET_WINDOW_MS * 1000) {
-        s_reset_count = 1;
-        s_first_reset_us = now;
-    }
 
     if (s_reset_count >= HEARTBEAT_MAX_RESETS) {
         ESP_LOGE(TAG, "Max resets reached (%d in %ld min) - entering safe mode",

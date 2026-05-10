@@ -95,9 +95,6 @@ void motor_set_speed(motor_id_t id, float speed_pct)
     ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[id].in2_ch);
 
-    portEXIT_CRITICAL(&motor_spinlock);
-
-    portENTER_CRITICAL(&motor_spinlock);
     stopped = false;
     portEXIT_CRITICAL(&motor_spinlock);
 }

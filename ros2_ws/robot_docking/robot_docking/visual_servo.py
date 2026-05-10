@@ -50,6 +50,7 @@ class VisualServoNode(Node):
         self._target_distance = self.get_parameter("target_distance_m").value
         self._enabled = False
         self._latest_pose: Optional[PoseStamped] = None
+        self._last_pose_time = self.get_clock().now()
 
         cmd_vel_topic = (
             self.get_parameter("cmd_vel_topic").get_parameter_value().string_value
@@ -75,6 +76,7 @@ class VisualServoNode(Node):
 
     def _on_tag_pose(self, msg: PoseStamped) -> None:
         self._latest_pose = msg
+        self._last_pose_time = self.get_clock().now()
 
     def _on_enable(self, msg: Bool) -> None:
         self._enabled = msg.data
@@ -83,6 +85,11 @@ class VisualServoNode(Node):
 
     def _servo_loop(self) -> None:
         if not self._enabled or self._latest_pose is None:
+            return
+
+        age = (self.get_clock().now() - self._last_pose_time).nanoseconds / 1e9
+        if age > 0.5:
+            self._cmd_pub.publish(Twist())
             return
 
         pose = self._latest_pose

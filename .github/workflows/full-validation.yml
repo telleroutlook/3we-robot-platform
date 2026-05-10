@@ -153,7 +153,7 @@ jobs:
           pytest tests/integration/ -m "simulation and not hardware and not fullstack" --timeout=120 -v --tb=short
 
   production-build:
-    needs: [firmware-tests, python-sdk, web-control, cross-layer]
+    needs: [firmware-tests, python-sdk, web-control, cross-layer, ros2-build]
     runs-on: ubuntu-latest
     container: espressif/idf:v5.2
     steps:

@@ -64,7 +64,7 @@ export const batteryStateSchema = z.object({
   charge: z.number(),
   capacity: z.number(),
   design_capacity: z.number(),
-  percentage: z.number(),
+  percentage: z.number().min(0).max(1),
   power_supply_status: z.number(),
   power_supply_health: z.number(),
   power_supply_technology: z.number(),

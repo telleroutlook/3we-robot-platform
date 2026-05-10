@@ -172,21 +172,26 @@ class NotificationDispatcher(Node):
             ).hexdigest()
             headers["X-Signature-256"] = f"sha256={signature}"
 
-        try:
-            req = Request(url, data=data, headers=headers, method="POST")
-            with urlopen(req, timeout=10) as resp:
-                if resp.status < 300:
-                    self.get_logger().debug(
-                        f"Sent to {channel_name}: {payload['title']}"
-                    )
-                else:
-                    self.get_logger().warn(
-                        f"Webhook {channel_name} returned {resp.status}"
-                    )
-        except URLError as e:
-            self.get_logger().error(f"Webhook {channel_name} failed: {e}")
-        except Exception as e:
-            self.get_logger().error(f"Webhook {channel_name} unexpected error: {e}")
+        def _do_send() -> None:
+            try:
+                req = Request(url, data=data, headers=headers, method="POST")
+                with urlopen(req, timeout=10) as resp:
+                    if resp.status < 300:
+                        self.get_logger().debug(
+                            f"Sent to {channel_name}: {payload['title']}"
+                        )
+                    else:
+                        self.get_logger().warn(
+                            f"Webhook {channel_name} returned {resp.status}"
+                        )
+            except URLError as e:
+                self.get_logger().error(f"Webhook {channel_name} failed: {e}")
+            except Exception as e:
+                self.get_logger().error(f"Webhook {channel_name} unexpected error: {e}")
+
+        import threading
+
+        threading.Thread(target=_do_send, daemon=True).start()
 
 
 def main(args=None) -> None:

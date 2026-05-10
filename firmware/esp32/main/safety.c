@@ -27,7 +27,7 @@ static volatile safety_state_t state = SAFETY_NORMAL;
 static volatile int64_t last_watchdog_feed = 0;
 static safety_callback_t user_callback = NULL;
 static float speed_limit_mps = DEFAULT_SPEED_LIMIT;
-static uint8_t relay_fault_count = 0;
+static volatile uint8_t relay_fault_count = 0;
 
 static void persist_relay_fault(void);
 
@@ -239,12 +239,10 @@ void safety_task(void *params)
         }
 
         // Continuous relay feedback monitoring
+        int relay_fb = gpio_get_level(SAFETY_RELAY_FB);
         portENTER_CRITICAL(&safety_spinlock);
         current_state = state;
-        portEXIT_CRITICAL(&safety_spinlock);
-        int relay_fb = gpio_get_level(SAFETY_RELAY_FB);
         if (current_state == SAFETY_NORMAL && relay_fb == 0) {
-            portENTER_CRITICAL(&safety_spinlock);
             relay_fault_count++;
             uint8_t fault_count = relay_fault_count;
             state = SAFETY_ESTOPPED;
@@ -261,7 +259,6 @@ void safety_task(void *params)
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: hardware damage suspected - service required");
             }
         } else if (current_state == SAFETY_ESTOPPED && relay_fb != 0) {
-            portENTER_CRITICAL(&safety_spinlock);
             relay_fault_count++;
             uint8_t fault_count = relay_fault_count;
             portEXIT_CRITICAL(&safety_spinlock);
@@ -275,9 +272,9 @@ void safety_task(void *params)
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: welded contact confirmed - service required");
             }
         } else if (current_state == SAFETY_RELAY_FAULT) {
+            portEXIT_CRITICAL(&safety_spinlock);
             motor_stop_all();
         } else {
-            portENTER_CRITICAL(&safety_spinlock);
             relay_fault_count = 0;
             portEXIT_CRITICAL(&safety_spinlock);
         }

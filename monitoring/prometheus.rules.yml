@@ -15,12 +15,12 @@ groups:
 
       - alert: EmergencyStopActive
         expr: robot_estop_active == 1
-        for: 5m
+        for: 30s
         labels:
           severity: critical
         annotations:
-          summary: "Emergency stop active for >5 minutes"
-          description: "Robot {{ $labels.robot_id }} E-stop has been triggered for over 5 minutes. Manual intervention required."
+          summary: "Emergency stop active"
+          description: "Robot {{ $labels.robot_id }} E-stop has been triggered. Manual intervention required."
 
       - alert: CommunicationLost
         expr: up{job="ros2-diagnostics"} == 0

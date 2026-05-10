@@ -46,16 +46,14 @@ class DiagnosticsNode(Node):
 
         reliable_qos = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
-            durability=DurabilityPolicy.VOLATILE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
             depth=10,
         )
 
         self.create_subscription(
             BatteryState, "/battery_state", self._on_battery, reliable_qos
         )
-        self.create_subscription(
-            Bool, "/emergency_stop_state", self._on_estop, reliable_qos
-        )
+        self.create_subscription(Bool, "/emergency_stop", self._on_estop, reliable_qos)
 
         self._diag_pub = self.create_publisher(
             DiagnosticArray, "/diagnostics", reliable_qos

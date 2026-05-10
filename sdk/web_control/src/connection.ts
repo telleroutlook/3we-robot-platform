@@ -16,6 +16,7 @@ type TopicCallback = (msg: unknown) => void;
 interface ServicePending {
   resolve: (value: unknown) => void;
   reject: (reason: Error) => void;
+  timer: ReturnType<typeof setTimeout>;
 }
 
 /**
@@ -117,6 +118,7 @@ export class RosbridgeConnection extends EventTarget {
     this.stopHeartbeat();
     this.reconnectAttempts = 0;
     for (const [, pending] of this.pendingServices) {
+      clearTimeout(pending.timer);
       pending.reject(new Error('Disconnected'));
     }
     this.pendingServices.clear();
@@ -190,14 +192,13 @@ export class RosbridgeConnection extends EventTarget {
     const id = `svc_${++this.serviceIdCounter}_${Date.now()}`;
 
     const promise = new Promise<unknown>((resolve, reject) => {
-      this.pendingServices.set(id, { resolve, reject });
-
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (this.pendingServices.has(id)) {
           this.pendingServices.delete(id);
           reject(new Error(`Service call to ${service} timed out`));
         }
       }, 10000);
+      this.pendingServices.set(id, { resolve, reject, timer });
     });
 
     const payload: RosbridgeCallService = { op: 'call_service', service, type, args, id };
@@ -304,13 +305,13 @@ export class RosbridgeConnection extends EventTarget {
     this.missedPongs = 0;
     this.heartbeatTimer = setInterval(() => {
       if (!this.isConnected()) return;
+      this.missedPongs++;
       if (this.missedPongs >= this.maxMissedPongs) {
         this.stopHeartbeat();
         this.ws?.close();
         return;
       }
       this.ws?.send(JSON.stringify({ op: 'ping' }));
-      this.missedPongs++;
     }, this.heartbeatIntervalMs);
   }
 

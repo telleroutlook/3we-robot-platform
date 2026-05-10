@@ -68,7 +68,6 @@ export async function setupMockRosbridge(page: Page, port = 9090): Promise<MockR
           this.readyState = 3;
           const event = new CloseEvent('close', { code: 1000, reason: '' });
           this.dispatchEvent(event);
-          if (this.onclose) this.onclose(event);
           const idx = mockSockets.indexOf(this);
           if (idx >= 0) mockSockets.splice(idx, 1);
         }
@@ -95,11 +94,16 @@ export async function setupMockRosbridge(page: Page, port = 9090): Promise<MockR
 
   const sendToClient = async (msg: unknown) => {
     await page.evaluate((data) => {
-      (window as unknown as { __mockWsSendToClient: (d: unknown) => void }).__mockWsSendToClient(data);
+      (window as unknown as { __mockWsSendToClient: (d: unknown) => void }).__mockWsSendToClient(
+        data
+      );
     }, msg);
   };
 
-  const waitForMessage = async (predicate: (msg: unknown) => boolean, timeout = 5000): Promise<unknown> => {
+  const waitForMessage = async (
+    predicate: (msg: unknown) => boolean,
+    timeout = 5000
+  ): Promise<unknown> => {
     const start = Date.now();
     while (Date.now() - start < timeout) {
       const found = messages.find(predicate);

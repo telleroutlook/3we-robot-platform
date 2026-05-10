@@ -272,6 +272,7 @@ class AsyncPayloadClient:
         send_goal_future = action_client.send_goal_async(goal_msg)
 
         loop = self._loop
+        goal_handle_ref: list[Any] = []
 
         def _goal_response_callback(future: Any) -> None:
             goal_handle = future.result()
@@ -285,6 +286,7 @@ class AsyncPayloadClient:
                 )
                 return
 
+            goal_handle_ref.append(goal_handle)
             result_future = goal_handle.get_result_async()
 
             def _result_callback(result_future: Any) -> None:
@@ -306,6 +308,8 @@ class AsyncPayloadClient:
         try:
             return await asyncio.wait_for(asyncio_future, timeout=timeout)
         except asyncio.TimeoutError:
+            if goal_handle_ref:
+                goal_handle_ref[0].cancel_goal_async()
             return False
         finally:
             action_client.destroy()

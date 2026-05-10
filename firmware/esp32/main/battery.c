@@ -33,6 +33,7 @@ esp_err_t battery_init(void)
         .bitwidth = ADC_BITWIDTH_12,
     };
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, BATT_ADC_CHANNEL, &chan_cfg));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, BATT_PACK2_ADC_CHANNEL, &chan_cfg));
 
     // Calibration
     adc_cali_curve_fitting_config_t cali_cfg = {

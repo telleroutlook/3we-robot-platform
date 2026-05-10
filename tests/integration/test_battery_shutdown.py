@@ -113,9 +113,10 @@ class TestBatteryShutdown:
             delta = abs(curr - prev)
 
             # Battery percentage should not jump more than 5% between readings
-            assert delta < 5.0, (
-                f"Battery percentage jumped {delta:.1f}% between consecutive readings "
-                f"({prev:.1f}% → {curr:.1f}%) — possible sensor fault"
+            # percentage is in [0.0, 1.0] per ROS2 BatteryState spec
+            assert delta < 0.05, (
+                f"Battery percentage jumped {delta * 100:.1f}% between consecutive readings "
+                f"({prev * 100:.1f}% → {curr * 100:.1f}%) — possible sensor fault"
             )
 
     def test_low_battery_triggers_warning_state(self, test_node: Any) -> None:

@@ -45,6 +45,32 @@ services:
       - prometheus
     restart: unless-stopped
 
+  metrics-exporter:
+    image: ${METRICS_EXPORTER_IMAGE:-robot-platform-metrics:latest}
+    ports:
+      - "9100:9100"
+      - "9101:9101"
+    environment:
+      - ROBOT_ID=${ROBOT_ID:-robot-001}
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    ports:
+      - "9102:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--web.listen-address=:9100'
+    restart: unless-stopped
+
 volumes:
   prometheus-data:
   grafana-data:

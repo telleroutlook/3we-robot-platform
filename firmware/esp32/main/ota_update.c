@@ -217,6 +217,42 @@ static esp_err_t perform_ota_from_url(const char *url)
         return err;
     }
 
+    // Re-read flash to verify written content matches the signed hash
+    uint8_t flash_hash[OTA_HASH_SIZE];
+    mbedtls_sha256_context verify_ctx;
+    mbedtls_sha256_init(&verify_ctx);
+    mbedtls_sha256_starts(&verify_ctx, 0);
+
+    uint8_t *vbuf = malloc(OTA_BUF_SIZE);
+    if (!vbuf) {
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Out of memory for flash verify");
+        return ESP_ERR_NO_MEM;
+    }
+
+    uint32_t offset = 0;
+    while (offset < firmware_size) {
+        uint32_t to_read = (firmware_size - offset) < OTA_BUF_SIZE ?
+                           (firmware_size - offset) : OTA_BUF_SIZE;
+        err = esp_partition_read(update_part, offset, vbuf, to_read);
+        if (err != ESP_OK) {
+            free(vbuf);
+            mbedtls_sha256_free(&verify_ctx);
+            set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Flash read-back failed");
+            return err;
+        }
+        mbedtls_sha256_update(&verify_ctx, vbuf, to_read);
+        offset += to_read;
+    }
+    free(vbuf);
+
+    mbedtls_sha256_finish(&verify_ctx, flash_hash);
+    mbedtls_sha256_free(&verify_ctx);
+
+    if (memcmp(computed_hash, flash_hash, OTA_HASH_SIZE) != 0) {
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Flash content mismatch after write");
+        return ESP_ERR_OTA_VALIDATE_FAILED;
+    }
+
     // Set boot partition
     set_progress(OTA_STATUS_APPLYING, 100, received, total, NULL);
     err = esp_ota_set_boot_partition(update_part);

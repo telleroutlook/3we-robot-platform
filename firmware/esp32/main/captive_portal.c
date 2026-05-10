@@ -96,7 +96,7 @@ static void dns_server_task(void *arg)
 
         // Build minimal DNS response: redirect all queries to AP IP
         buf[2] = 0x81; buf[3] = 0x80; // flags: response, no error
-        buf[6] = buf[4]; buf[7] = buf[5]; // answer count = question count
+        buf[6] = 0x00; buf[7] = 0x01; // exactly 1 answer regardless of question count
         // Append answer section pointing to AP IP
         int resp_len = len;
         if (resp_len + 16 <= (int)sizeof(buf)) {

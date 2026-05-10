@@ -265,12 +265,14 @@ function toggleEstop() {
       return;
     const resetId = "estop_reset_" + Date.now();
     if (robot.ws && robot.ws.readyState === WebSocket.OPEN) {
+      // Capture socket reference to avoid stale removal on reconnect
+      const targetWs = robot.ws;
       // Listen for service response before clearing state
       const responseHandler = (event) => {
         try {
           const msg = JSON.parse(event.data);
           if (msg.op === "service_response" && msg.id === resetId) {
-            robot.ws.removeEventListener("message", responseHandler);
+            targetWs.removeEventListener("message", responseHandler);
             if (msg.result === true) {
               estopped = false;
               btn.textContent = "EMERGENCY STOP";
@@ -283,10 +285,10 @@ function toggleEstop() {
           /* ignore parse errors */
         }
       };
-      robot.ws.addEventListener("message", responseHandler);
+      targetWs.addEventListener("message", responseHandler);
       // Timeout: if no response in 3s, revert
       setTimeout(() => {
-        robot.ws?.removeEventListener("message", responseHandler);
+        targetWs.removeEventListener("message", responseHandler);
         if (estopped) {
           btn.textContent = "RESET (Click to Resume)";
         }

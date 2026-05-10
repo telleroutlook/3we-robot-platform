@@ -469,6 +469,7 @@ static void handle_session_io(int idx)
             authority_result_t ar = authority_request(&authority, (uint8_t)idx,
                                                      sessions[idx].priority, &preempted);
             uint8_t resp;
+            xSemaphoreTake(ssl_mutex, portMAX_DELAY);
             if (ar == AUTHORITY_RESULT_GRANTED || ar == AUTHORITY_RESULT_PREEMPTED) {
                 resp = DTLS_CMD_CTRL_GRANTED;
                 mbedtls_ssl_write(&sessions[idx].ssl, &resp, 1);
@@ -481,6 +482,7 @@ static void handle_session_io(int idx)
                 resp = DTLS_CMD_CTRL_DENIED;
                 mbedtls_ssl_write(&sessions[idx].ssl, &resp, 1);
             }
+            xSemaphoreGive(ssl_mutex);
             return;
         }
 
