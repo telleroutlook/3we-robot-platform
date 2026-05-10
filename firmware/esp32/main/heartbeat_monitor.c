@@ -1,0 +1,119 @@
+// SPDX-License-Identifier: Apache-2.0
+#include "heartbeat_monitor.h"
+#include "pin_definitions.h"
+
+#include "driver/gpio.h"
+#include "esp_log.h"
+#include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+static const char *TAG = "heartbeat";
+
+static volatile int64_t s_last_heartbeat_us = 0;
+static volatile heartbeat_state_t s_state = HB_STATE_WAITING;
+static uint8_t s_reset_count = 0;
+static int64_t s_first_reset_us = 0;
+
+esp_err_t heartbeat_monitor_init(void)
+{
+    gpio_config_t io_cfg = {
+        .pin_bit_mask = (1ULL << PI5_RELAY_GPIO),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    esp_err_t err = gpio_config(&io_cfg);
+    if (err != ESP_OK) return err;
+
+    gpio_set_level(PI5_RELAY_GPIO, 1); // Relay ON (Pi5 powered)
+    s_last_heartbeat_us = esp_timer_get_time();
+    s_state = HB_STATE_WAITING;
+    s_reset_count = 0;
+
+    ESP_LOGI(TAG, "Heartbeat monitor initialized (timeout=%dms, max_resets=%d)",
+             HEARTBEAT_TIMEOUT_MS, HEARTBEAT_MAX_RESETS);
+    return ESP_OK;
+}
+
+void heartbeat_feed(void)
+{
+    s_last_heartbeat_us = esp_timer_get_time();
+    if (s_state == HB_STATE_WAITING || s_state == HB_STATE_TIMEOUT) {
+        s_state = HB_STATE_ACTIVE;
+    }
+}
+
+heartbeat_state_t heartbeat_get_state(void)
+{
+    return s_state;
+}
+
+heartbeat_status_t heartbeat_get_status(void)
+{
+    heartbeat_status_t status = {
+        .state = s_state,
+        .last_heartbeat_us = s_last_heartbeat_us,
+        .reset_count = s_reset_count,
+        .first_reset_us = s_first_reset_us,
+    };
+    return status;
+}
+
+static void power_cycle_pi5(void)
+{
+    ESP_LOGW(TAG, "Power-cycling Pi 5 (reset #%d)", s_reset_count + 1);
+    gpio_set_level(PI5_RELAY_GPIO, 0); // Relay OFF
+    vTaskDelay(pdMS_TO_TICKS(HEARTBEAT_RELAY_PULSE_MS));
+    gpio_set_level(PI5_RELAY_GPIO, 1); // Relay ON
+
+    int64_t now = esp_timer_get_time();
+    if (s_reset_count == 0) {
+        s_first_reset_us = now;
+    }
+    s_reset_count++;
+
+    // Check if window expired → reset counter
+    int64_t elapsed_us = now - s_first_reset_us;
+    if (elapsed_us > (int64_t)HEARTBEAT_RESET_WINDOW_MS * 1000) {
+        s_reset_count = 1;
+        s_first_reset_us = now;
+    }
+
+    if (s_reset_count >= HEARTBEAT_MAX_RESETS) {
+        ESP_LOGE(TAG, "Max resets reached (%d in %ld min) - entering safe mode",
+                 HEARTBEAT_MAX_RESETS, (long)(HEARTBEAT_RESET_WINDOW_MS / 60000));
+        s_state = HB_STATE_SAFE_MODE;
+    } else {
+        s_state = HB_STATE_WAITING;
+        s_last_heartbeat_us = esp_timer_get_time();
+    }
+}
+
+void heartbeat_monitor_task(void *params)
+{
+    (void)params;
+
+    while (1) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
+        if (s_state == HB_STATE_SAFE_MODE) {
+            continue; // Stay in safe mode until manual intervention
+        }
+
+        if (s_state == HB_STATE_WAITING) {
+            continue; // Haven't received first heartbeat yet
+        }
+
+        int64_t now = esp_timer_get_time();
+        int64_t elapsed_ms = (now - s_last_heartbeat_us) / 1000;
+
+        if (elapsed_ms > HEARTBEAT_TIMEOUT_MS) {
+            ESP_LOGW(TAG, "Heartbeat timeout (%lld ms > %d ms)",
+                     (long long)elapsed_ms, HEARTBEAT_TIMEOUT_MS);
+            s_state = HB_STATE_TIMEOUT;
+            power_cycle_pi5();
+        }
+    }
+}

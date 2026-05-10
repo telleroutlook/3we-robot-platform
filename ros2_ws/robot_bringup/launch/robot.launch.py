@@ -28,9 +28,7 @@ def _launch_setup(context: LaunchContext):
     serial_port = context.launch_configurations["serial_port"]
 
     pkg_bringup = FindPackageShare("robot_bringup")
-    pkg_description = FindPackageShare("robot_description")
 
-    xacro_path = PathJoinSubstitution([pkg_description, "urdf", "robot.urdf.xacro"])
     xacro_path_str = (
         subprocess.check_output(
             ["ros2", "pkg", "prefix", "robot_description"], text=True

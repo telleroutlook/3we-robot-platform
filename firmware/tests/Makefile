@@ -30,6 +30,9 @@ SRCS = test_runner.c \
        test_ota_upload.c \
        test_ota_preflight.c \
        test_ota_compat.c \
+       test_heartbeat_monitor.c \
+       test_external_wdt.c \
+       test_battery_multipack.c \
        test_microros_messages.c \
        mocks/esp_stubs.c \
        mocks/i2c_stubs.c \
@@ -52,7 +55,9 @@ SRCS = test_runner.c \
        $(FIRMWARE_SRC)/thermal_monitor.c \
        $(FIRMWARE_SRC)/i2c_bus.c \
        $(FIRMWARE_SRC)/udp_transport.c \
-       $(FIRMWARE_SRC)/dtls_authority.c
+       $(FIRMWARE_SRC)/dtls_authority.c \
+       $(FIRMWARE_SRC)/heartbeat_monitor.c \
+       $(FIRMWARE_SRC)/external_wdt.c
 
 BUILD_DIR = build
 TARGET = $(BUILD_DIR)/test_runner

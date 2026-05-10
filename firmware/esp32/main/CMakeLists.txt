@@ -21,6 +21,9 @@ set(SRCS
     "udp_transport.c"
     "wifi_provision.c"
     "captive_portal.c"
+    "heartbeat_monitor.c"
+    "external_wdt.c"
+    "charging_detect.c"
 )
 
 set(PRIV_REQS "")

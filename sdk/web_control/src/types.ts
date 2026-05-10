@@ -114,6 +114,22 @@ export interface EmergencyStopResponse {
   message: string;
 }
 
+export interface DockingState {
+  stage: number;
+  progress: number;
+  error_message: string;
+  distance_to_dock: number;
+}
+
+export interface UndockRobotRequest {
+  reverse_distance: number;
+}
+
+export interface UndockRobotResponse {
+  success: boolean;
+  error_message: string;
+}
+
 // --- Connection state ---
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';

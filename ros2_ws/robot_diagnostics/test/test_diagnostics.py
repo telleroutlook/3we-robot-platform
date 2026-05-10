@@ -2,7 +2,6 @@
 """Unit tests for the diagnostics node."""
 
 
-
 def test_diagnostics_node_import():
     """Verify module imports without ROS2 runtime."""
     # This test validates the module structure is correct.

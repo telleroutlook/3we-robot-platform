@@ -84,9 +84,11 @@ typedef struct {
 
 esp_err_t gpio_config(const gpio_config_t *cfg);
 int gpio_get_level(int gpio);
+esp_err_t gpio_set_level(int gpio, int level);
 esp_err_t gpio_install_isr_service(int flags);
 esp_err_t gpio_isr_handler_add(int gpio, void (*handler)(void*), void *arg);
 void mock_set_gpio_level(int gpio, int level);
+int mock_get_gpio_output(int gpio);
 
 // Timer stubs
 int64_t esp_timer_get_time(void);
@@ -140,6 +142,9 @@ typedef void* adc_cali_handle_t;
 #define ADC_ATTEN_DB_12   3
 #define ADC_BITWIDTH_12   12
 #define ADC_CHANNEL_2     2
+#define ADC_CHANNEL_3     3
+#define ADC_CHANNEL_8     8
+#define ADC_CHANNEL_9     9
 
 typedef struct { int unit_id; } adc_oneshot_unit_init_cfg_t;
 typedef struct { int atten; int bitwidth; } adc_oneshot_chan_cfg_t;

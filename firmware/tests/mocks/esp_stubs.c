@@ -22,12 +22,18 @@ esp_err_t ledc_update_duty(int mode, int channel) {
 
 // --- GPIO mocks ---
 static int mock_gpio_levels[50] = {0};
+static int mock_gpio_outputs[50] = {0};
 
 esp_err_t gpio_config(const gpio_config_t *cfg) { (void)cfg; return ESP_OK; }
 
 int gpio_get_level(int gpio) {
     if (gpio >= 0 && gpio < 50) return mock_gpio_levels[gpio];
     return 0;
+}
+
+esp_err_t gpio_set_level(int gpio, int level) {
+    if (gpio >= 0 && gpio < 50) mock_gpio_outputs[gpio] = level;
+    return ESP_OK;
 }
 
 esp_err_t gpio_install_isr_service(int flags) { (void)flags; return ESP_OK; }
@@ -38,6 +44,11 @@ esp_err_t gpio_isr_handler_add(int gpio, void (*handler)(void*), void *arg) {
 
 void mock_set_gpio_level(int gpio, int level) {
     if (gpio >= 0 && gpio < 50) mock_gpio_levels[gpio] = level;
+}
+
+int mock_get_gpio_output(int gpio) {
+    if (gpio >= 0 && gpio < 50) return mock_gpio_outputs[gpio];
+    return 0;
 }
 
 // --- Timer mocks ---

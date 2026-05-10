@@ -207,6 +207,30 @@ extern void test_compat_no_current_version_allows_any(void);
 extern void test_compat_v2_min_boundary(void);
 extern void test_compat_v2_max_boundary(void);
 
+// test_heartbeat_monitor.c
+extern void test_heartbeat_init_relay_on(void);
+extern void test_heartbeat_feed_transitions_to_active(void);
+extern void test_heartbeat_feed_updates_timestamp(void);
+extern void test_heartbeat_status_initial(void);
+extern void test_heartbeat_timeout_constants(void);
+extern void test_heartbeat_relay_gpio_defined(void);
+extern void test_heartbeat_feed_from_timeout_to_active(void);
+
+// test_external_wdt.c
+extern void test_ext_wdt_init_sets_gpio_low(void);
+extern void test_ext_wdt_gpio_defined(void);
+extern void test_ext_wdt_feed_period(void);
+extern void test_ext_wdt_init_success(void);
+
+// test_battery_multipack.c
+extern void test_battery_multipack_constants(void);
+extern void test_battery_pack2_gpio_defined(void);
+extern void test_battery_system_state_single_pack(void);
+extern void test_battery_pack_state_struct(void);
+extern void test_battery_pack0_voltage(void);
+extern void test_battery_invalid_pack_index(void);
+extern void test_battery_system_state_worst_state(void);
+
 // test_ota_upload.c
 extern void test_upload_rejects_zero_content_length(void);
 extern void test_upload_rejects_oversized_content(void);
@@ -481,6 +505,30 @@ int main(void)
     RUN_TEST(test_compat_no_current_version_allows_any);
     RUN_TEST(test_compat_v2_min_boundary);
     RUN_TEST(test_compat_v2_max_boundary);
+
+    // Heartbeat monitor
+    RUN_TEST(test_heartbeat_init_relay_on);
+    RUN_TEST(test_heartbeat_feed_transitions_to_active);
+    RUN_TEST(test_heartbeat_feed_updates_timestamp);
+    RUN_TEST(test_heartbeat_status_initial);
+    RUN_TEST(test_heartbeat_timeout_constants);
+    RUN_TEST(test_heartbeat_relay_gpio_defined);
+    RUN_TEST(test_heartbeat_feed_from_timeout_to_active);
+
+    // External watchdog
+    RUN_TEST(test_ext_wdt_init_sets_gpio_low);
+    RUN_TEST(test_ext_wdt_gpio_defined);
+    RUN_TEST(test_ext_wdt_feed_period);
+    RUN_TEST(test_ext_wdt_init_success);
+
+    // Multi-battery pack
+    RUN_TEST(test_battery_multipack_constants);
+    RUN_TEST(test_battery_pack2_gpio_defined);
+    RUN_TEST(test_battery_system_state_single_pack);
+    RUN_TEST(test_battery_pack_state_struct);
+    RUN_TEST(test_battery_pack0_voltage);
+    RUN_TEST(test_battery_invalid_pack_index);
+    RUN_TEST(test_battery_system_state_worst_state);
 
     // OTA upload handler
     RUN_TEST(test_upload_rejects_zero_content_length);

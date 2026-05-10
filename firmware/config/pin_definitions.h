@@ -76,9 +76,25 @@
 #define BATT_ADC_CHANNEL    ADC_CHANNEL_2   // ESP32-S3: GPIO 3 = ADC1_CH2
 #define BATT_ADC_ATTEN      ADC_ATTEN_DB_11
 
+// Battery pack 2 ADC (extended battery SKU, shares with encoder on basic SKU)
+#define BATT_PACK2_ADC_GPIO     4
+#define BATT_PACK2_ADC_CHANNEL  ADC_CHANNEL_3   // ESP32-S3: GPIO 4 = ADC1_CH3
+
 // Safety / E-stop (dedicated pins, no sharing)
 #define ESTOP_GPIO          41  // NC button, active-low when pressed
 #define SAFETY_RELAY_FB     42  // Relay feedback (verify relay state)
+
+// Pi 5 power relay (heartbeat watchdog)
+#define PI5_RELAY_GPIO      45  // Controls Pi 5 power via relay (active-high = ON)
+
+// External watchdog IC feed (TPS3813)
+#define EXT_WDT_FEED_GPIO   46  // Toggle to feed external WDT — stops toggling = HW reset
+
+// Charging contact detection (ADC1, pogo pin voltage sense)
+// Note: shares GPIO 9 with US_ECHO_LEFT — docking SKU omits side ultrasonics
+#define CHARGE_ADC_GPIO     9   // ADC1_CH8 on ESP32-S3
+#define CHARGE_ADC_CHANNEL  ADC_CHANNEL_8
+#define CHARGE_ADC_ATTEN    ADC_ATTEN_DB_11
 
 // Payload bus control (via MCP23017 I2C expander)
 #define MCP23017_ADDR       0x20

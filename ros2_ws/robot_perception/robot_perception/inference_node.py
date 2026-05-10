@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Hailo AI accelerator inference node for object detection."""
 
+import threading
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image

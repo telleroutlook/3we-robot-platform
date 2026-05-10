@@ -18,6 +18,8 @@
 #include "udp_transport.h"
 #include "wifi_provision.h"
 #include "captive_portal.h"
+#include "heartbeat_monitor.h"
+#include "external_wdt.h"
 #include "robot_params.h"
 #include "pin_definitions.h"
 
@@ -52,6 +54,8 @@ static const char *TAG = "main";
 #define TASK_STACK_UDP       4096
 #define TASK_STACK_CANBUS    3072
 #define TASK_STACK_OTA       8192
+#define TASK_STACK_HEARTBEAT 2048
+#define TASK_STACK_EXT_WDT   1024
 
 #define TASK_PRIO_SAFETY     (configMAX_PRIORITIES - 1)
 #define TASK_PRIO_MICROROS   5
@@ -63,6 +67,8 @@ static const char *TAG = "main";
 #define TASK_PRIO_UDP        3
 #define TASK_PRIO_CANBUS     4
 #define TASK_PRIO_OTA        2
+#define TASK_PRIO_HEARTBEAT  (configMAX_PRIORITIES - 2)
+#define TASK_PRIO_EXT_WDT    (configMAX_PRIORITIES - 1)
 
 #define WIFI_CONNECT_TIMEOUT_MS  10000
 
@@ -173,6 +179,12 @@ void app_main(void)
     }
 
     ESP_ERROR_CHECK(battery_init());
+
+    // Heartbeat monitor (Pi 5 power watchdog)
+    ESP_ERROR_CHECK(heartbeat_monitor_init());
+
+    // External hardware watchdog (TPS3813 toggle feed)
+    ESP_ERROR_CHECK(external_wdt_init());
 
     // Thermal monitoring (INA219)
     esp_err_t thermal_ret = thermal_monitor_init();
@@ -333,6 +345,20 @@ void app_main(void)
     // OTA update task
     ota_update_init(captive_portal_get_httpd());
     xTaskCreate(ota_update_task, "ota", TASK_STACK_OTA, NULL, TASK_PRIO_OTA, NULL);
+
+    // Heartbeat monitor task (watches Pi 5 liveness)
+    rc = xTaskCreate(heartbeat_monitor_task, "heartbeat", TASK_STACK_HEARTBEAT, NULL, TASK_PRIO_HEARTBEAT, NULL);
+    if (rc != pdPASS) {
+        ESP_LOGE(TAG, "FATAL: heartbeat_monitor_task creation failed - rebooting");
+        esp_restart();
+    }
+
+    // External watchdog feed task (highest priority — must never starve)
+    rc = xTaskCreate(external_wdt_task, "ext_wdt", TASK_STACK_EXT_WDT, NULL, TASK_PRIO_EXT_WDT, NULL);
+    if (rc != pdPASS) {
+        ESP_LOGE(TAG, "FATAL: external_wdt_task creation failed - rebooting");
+        esp_restart();
+    }
 
     ESP_LOGI(TAG, "All systems initialized. Robot ready.");
 

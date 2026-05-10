@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+# Undock service — request the robot to undock from the charging station
+
+# Request
+float32 reverse_distance    # Meters to reverse after undocking (default 0.3)
+---
+# Response
+bool success
+string error_message

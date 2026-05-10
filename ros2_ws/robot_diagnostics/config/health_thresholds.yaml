@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+# Health monitor thresholds configuration
+health_monitor:
+  ros__parameters:
+    publish_rate_hz: 0.5
+
+    # CPU temperature (°C) — Pi 5 throttles at 85°C
+    cpu_temp_warn: 75.0
+    cpu_temp_critical: 85.0
+
+    # RAM usage (percent)
+    memory_warn_pct: 85.0
+    memory_critical_pct: 95.0
+
+    # WiFi signal strength (dBm, more negative = weaker)
+    wifi_rssi_warn: -75
+    wifi_rssi_critical: -85
+
+    # Available disk space (GB)
+    disk_warn_gb: 2.0
+    disk_critical_gb: 0.5

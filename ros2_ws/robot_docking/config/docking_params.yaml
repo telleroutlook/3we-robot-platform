@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: Apache-2.0
+# Docking parameters configuration
+docking_controller:
+  ros__parameters:
+    # Nav2 approach waypoint (pose near the dock)
+    approach_waypoint_x: 1.0
+    approach_waypoint_y: 0.0
+    approach_waypoint_yaw: 3.14159
+
+    # AprilTag IDs
+    coarse_tag_id: 0        # Large tag (200mm), tag36h11 family
+    fine_tag_id: 1          # Small tag (50mm), tag36h11 family
+
+    # Contact detection
+    contact_voltage_threshold: 2.0   # Volts — above this = contact
+    contact_confirm_duration_s: 1.0  # Seconds of sustained contact
+
+    # Timeouts
+    approach_timeout_s: 60.0
+    servo_timeout_s: 30.0
+    max_retries: 2
+
+    # Topics
+    cmd_vel_topic: /cmd_vel
+    charging_voltage_topic: /charging/voltage
+
+visual_servo:
+  ros__parameters:
+    # Proportional gains
+    kp_lateral: 0.8
+    kp_angular: 1.2
+    kp_forward: 0.3
+
+    # Speed limits (m/s and rad/s)
+    max_linear_speed: 0.1
+    max_angular_speed: 0.3
+
+    # Target approach distance
+    target_distance_m: 0.05
+    alignment_tolerance_m: 0.01
+
+    # Topics
+    cmd_vel_topic: /cmd_vel
+    tag_pose_topic: /docking/tag_pose
+    enabled_topic: /docking/servo_enabled
+
+contact_detector:
+  ros__parameters:
+    voltage_threshold: 2.0
+    confirm_duration_s: 1.0
+    voltage_topic: /charging/voltage
+    contact_topic: /docking/contact_confirmed

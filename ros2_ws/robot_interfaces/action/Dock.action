@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: Apache-2.0
+# Dock action — navigate to and dock at a charging station
+
+# Goal
+string dock_id              # Identifier for target dock (empty = nearest)
+---
+# Result
+bool success
+string error_message
+float32 total_duration_sec
+---
+# Feedback
+uint8 stage                 # Same enum as DockingState.msg
+float32 progress            # 0.0-1.0
+float64 distance_to_dock
