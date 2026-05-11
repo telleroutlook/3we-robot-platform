@@ -191,12 +191,10 @@ global_costmap:
 
 behavior_server:
   ros__parameters:
-    behavior_plugins: ["clear_costmap", "spin", "backup", "wait"]
-    clear_costmap:
-      plugin: "nav2_behaviors::ClearEntireCostmap"
+    behavior_plugins: ["spin", "backup", "wait"]
     spin:
-      plugin: "nav2_behaviors::Spin"
+      plugin: "nav2_behaviors/Spin"
     backup:
-      plugin: "nav2_behaviors::BackUp"
+      plugin: "nav2_behaviors/BackUp"
     wait:
-      plugin: "nav2_behaviors::Wait"
+      plugin: "nav2_behaviors/Wait"
