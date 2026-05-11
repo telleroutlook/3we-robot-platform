@@ -17,7 +17,7 @@ setup(
             ],
         ),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "cryptography>=41.0"],
     zip_safe=True,
     maintainer="Robot Platform Contributors",
     maintainer_email="dev@robot-platform.org",

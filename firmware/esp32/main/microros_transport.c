@@ -9,6 +9,9 @@
 #include "payload_hotplug.h"
 #include "pin_definitions.h"
 #include "robot_params.h"
+#ifdef CONFIG_ROBOT_DOCKING_ENABLED
+#include "charging_detect.h"
+#endif
 
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
@@ -20,6 +23,7 @@
 #include <sensor_msgs/msg/battery_state.h>
 #include <sensor_msgs/msg/imu.h>
 #include <std_msgs/msg/float32_multi_array.h>
+#include <std_msgs/msg/float32.h>
 #include <std_msgs/msg/string.h>
 
 #include <micro_ros_utilities/type_utilities.h>
@@ -42,6 +46,9 @@ static rcl_publisher_t battery_pub;
 static rcl_publisher_t wheel_speed_pub;
 static rcl_publisher_t imu_pub;
 static rcl_publisher_t payload_pub;
+#ifdef CONFIG_ROBOT_DOCKING_ENABLED
+static rcl_publisher_t charging_voltage_pub;
+#endif
 
 // Subscribers
 static rcl_subscription_t cmd_vel_sub;
@@ -55,12 +62,19 @@ static std_msgs__msg__Float32MultiArray wheel_msg;
 static sensor_msgs__msg__Imu imu_msg;
 static std_msgs__msg__String payload_msg;
 static char payload_json_buf[192];
+#ifdef CONFIG_ROBOT_DOCKING_ENABLED
+static std_msgs__msg__Float32 charging_voltage_msg;
+#endif
 
 // Timers
 static rcl_timer_t odom_timer;
 static rcl_timer_t range_timer;
 static rcl_timer_t battery_timer;
 static rcl_timer_t imu_timer;
+#ifdef CONFIG_ROBOT_DOCKING_ENABLED
+#define CHARGING_PUBLISH_HZ 5
+static rcl_timer_t charging_timer;
+#endif
 
 // Odometry state
 static float odom_x = 0.0f;
@@ -255,6 +269,15 @@ static void imu_timer_callback(rcl_timer_t *timer, int64_t last_call_time)
     rcl_publish(&imu_pub, &imu_msg, NULL);
 }
 
+#ifdef CONFIG_ROBOT_DOCKING_ENABLED
+static void charging_timer_callback(rcl_timer_t *timer, int64_t last_call_time)
+{
+    (void)timer; (void)last_call_time;
+    charging_voltage_msg.data = charging_detect_get_voltage_mv() / 1000.0f;
+    rcl_publish(&charging_voltage_pub, &charging_voltage_msg, NULL);
+}
+#endif
+
 static void battery_timer_callback(rcl_timer_t *timer, int64_t last_call_time)
 {
     (void)timer; (void)last_call_time;
@@ -317,16 +340,30 @@ esp_err_t microros_init(void)
     rclc_timer_init_default(&battery_timer, &support,
         RCL_MS_TO_NS(1000 / BATTERY_PUBLISH_HZ), battery_timer_callback);
     rclc_timer_init_default(&imu_timer, &support,
-        RCL_MS_TO_NS(1000 / ODOM_PUBLISH_HZ), imu_timer_callback);
+        RCL_MS_TO_NS(1000 / IMU_PUBLISH_HZ), imu_timer_callback);
+
+#ifdef CONFIG_ROBOT_DOCKING_ENABLED
+    rclc_publisher_init_default(&charging_voltage_pub, &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "/charging/voltage");
+    rclc_timer_init_default(&charging_timer, &support,
+        RCL_MS_TO_NS(1000 / CHARGING_PUBLISH_HZ), charging_timer_callback);
+#endif
 
     // Executor
+#ifdef CONFIG_ROBOT_DOCKING_ENABLED
+    rclc_executor_init(&executor, &support.context, 7, &allocator);
+#else
     rclc_executor_init(&executor, &support.context, 6, &allocator);
+#endif
     rclc_executor_add_subscription(&executor, &cmd_vel_sub, &cmd_vel_msg,
         &cmd_vel_callback, ON_NEW_DATA);
     rclc_executor_add_timer(&executor, &odom_timer);
     rclc_executor_add_timer(&executor, &range_timer);
     rclc_executor_add_timer(&executor, &battery_timer);
     rclc_executor_add_timer(&executor, &imu_timer);
+#ifdef CONFIG_ROBOT_DOCKING_ENABLED
+    rclc_executor_add_timer(&executor, &charging_timer);
+#endif
 
     // Allocate wheel speed array
     wheel_msg.data.capacity = 4;

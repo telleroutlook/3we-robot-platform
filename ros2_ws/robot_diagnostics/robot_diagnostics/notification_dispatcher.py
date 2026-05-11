@@ -185,7 +185,7 @@ class NotificationDispatcher(Node):
         dashboard_url = channel.get("dashboard_url", "")
 
         markdown_body = (
-            f"### {payload['title']}\n\n"
+            f'### <font color="{color}">{payload["title"]}</font>\n\n'
             f"**Robot:** {payload['robot_id']}  \n"
             f"**Event:** {payload['event_type']}  \n"
             f"**Time:** {payload['timestamp']}  \n\n"

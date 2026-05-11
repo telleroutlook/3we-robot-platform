@@ -40,12 +40,13 @@
     )
   )
   (symbol
-    (lib_id "Relay:Relay_SPST")
+    (lib_id "Relay:Relay_DPST_NO")
     (at 80 35 0)
     (uuid "7e7914b1-3f09-458f-aa90-1f4707f6d72b")
-    (property "Reference" "RLY1" (at 80 30 0) (effects (font (size 1.27 1.27))))
-    (property "Value" "Safety_Relay" (at 80 40 0) (effects (font (size 1.27 1.27))))
-    (property "Footprint" "Relay_THT:Relay_SPST_Omron_G5V-1" (at 80 42 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Reference" "RLY1" (at 80 28 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "G2R-2-H_DC5" (at 80 42 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Relay_THT:Relay_DPST_Omron_G2R-2" (at 80 44 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "Dual-channel NO safety relay for CE PL d Category 3" (at 80 46 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1"
       (uuid "559f9c12-ff8e-4912-a26c-0cc4734a9e27")
     )
@@ -57,6 +58,12 @@
     )
     (pin "4"
       (uuid "71f694b9-162a-436c-8410-211cacc692c9")
+    )
+    (pin "5"
+      (uuid "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+    )
+    (pin "6"
+      (uuid "b2c3d4e5-f6a7-8901-bcde-f12345678901")
     )
   )
   (label "VBAT" (at 70 30 0) (effects (font (size 1.27 1.27))) (uuid "2c333c0b-fbfd-4002-8468-66777053f507"))
@@ -348,6 +355,9 @@
     (pin "GPIO21"
       (uuid "7cc76ea9-11a9-4c99-bfac-ea6336e11280")
     )
+    (pin "GPIO22"
+      (uuid "e8f9a0b1-c2d3-4567-89ab-cdef01234567")
+    )
     (pin "GPIO26"
       (uuid "0153b92e-1146-43d5-a971-a04c86c15a48")
     )
@@ -458,6 +468,7 @@
   (label "MOT_RR_IN2" (at 235 89 0) (effects (font (size 1.27 1.27))) (uuid "43fdce87-8f70-46cd-9572-86b1ca8e4746"))
   (label "ESTOP" (at 235 92 0) (effects (font (size 1.27 1.27))) (uuid "f40b2f6f-dc78-41e8-8765-b759ffde5a8c"))
   (label "SAFETY_RELAY_FB" (at 235 95 0) (effects (font (size 1.27 1.27))) (uuid "53df0b6f-c6ff-4812-a93c-18b89ac4ff4b"))
+  (label "SAFETY_RELAY_FB2" (at 235 98 0) (effects (font (size 1.27 1.27))) (uuid "c3d4e5f6-a7b8-9012-cdef-234567890abc"))
   (label "UROS_TX" (at 235 98 0) (effects (font (size 1.27 1.27))) (uuid "f0afabf1-0f4d-44a4-9b9f-d7f4900328a5"))
   (label "UROS_RX" (at 235 101 0) (effects (font (size 1.27 1.27))) (uuid "311f25a7-90b5-45db-85aa-87f3979bef8e"))
   (label "MOT_FR_IN2" (at 235 104 0) (effects (font (size 1.27 1.27))) (uuid "a1d71aeb-951d-4415-8cbf-48681446fb75"))
@@ -1776,6 +1787,63 @@
   (label "+3V3" (at 155 122 0) (effects (font (size 1.27 1.27))) (uuid "a3fa294f-6049-4423-b73d-17e4c1ad9336"))
   (label "ESTOP" (at 155 134 0) (effects (font (size 1.27 1.27))) (uuid "0103452f-c2c5-493c-93ba-4adb97983d21"))
   (symbol
+    (lib_id "Device:R")
+    (at 175 135 0)
+    (uuid "d4e5f6a7-b8c9-0123-def4-567890abcdef")
+    (property "Reference" "R13" (at 175 130 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "20k" (at 175 140 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric" (at 175 142 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "Relay FB2 voltage divider upper" (at 175 144 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "e5f6a7b8-c9d0-1234-ef56-7890abcdef01")
+    )
+    (pin "2"
+      (uuid "f6a7b8c9-d0e1-2345-f678-90abcdef0123")
+    )
+  )
+  (symbol
+    (lib_id "Device:R")
+    (at 175 148 0)
+    (uuid "a7b8c9d0-e1f2-3456-a789-0bcdef012345")
+    (property "Reference" "R14" (at 175 143 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "10k" (at 175 153 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric" (at 175 155 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "Relay FB2 voltage divider lower" (at 175 157 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "b8c9d0e1-f2a3-4567-b890-cdef01234567")
+    )
+    (pin "2"
+      (uuid "c9d0e1f2-a3b4-5678-c901-def012345678")
+    )
+  )
+  (symbol
+    (lib_id "Device:C")
+    (at 185 148 0)
+    (uuid "d0e1f2a3-b4c5-6789-d012-ef0123456789")
+    (property "Reference" "C15" (at 185 143 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "100nF" (at 185 153 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 185 155 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "Relay FB2 RC filter" (at 185 157 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "e1f2a3b4-c5d6-7890-e123-f01234567890")
+    )
+    (pin "2"
+      (uuid "f2a3b4c5-d6e7-8901-f234-012345678901")
+    )
+  )
+  (label "VBAT_MOTOR" (at 175 128 0) (effects (font (size 1.27 1.27))) (uuid "a3b4c5d6-e7f8-9012-a345-6789abcdef01"))
+  (label "SAFETY_RELAY_FB2" (at 183 142 0) (effects (font (size 1.27 1.27))) (uuid "b4c5d6e7-f8a9-0123-b456-789abcdef012"))
+  (symbol
+    (lib_id "power:GND")
+    (at 175 155 0)
+    (uuid "c5d6e7f8-a9b0-1234-c567-89abcdef0123")
+    (property "Reference" "#PWR32" (at 175 153 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 175 157 0) (effects (font (size 1.27 1.27))))
+    (pin "1"
+      (uuid "d6e7f8a9-b0c1-2345-d678-9abcdef01234")
+    )
+  )
+  (symbol
     (lib_id "Connector:USB_C_Receptacle_USB2.0")
     (at 160 245 0)
     (uuid "726a6ac6-057d-4cbf-8fc6-b540acdef53d")
@@ -1936,7 +2004,7 @@
     (path "/7e7914b1-3f09-458f-aa90-1f4707f6d72b"
       (reference "RLY1")
       (unit 1)
-      (value "Safety_Relay")
+      (value "G2R-2-H_DC5")
       (footprint "")
     )
     (path "/9a8fba03-e506-4510-9185-a235b79b3a48"

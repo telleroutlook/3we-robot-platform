@@ -79,6 +79,7 @@
 
 // micro-ROS publish rates
 #define ODOM_PUBLISH_HZ         50
+#define IMU_PUBLISH_HZ          100
 #define ULTRASONIC_PUBLISH_HZ   10
 #define BATTERY_PUBLISH_HZ      1
 #define WHEEL_SPEED_PUBLISH_HZ  50

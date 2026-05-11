@@ -65,6 +65,7 @@ class HailoInferenceNode(Node):
         self._configured_network = None
         self._input_vstream_info = None
         self._output_vstream_info = None
+        self._pipeline = None
         self._passthrough_log_counter = 0
 
         # Attempt to import Hailo runtime
@@ -151,6 +152,17 @@ class HailoInferenceNode(Node):
             self._input_height = input_shape[1]
             self._input_width = input_shape[2]
 
+            # Open the inference pipeline once (DMA buffers + stream threads)
+            # and reuse across all frames for the lifetime of the node.
+            from hailo_platform import InferVStreams
+
+            self._pipeline = InferVStreams(
+                self._configured_network,
+                self._input_vstream_params,
+                self._output_vstream_params,
+            )
+            self._pipeline.__enter__()
+
             self.get_logger().info(
                 f"Hailo model loaded (input: {self._input_width}x{self._input_height}, "
                 f"outputs: {len(self._output_vstream_info)})"
@@ -228,7 +240,6 @@ class HailoInferenceNode(Node):
         # YOLOv8: [cx, cy, w, h, class_scores...]
         boxes = raw[:, :4]
         class_scores = raw[:, 4:]
-        num_classes = class_scores.shape[1]
 
         # Get max class score and class ID per detection
         max_scores = np.max(class_scores, axis=1)
@@ -329,19 +340,11 @@ class HailoInferenceNode(Node):
         input_data = self._preprocess(frame)
         input_data = np.expand_dims(input_data, axis=0)  # Add batch dim
 
-        # Run inference via InferVStreams
+        # Run inference via persistent pipeline
         try:
-            from hailo_platform import InferVStreams
-
             input_name = self._input_vstream_info[0].name
             input_dict = {input_name: input_data}
-
-            with InferVStreams(
-                self._configured_network,
-                self._input_vstream_params,
-                self._output_vstream_params,
-            ) as pipeline:
-                raw_output = pipeline.infer(input_dict)
+            raw_output = self._pipeline.infer(input_dict)
 
         except Exception as e:
             self.get_logger().error(f"Inference failed: {e}", throttle_duration_sec=5.0)
@@ -385,6 +388,12 @@ class HailoInferenceNode(Node):
 
     def destroy_node(self) -> None:
         """Release Hailo device resources before node destruction."""
+        if self._pipeline is not None:
+            try:
+                self._pipeline.__exit__(None, None, None)
+            except Exception as exc:
+                self.get_logger().warning(f"Failed to close Hailo pipeline: {exc}")
+            self._pipeline = None
         if self._vdevice is not None:
             try:
                 self._vdevice.release()

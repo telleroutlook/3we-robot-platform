@@ -189,6 +189,11 @@ class OtaManagerNode(Node):
                 os.unlink(local_path)
                 return
 
+            if not self._verify_signature(local_path, url):
+                self._publish_status("error", "Ed25519 signature verification failed")
+                os.unlink(local_path)
+                return
+
             self._publish_status("applying", f"Applying {update_type} v{version}")
 
             if update_type == "model":
@@ -243,6 +248,62 @@ class OtaManagerNode(Node):
             )
             return False
         return True
+
+    def _verify_signature(self, file_path: str, url: str) -> bool:
+        """Verify Ed25519 signature of the downloaded file.
+
+        Expects a .sig file alongside the payload (downloaded from url + '.sig').
+        The .sig file contains the raw 64-byte Ed25519 signature.
+        """
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+        from cryptography.hazmat.primitives.serialization import load_pem_public_key
+        from cryptography.exceptions import InvalidSignature
+
+        if not self._public_key_path.exists():
+            self.get_logger().error(
+                f"Public key not found at {self._public_key_path} — "
+                "refusing to apply unsigned update"
+            )
+            return False
+
+        sig_url = url + ".sig"
+        sig_path = self._download_file(sig_url)
+        if not sig_path:
+            self.get_logger().error(
+                f"Signature file not found at {sig_url} — "
+                "refusing to apply unsigned update"
+            )
+            return False
+
+        try:
+            with open(self._public_key_path, "rb") as kf:
+                public_key = load_pem_public_key(kf.read())
+
+            if not isinstance(public_key, Ed25519PublicKey):
+                self.get_logger().error("Public key is not Ed25519")
+                return False
+
+            with open(sig_path, "rb") as sf:
+                signature = sf.read()
+
+            with open(file_path, "rb") as pf:
+                payload = pf.read()
+
+            public_key.verify(signature, payload)
+            self.get_logger().info("Ed25519 signature verification passed")
+            return True
+
+        except InvalidSignature:
+            self.get_logger().error(
+                "Ed25519 signature verification FAILED — payload may be tampered"
+            )
+            return False
+        except Exception as e:
+            self.get_logger().error(f"Signature verification error: {e}")
+            return False
+        finally:
+            if sig_path and os.path.exists(sig_path):
+                os.unlink(sig_path)
 
     def _apply_model_update(self, file_path: str, version: str) -> bool:
         """Apply AI model (.hef) update with rollback support."""
