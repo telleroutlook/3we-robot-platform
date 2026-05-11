@@ -7,18 +7,26 @@ Docking controller — orchestrates the three-stage autonomous docking sequence:
 4. CONTACT_VERIFY: Check charging voltage confirms physical contact
 """
 
+import math
 from typing import Optional
 
 import rclpy
 from rclpy.node import Node
-from rclpy.action import ActionServer, GoalResponse, CancelResponse
+from rclpy.action import ActionServer, ActionClient, GoalResponse, CancelResponse
 from rclpy.action.server import ServerGoalHandle
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, PoseStamped, Quaternion
 from std_msgs.msg import Bool
 
 from robot_docking.constants import DockingStage  # noqa: F401
+
+
+def _yaw_to_quaternion(yaw: float) -> Quaternion:
+    q = Quaternion()
+    q.w = math.cos(yaw / 2.0)
+    q.z = math.sin(yaw / 2.0)
+    return q
 
 
 class DockingController(Node):
@@ -40,6 +48,8 @@ class DockingController(Node):
         self._retries = 0
         self._contact_confirmed = False
         self._stage_start_time: Optional[float] = None
+        self._nav2_goal_handle = None
+        self._nav2_result_future = None
 
         cmd_vel_topic = (
             self.get_parameter("cmd_vel_topic").get_parameter_value().string_value
@@ -51,15 +61,25 @@ class DockingController(Node):
         )
 
         self._cmd_pub = self.create_publisher(Twist, cmd_vel_topic, 10)
+        self._servo_enable_pub = self.create_publisher(
+            Bool, "/docking/servo_enabled", 10
+        )
 
         self._contact_sub = self.create_subscription(
-            Bool,
-            contact_topic,
-            self._on_contact,
-            10,
+            Bool, contact_topic, self._on_contact, 10
+        )
+
+        self._tag_pose: Optional[PoseStamped] = None
+        self._tag_pose_sub = self.create_subscription(
+            PoseStamped, "/docking/tag_pose", self._on_tag_pose, 10
         )
 
         cb_group = ReentrantCallbackGroup()
+
+        self._nav2_client = ActionClient(
+            self, self._get_navigate_action_type(), "navigate_to_pose"
+        )
+
         dock_action_type = self._get_dock_action_type()
         if dock_action_type is None:
             self._action_server = None
@@ -78,6 +98,19 @@ class DockingController(Node):
         self._goal_handle: Optional[ServerGoalHandle] = None
 
         self.get_logger().info("Docking controller initialized")
+
+    def _get_navigate_action_type(self):
+        try:
+            from nav2_msgs.action import NavigateToPose
+
+            return NavigateToPose
+        except ImportError:
+            self.get_logger().warn(
+                "nav2_msgs not available — using stub NavigateToPose"
+            )
+            from nav2_msgs.action import NavigateToPose
+
+            return NavigateToPose
 
     def _get_dock_action_type(self):
         try:
@@ -103,18 +136,26 @@ class DockingController(Node):
     def _on_contact(self, msg: Bool) -> None:
         self._contact_confirmed = msg.data
 
+    def _on_tag_pose(self, msg: PoseStamped) -> None:
+        self._tag_pose = msg
+
     def _execute_dock(self, goal_handle: ServerGoalHandle):
         self.get_logger().info("Executing dock action")
         self._goal_handle = goal_handle
         self._stage = DockingStage.APPROACH
         self._stage_start_time = self.get_clock().now().nanoseconds / 1e9
         self._retries = 0
+        self._contact_confirmed = False
+
+        self._send_nav2_goal()
 
         start_time = self.get_clock().now().nanoseconds / 1e9
 
         rate = self.create_rate(10)
         while rclpy.ok():
             if goal_handle.is_cancel_requested:
+                self._cancel_nav2_goal()
+                self._set_servo_enabled(False)
                 self._stop_robot()
                 self._stage = DockingStage.IDLE
                 goal_handle.canceled()
@@ -133,6 +174,73 @@ class DockingController(Node):
 
         goal_handle.abort()
         return self._make_result(False, "Node shutdown", start_time)
+
+    def _send_nav2_goal(self) -> None:
+        from nav2_msgs.action import NavigateToPose
+
+        wp_x = self.get_parameter("approach_waypoint_x").value
+        wp_y = self.get_parameter("approach_waypoint_y").value
+        wp_yaw = self.get_parameter("approach_waypoint_yaw").value
+
+        goal_msg = NavigateToPose.Goal()
+        goal_msg.pose = PoseStamped()
+        goal_msg.pose.header.frame_id = "map"
+        goal_msg.pose.header.stamp = self.get_clock().now().to_msg()
+        goal_msg.pose.pose.position.x = wp_x
+        goal_msg.pose.pose.position.y = wp_y
+        goal_msg.pose.pose.orientation = _yaw_to_quaternion(wp_yaw)
+
+        self.get_logger().info(
+            f"Sending Nav2 goal: ({wp_x:.2f}, {wp_y:.2f}, yaw={wp_yaw:.2f})"
+        )
+
+        if not self._nav2_client.wait_for_server(timeout_sec=5.0):
+            self.get_logger().error("Nav2 action server not available")
+            self._stage = DockingStage.FAILED
+            return
+
+        send_goal_future = self._nav2_client.send_goal_async(goal_msg)
+        send_goal_future.add_done_callback(self._nav2_goal_response_callback)
+
+    def _nav2_goal_response_callback(self, future) -> None:
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().error("Nav2 goal rejected")
+            self._stage = DockingStage.FAILED
+            return
+
+        self._nav2_goal_handle = goal_handle
+        self._nav2_result_future = goal_handle.get_result_async()
+        self._nav2_result_future.add_done_callback(self._nav2_result_callback)
+
+    def _nav2_result_callback(self, future) -> None:
+        result = future.result()
+        if result.status == 4:
+            self.get_logger().info("Nav2 approach complete — switching to visual servo")
+            self._stage = DockingStage.VISUAL_SERVO_COARSE
+            self._stage_start_time = self.get_clock().now().nanoseconds / 1e9
+            self._set_servo_enabled(True)
+        else:
+            self.get_logger().error(f"Nav2 approach failed (status={result.status})")
+            max_retries = self.get_parameter("max_retries").value
+            self._retries += 1
+            if self._retries <= max_retries:
+                self.get_logger().info(
+                    f"Retrying approach ({self._retries}/{max_retries})"
+                )
+                self._send_nav2_goal()
+            else:
+                self._stage = DockingStage.FAILED
+
+    def _cancel_nav2_goal(self) -> None:
+        if self._nav2_goal_handle is not None:
+            self._nav2_goal_handle.cancel_goal_async()
+            self._nav2_goal_handle = None
+
+    def _set_servo_enabled(self, enabled: bool) -> None:
+        msg = Bool()
+        msg.data = enabled
+        self._servo_enable_pub.publish(msg)
 
     def _make_result(self, success: bool, error: str, start_time: float):
         try:
@@ -155,10 +263,16 @@ class DockingController(Node):
             feedback = Dock.Feedback()
             feedback.stage = int(self._stage)
             feedback.progress = self._estimate_progress()
-            feedback.distance_to_dock = -1.0
+            feedback.distance_to_dock = self._get_distance_to_dock()
             goal_handle.publish_feedback(feedback)
         except ImportError:
             pass
+
+    def _get_distance_to_dock(self) -> float:
+        if self._tag_pose is None:
+            return -1.0
+        p = self._tag_pose.pose.position
+        return math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z)
 
     def _estimate_progress(self) -> float:
         stage_progress = {
@@ -188,6 +302,7 @@ class DockingController(Node):
             )
             if self._stage_start_time and now - self._stage_start_time > timeout:
                 self.get_logger().error("Approach timed out")
+                self._cancel_nav2_goal()
                 self._stop_robot()
                 self._stage = DockingStage.FAILED
                 return
@@ -201,14 +316,33 @@ class DockingController(Node):
             )
             if self._stage_start_time and now - self._stage_start_time > timeout:
                 self.get_logger().error("Visual servo timed out")
+                self._set_servo_enabled(False)
                 self._stop_robot()
                 self._stage = DockingStage.FAILED
                 return
+
+            dist = self._get_distance_to_dock()
+            if self._stage == DockingStage.VISUAL_SERVO_COARSE and 0 < dist < 0.3:
+                self.get_logger().info(
+                    "Coarse alignment done — switching to fine servo"
+                )
+                self._stage = DockingStage.VISUAL_SERVO_FINE
+                self._stage_start_time = now
+
+            if self._stage == DockingStage.VISUAL_SERVO_FINE and 0 < dist < 0.06:
+                self.get_logger().info("Fine approach done — verifying contact")
+                self._set_servo_enabled(False)
+                self._stop_robot()
+                self._stage = DockingStage.CONTACT_VERIFY
+                self._stage_start_time = now
 
         if self._stage == DockingStage.CONTACT_VERIFY:
             if self._contact_confirmed:
                 self.get_logger().info("Contact confirmed — docked!")
                 self._stage = DockingStage.DOCKED
+            elif self._stage_start_time and now - self._stage_start_time > 5.0:
+                self.get_logger().error("Contact verification timed out")
+                self._stage = DockingStage.FAILED
 
     def _stop_robot(self) -> None:
         self._cmd_pub.publish(Twist())

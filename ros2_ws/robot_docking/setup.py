@@ -24,6 +24,7 @@ setup(
             "docking_controller = robot_docking.docking_controller:main",
             "visual_servo = robot_docking.visual_servo:main",
             "contact_detector = robot_docking.contact_detector:main",
+            "apriltag_detector = robot_docking.apriltag_detector:main",
         ],
     },
 )

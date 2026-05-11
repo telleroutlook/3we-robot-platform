@@ -16,6 +16,13 @@ def generate_launch_description() -> LaunchDescription:
         [
             Node(
                 package="robot_docking",
+                executable="apriltag_detector",
+                name="apriltag_detector",
+                parameters=[params_file],
+                output="screen",
+            ),
+            Node(
+                package="robot_docking",
                 executable="docking_controller",
                 name="docking_controller",
                 parameters=[params_file],
