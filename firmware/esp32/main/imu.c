@@ -5,6 +5,8 @@
 
 #include "driver/i2c.h"
 #include "esp_log.h"
+#include "nvs_flash.h"
+#include "nvs.h"
 
 #include <string.h>
 
@@ -20,11 +22,65 @@ static const char *TAG = "imu";
 #define BNO055_GYR_DATA_X_REG   0x14
 #define BNO055_LIA_DATA_X_REG   0x28
 #define BNO055_CALIB_STAT_REG   0x35
+#define BNO055_ACCEL_OFFSET_REG 0x55
+#define BNO055_CALIB_DATA_LEN   22
 
 #define I2C_PORT    I2C_NUM_0
 #define I2C_TIMEOUT pdMS_TO_TICKS(100)
 
 static uint8_t imu_addr = IMU_ADDR;
+static bool calibration_saved = false;
+
+static esp_err_t imu_load_calibration(void)
+{
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open("imu_cal", NVS_READONLY, &handle);
+    if (err != ESP_OK) return err;
+
+    uint8_t cal_data[BNO055_CALIB_DATA_LEN];
+    size_t len = BNO055_CALIB_DATA_LEN;
+    err = nvs_get_blob(handle, "offsets", cal_data, &len);
+    nvs_close(handle);
+    if (err != ESP_OK || len != BNO055_CALIB_DATA_LEN) return ESP_ERR_INVALID_SIZE;
+
+    err = i2c_write_reg(BNO055_OPR_MODE_REG, BNO055_OPR_MODE_CONFIG);
+    if (err != ESP_OK) return err;
+    vTaskDelay(pdMS_TO_TICKS(25));
+
+    for (int i = 0; i < BNO055_CALIB_DATA_LEN; i++) {
+        err = i2c_write_reg(BNO055_ACCEL_OFFSET_REG + i, cal_data[i]);
+        if (err != ESP_OK) return err;
+    }
+
+    ESP_LOGI(TAG, "Calibration loaded from NVS");
+    return ESP_OK;
+}
+
+static esp_err_t imu_save_calibration(void)
+{
+    uint8_t cal_data[BNO055_CALIB_DATA_LEN];
+    esp_err_t err = i2c_write_reg(BNO055_OPR_MODE_REG, BNO055_OPR_MODE_CONFIG);
+    if (err != ESP_OK) return err;
+    vTaskDelay(pdMS_TO_TICKS(25));
+
+    err = i2c_read_reg(BNO055_ACCEL_OFFSET_REG, cal_data, BNO055_CALIB_DATA_LEN);
+    if (err != ESP_OK) goto restore_mode;
+
+    nvs_handle_t handle;
+    err = nvs_open("imu_cal", NVS_READWRITE, &handle);
+    if (err != ESP_OK) goto restore_mode;
+
+    err = nvs_set_blob(handle, "offsets", cal_data, BNO055_CALIB_DATA_LEN);
+    if (err == ESP_OK) err = nvs_commit(handle);
+    nvs_close(handle);
+
+    if (err == ESP_OK) ESP_LOGI(TAG, "Calibration saved to NVS");
+
+restore_mode:
+    i2c_write_reg(BNO055_OPR_MODE_REG, BNO055_OPR_MODE_NDOF);
+    vTaskDelay(pdMS_TO_TICKS(20));
+    return err;
+}
 
 static esp_err_t i2c_read_reg(uint8_t reg, uint8_t *data, size_t len)
 {
@@ -64,6 +120,12 @@ esp_err_t imu_init(void)
         return err;
     }
     vTaskDelay(pdMS_TO_TICKS(25));
+
+    // Attempt to restore saved calibration offsets
+    if (imu_load_calibration() == ESP_OK) {
+        calibration_saved = true;
+    }
+
     err = i2c_write_reg(BNO055_OPR_MODE_REG, BNO055_OPR_MODE_NDOF);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to set NDOF mode");
@@ -135,5 +197,10 @@ bool imu_is_calibrated(void)
     uint8_t stat = 0;
     if (i2c_read_reg(BNO055_CALIB_STAT_REG, &stat, 1) != ESP_OK) return false;
     // All 4 subsystems calibrated (sys, gyro, accel, mag all == 3)
-    return stat == 0xFF;
+    bool fully_calibrated = (stat == 0xFF);
+    if (fully_calibrated && !calibration_saved) {
+        imu_save_calibration();
+        calibration_saved = true;
+    }
+    return fully_calibrated;
 }
