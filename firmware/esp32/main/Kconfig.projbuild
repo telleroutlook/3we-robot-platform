@@ -191,4 +191,14 @@ menu "Robot Platform Configuration"
             default 2
     endmenu
 
+    menu "Docking"
+        config ROBOT_DOCKING_ENABLED
+            bool "Enable charging dock support"
+            default n
+            help
+                Enable charging contact detection via ADC pogo pin sense.
+                Uses GPIO 9 (ADC1_CH8) which conflicts with US_ECHO_LEFT —
+                builds with docking enabled must omit side ultrasonics.
+    endmenu
+
 endmenu

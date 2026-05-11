@@ -23,11 +23,14 @@ set(SRCS
     "captive_portal.c"
     "heartbeat_monitor.c"
     "external_wdt.c"
-    "charging_detect.c"
 )
 
 set(PRIV_REQS "")
 set(COMPILE_DEFS "")
+
+if(CONFIG_ROBOT_DOCKING_ENABLED)
+    list(APPEND SRCS "charging_detect.c")
+endif()
 
 if(DEFINED ENV{CI})
     list(APPEND COMPILE_DEFS "MICROROS_DISABLED=1")
