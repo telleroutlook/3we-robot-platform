@@ -12,8 +12,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PCB_FILE="$PROJECT_ROOT/hardware/pcb/robot-platform.kicad_pcb"
 
-# Check if kicad-cli is available
-if ! command -v kicad-cli &> /dev/null; then
+# Locate kicad-cli
+KICAD_CLI=""
+if command -v kicad-cli &>/dev/null; then
+    KICAD_CLI="kicad-cli"
+elif [ -x "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli" ]; then
+    KICAD_CLI="/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
+else
     echo "WARNING: kicad-cli not found."
     echo "Install KiCad 8+ and ensure kicad-cli is in PATH."
     echo ""
@@ -39,7 +44,7 @@ DRC_REPORT=$(mktemp /tmp/drc_report_XXXXXX.json)
 trap 'rm -f "$DRC_REPORT"' EXIT
 
 # Run DRC
-DRC_OUTPUT=$(kicad-cli pcb drc \
+DRC_OUTPUT=$("$KICAD_CLI" pcb drc \
     --output "$DRC_REPORT" \
     --format json \
     --severity-all \
