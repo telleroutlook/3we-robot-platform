@@ -335,5 +335,76 @@
       </link>
     </model>
 
+    <!-- Bookshelf (north-east corner, 1.8m tall) -->
+    <model name="bookshelf">
+      <static>true</static>
+      <pose>14 9.5 0.9 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.0 0.35 1.8</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.0 0.35 1.8</size></box></geometry>
+          <material><ambient>0.55 0.4 0.25 1</ambient><diffuse>0.55 0.4 0.25 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Water cooler (corridor, near south door) -->
+    <model name="water_cooler">
+      <static>true</static>
+      <pose>6 4.5 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><cylinder><radius>0.18</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.18</radius><length>1.0</length></cylinder></geometry>
+          <material><ambient>0.8 0.8 0.85 1</ambient><diffuse>0.8 0.8 0.85 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Potted plant (corridor decoration) -->
+    <model name="potted_plant">
+      <static>true</static>
+      <pose>9 5.5 0.3 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><cylinder><radius>0.2</radius><length>0.6</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.2</radius><length>0.6</length></cylinder></geometry>
+          <material><ambient>0.2 0.5 0.2 1</ambient><diffuse>0.2 0.5 0.2 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Trash bin (near corridor wall) -->
+    <model name="trash_bin">
+      <static>false</static>
+      <pose>4.5 4.6 0.2 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>2.0</mass>
+          <inertia><ixx>0.02</ixx><iyy>0.02</iyy><izz>0.01</izz></inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><cylinder><radius>0.15</radius><length>0.4</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.15</radius><length>0.4</length></cylinder></geometry>
+          <material><ambient>0.4 0.4 0.42 1</ambient><diffuse>0.4 0.4 0.42 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Charging dock with AprilTag (against east wall) -->
+    <include>
+      <uri>model://charging_dock</uri>
+      <name>charging_dock_1</name>
+      <pose>14.7 3 0 0 0 3.14159</pose>
+    </include>
+
   </world>
 </sdf>

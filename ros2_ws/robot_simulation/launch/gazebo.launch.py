@@ -128,8 +128,11 @@ def _launch_setup(context: LaunchContext):
 def generate_launch_description():
     pkg_simulation = FindPackageShare("robot_simulation")
 
+    models_path = PathJoinSubstitution([pkg_simulation, "models"])
+
     return LaunchDescription(
         [
+            SetEnvironmentVariable("GZ_SIM_RESOURCE_PATH", models_path),
             DeclareLaunchArgument(
                 "sku",
                 default_value="standard",

@@ -29,6 +29,11 @@ install(DIRECTORY rviz/
   DESTINATION share/${PROJECT_NAME}/rviz
 )
 
+# Install Gazebo models
+install(DIRECTORY models/
+  DESTINATION share/${PROJECT_NAME}/models
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_pytest REQUIRED)
