@@ -116,6 +116,14 @@ esp_err_t nvs_get_str(nvs_handle_t handle, const char *key, char *out, size_t *l
     (void)handle; (void)key; (void)out; (void)length;
     return ESP_ERR_NOT_FOUND;
 }
+esp_err_t nvs_get_blob(nvs_handle_t handle, const char *key, void *out, size_t *length) {
+    (void)handle; (void)key; (void)out; (void)length;
+    return ESP_ERR_NOT_FOUND;
+}
+esp_err_t nvs_set_blob(nvs_handle_t handle, const char *key, const void *data, size_t length) {
+    (void)handle; (void)key; (void)data; (void)length;
+    return ESP_OK;
+}
 
 // --- PCNT mocks ---
 static int mock_pcnt_counts[4] = {0};

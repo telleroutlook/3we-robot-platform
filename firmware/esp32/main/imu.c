@@ -31,6 +31,9 @@ static const char *TAG = "imu";
 static uint8_t imu_addr = IMU_ADDR;
 static bool calibration_saved = false;
 
+static esp_err_t i2c_read_reg(uint8_t reg, uint8_t *data, size_t len);
+static esp_err_t i2c_write_reg(uint8_t reg, uint8_t val);
+
 static esp_err_t imu_load_calibration(void)
 {
     nvs_handle_t handle;

@@ -5,6 +5,7 @@
 
 #define ESTOP_GPIO          41
 #define SAFETY_RELAY_FB     42
+#define SAFETY_RELAY_FB2    22
 #define WATCHDOG_TIMEOUT_MS 1000
 
 // --- Motor control mock ---
@@ -34,6 +35,7 @@ static void safety_test_setUp(void)
     // GPIO 41 released (high = not pressed), relay feedback high (healthy)
     mock_set_gpio_level(ESTOP_GPIO, 1);
     mock_set_gpio_level(SAFETY_RELAY_FB, 1);
+    mock_set_gpio_level(SAFETY_RELAY_FB2, 1);
     mock_set_timer(0);
 
     // Re-initialize safety module to reset static state
@@ -108,6 +110,7 @@ void test_safety_is_estopped_all_non_normal(void)
     safety_init();
     // Trigger 3 relay faults to escalate to RELAY_FAULT
     mock_set_gpio_level(SAFETY_RELAY_FB, 0);
+    mock_set_gpio_level(SAFETY_RELAY_FB2, 0);
     safety_relay_selftest();
     safety_relay_selftest();
     safety_relay_selftest();
@@ -147,6 +150,7 @@ void test_safety_reset_rejects_relay_fault(void)
     safety_test_setUp();
     // Force into RELAY_FAULT: 3 selftest failures
     mock_set_gpio_level(SAFETY_RELAY_FB, 0);
+    mock_set_gpio_level(SAFETY_RELAY_FB2, 0);
     safety_relay_selftest();
     safety_relay_selftest();
     safety_relay_selftest();
@@ -256,6 +260,7 @@ void test_safety_relay_selftest_pass_released(void)
     safety_test_setUp();
     mock_set_gpio_level(ESTOP_GPIO, 1);
     mock_set_gpio_level(SAFETY_RELAY_FB, 1);
+    mock_set_gpio_level(SAFETY_RELAY_FB2, 1);
 
     esp_err_t err = safety_relay_selftest();
 
@@ -269,6 +274,7 @@ void test_safety_relay_selftest_fail_stuck_off(void)
     safety_test_setUp();
     mock_set_gpio_level(ESTOP_GPIO, 1);
     mock_set_gpio_level(SAFETY_RELAY_FB, 0);
+    mock_set_gpio_level(SAFETY_RELAY_FB2, 0);
 
     // Need 3 failures for RELAY_FAULT escalation
     safety_relay_selftest();
@@ -288,6 +294,7 @@ void test_safety_relay_selftest_pass_pressed(void)
     TEST_ASSERT_EQUAL(SAFETY_ESTOPPED, safety_get_state());
 
     mock_set_gpio_level(SAFETY_RELAY_FB, 0);
+    mock_set_gpio_level(SAFETY_RELAY_FB2, 0);
 
     esp_err_t err = safety_relay_selftest();
 
@@ -303,6 +310,7 @@ void test_safety_relay_selftest_fail_welded(void)
     TEST_ASSERT_EQUAL(SAFETY_ESTOPPED, safety_get_state());
 
     mock_set_gpio_level(SAFETY_RELAY_FB, 1);
+    mock_set_gpio_level(SAFETY_RELAY_FB2, 1);
 
     // Need 3 failures for escalation
     safety_relay_selftest();
@@ -320,6 +328,7 @@ void test_safety_clear_relay_fault_success(void)
     // Trigger RELAY_FAULT state
     mock_set_gpio_level(ESTOP_GPIO, 1);
     mock_set_gpio_level(SAFETY_RELAY_FB, 0);
+    mock_set_gpio_level(SAFETY_RELAY_FB2, 0);
     safety_relay_selftest();
     safety_relay_selftest();
     safety_relay_selftest();
