@@ -35,7 +35,7 @@ def generate_launch_description():
             PathJoinSubstitution([pkg_simulation, "launch", "gazebo_nav.launch.py"])
         ),
         launch_arguments={
-            "world": "obstacles.sdf",
+            "world": PathJoinSubstitution([pkg_simulation, "worlds", "obstacles.sdf"]),
             "headless": LaunchConfiguration("headless"),
             "sku": "standard",
             "use_rviz": "false",

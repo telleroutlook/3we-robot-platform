@@ -40,6 +40,7 @@ jobs:
           apt-get update && apt-get install -y \
             python3-pip \
             ros-humble-nav2-bringup \
+            ros-humble-nav2-smac-planner \
             ros-humble-slam-toolbox \
             ros-humble-robot-localization \
             ros-humble-xacro \
@@ -48,6 +49,7 @@ jobs:
             ros-humble-robot-state-publisher \
             ros-humble-joint-state-publisher \
             ros-humble-tf2-ros \
+            libignition-rendering6-ogre \
             mesa-utils \
             libgl1-mesa-dri \
             libegl1-mesa \
