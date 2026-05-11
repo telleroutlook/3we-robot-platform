@@ -5,6 +5,13 @@
 #include "safety.h"
 #include "pin_definitions.h"
 
+#ifdef CONFIG_THERMAL_NTC_ENABLED
+#include "adc_manager.h"
+#include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
+#endif
+
 #include "driver/i2c.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -34,6 +41,16 @@ static const char *TAG = "thermal";
 // Rth_ja ~= 40°C/W for typical motor driver package + PCB
 #define THERMAL_RESISTANCE  40.0f
 #define AMBIENT_TEMP_C      25.0f
+
+// NTC thermistor parameters (10K B3950)
+#ifdef CONFIG_THERMAL_NTC_ENABLED
+#define NTC_R25             10000.0f // Resistance at 25°C
+#define NTC_BETA            3950.0f  // B-value
+#define NTC_SERIES_R        10000.0f // Series resistor in voltage divider
+#define NTC_ADC_CHANNEL     ADC_CHANNEL_5  // Placeholder — confirm with PCB
+#define NTC_ADC_ATTEN       ADC_ATTEN_DB_11
+static adc_cali_handle_t ntc_cali_handle;
+#endif
 
 static thermal_state_t state = THERMAL_OK;
 static thermal_callback_t user_callback = NULL;
@@ -81,6 +98,26 @@ esp_err_t thermal_monitor_init(void)
 
     state = THERMAL_OK;
     memset(&last_reading, 0, sizeof(last_reading));
+
+#ifdef CONFIG_THERMAL_NTC_ENABLED
+    adc_oneshot_unit_handle_t adc_handle = adc_manager_get_handle();
+    if (adc_handle) {
+        adc_oneshot_chan_cfg_t chan_cfg = {
+            .atten = NTC_ADC_ATTEN,
+            .bitwidth = ADC_BITWIDTH_12,
+        };
+        adc_oneshot_config_channel(adc_handle, NTC_ADC_CHANNEL, &chan_cfg);
+
+        adc_cali_curve_fitting_config_t cali_cfg = {
+            .unit_id = ADC_UNIT_1,
+            .atten = NTC_ADC_ATTEN,
+            .bitwidth = ADC_BITWIDTH_12,
+        };
+        adc_cali_create_scheme_curve_fitting(&cali_cfg, &ntc_cali_handle);
+        ESP_LOGI(TAG, "NTC thermistor ADC initialized");
+    }
+#endif
+
     ESP_LOGI(TAG, "Thermal monitor initialized (INA219 at 0x%02X)", INA219_ADDR);
     return ESP_OK;
 }
@@ -108,11 +145,17 @@ static void update_thermal_state(thermal_reading_t *r)
     float power_w = r->power_mw / 1000.0f;
     r->estimated_temp_c = AMBIENT_TEMP_C + (power_w * THERMAL_RESISTANCE);
 
+    // Use the higher of INA219 estimate and NTC direct measurement
+    r->effective_temp_c = fmaxf(r->estimated_temp_c, r->ntc_temp_c);
+
     thermal_state_t new_state;
-    if (r->estimated_temp_c >= THERMAL_CRITICAL_TEMP_C ||
+    if (r->effective_temp_c >= THERMAL_CRITICAL_TEMP_C ||
         fabsf(r->current_ma) > (THERMAL_CURRENT_MAX_A * 1000.0f)) {
         new_state = THERMAL_SHUTDOWN;
-    } else if (r->estimated_temp_c >= THERMAL_WARNING_TEMP_C) {
+    } else if (r->effective_temp_c >= THERMAL_WARNING_TEMP_C) {
+        new_state = THERMAL_WARNING;
+    } else if (state == THERMAL_WARNING &&
+               r->effective_temp_c > (THERMAL_WARNING_TEMP_C - THERMAL_HYSTERESIS_C)) {
         new_state = THERMAL_WARNING;
     } else {
         new_state = THERMAL_OK;
@@ -162,6 +205,26 @@ void thermal_monitor_task(void *params)
         if (ina219_read_reg(INA219_REG_POWER, &raw) == ESP_OK) {
             reading.power_mw = raw * 2.0f;
         }
+
+#ifdef CONFIG_THERMAL_NTC_ENABLED
+        // Read NTC thermistor via ADC
+        adc_oneshot_unit_handle_t adc_handle = adc_manager_get_handle();
+        if (adc_handle && ntc_cali_handle) {
+            int adc_raw = 0;
+            if (adc_oneshot_read(adc_handle, NTC_ADC_CHANNEL, &adc_raw) == ESP_OK) {
+                int voltage_mv = 0;
+                adc_cali_raw_to_voltage(ntc_cali_handle, adc_raw, &voltage_mv);
+                // Steinhart-Hart: convert voltage divider reading to temperature
+                float v = (float)voltage_mv / 1000.0f;
+                if (v > 0.01f && v < 3.29f) {
+                    float resistance = NTC_SERIES_R * v / (3.3f - v);
+                    float log_r = logf(resistance / NTC_R25);
+                    float inv_t = (1.0f / 298.15f) + (1.0f / NTC_BETA) * log_r;
+                    reading.ntc_temp_c = (1.0f / inv_t) - 273.15f;
+                }
+            }
+        }
+#endif
 
         update_thermal_state(&reading);
         last_reading = reading;

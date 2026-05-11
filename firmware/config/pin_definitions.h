@@ -148,4 +148,19 @@
 #define BTS7960_EN_ACTIVE   1  // Flag: enables are hardware-tied, no GPIO needed
 #endif
 
+// =============================================================================
+// Industrial SKU: ACS712 Current Sensing (ADC)
+// =============================================================================
+// ACS712 outputs analog voltage proportional to motor current (2.5V = 0A).
+// Industrial PCB routes 4x ACS712 outputs to ADC-capable GPIOs via the
+// industrial expansion header. Channels are read by current_sense.c.
+// NOTE: Final GPIO assignment depends on Industrial PCB rev ≥ 3.2 routing.
+#ifdef CONFIG_CURRENT_SENSE_ENABLED
+#define CURRENT_SENSE_FL_GPIO       1   // ADC1_CH0 (placeholder — confirm with PCB)
+#define CURRENT_SENSE_FR_GPIO       2   // ADC1_CH1 (placeholder — confirm with PCB)
+#define CURRENT_SENSE_RL_GPIO       3   // ADC1_CH2 (placeholder — confirm with PCB)
+#define CURRENT_SENSE_RR_GPIO       4   // ADC1_CH3 (placeholder — confirm with PCB)
+#define CURRENT_SENSE_ADC_ATTEN     ADC_ATTEN_DB_11
+#endif
+
 #endif // PIN_DEFINITIONS_H

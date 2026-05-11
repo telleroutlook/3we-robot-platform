@@ -33,7 +33,11 @@ if(CONFIG_ROBOT_DOCKING_ENABLED)
     list(APPEND SRCS "charging_detect.c")
 endif()
 
-if(DEFINED ENV{CI})
+if(CONFIG_CURRENT_SENSE_ENABLED)
+    list(APPEND SRCS "current_sense.c")
+endif()
+
+if(CONFIG_ROBOT_BASIC_STANDALONE OR DEFINED ENV{CI})
     list(APPEND COMPILE_DEFS "MICROROS_DISABLED=1")
 else()
     list(APPEND SRCS "microros_transport.c")

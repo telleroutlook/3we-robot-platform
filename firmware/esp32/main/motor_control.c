@@ -75,7 +75,7 @@ void motor_set_speed(motor_id_t id, float speed_pct)
     if (id >= MOTOR_COUNT) return;
 
     float clamped = fmaxf(-1.0f, fminf(1.0f, speed_pct));
-    uint32_t duty = (uint32_t)(fabsf(clamped) * PWM_MAX_DUTY);
+    uint32_t duty = (uint32_t)(fabsf(clamped) * PWM_DUTY_CAP * PWM_MAX_DUTY);
 
     portENTER_CRITICAL(&motor_spinlock);
 

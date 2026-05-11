@@ -44,11 +44,22 @@
 // PWM
 #define PWM_RESOLUTION_BITS     8
 #define PWM_MAX_DUTY            ((1 << PWM_RESOLUTION_BITS) - 1)
+#ifdef CONFIG_MOTOR_PWM_DUTY_CAP_PCT
+#define PWM_DUTY_CAP            (CONFIG_MOTOR_PWM_DUTY_CAP_PCT / 100.0f)
+#else
+#define PWM_DUTY_CAP            1.0f
+#endif
 
-// PID defaults (velocity control)
+// PID defaults (velocity control, from Kconfig when available)
+#ifdef CONFIG_MOTOR_PID_KP
+#define PID_KP_DEFAULT          (CONFIG_MOTOR_PID_KP / 100.0f)
+#define PID_KI_DEFAULT          (CONFIG_MOTOR_PID_KI / 100.0f)
+#define PID_KD_DEFAULT          (CONFIG_MOTOR_PID_KD / 100.0f)
+#else
 #define PID_KP_DEFAULT          1.2f
 #define PID_KI_DEFAULT          0.8f
 #define PID_KD_DEFAULT          0.01f
+#endif
 #define PID_INTEGRAL_LIMIT      100.0f
 
 // Control loop
@@ -83,5 +94,24 @@
 #define ULTRASONIC_PUBLISH_HZ   10
 #define BATTERY_PUBLISH_HZ      1
 #define WHEEL_SPEED_PUBLISH_HZ  50
+
+// --- Competition Profile overrides (applied AFTER SKU defaults) ---
+#ifdef CONFIG_ROBOT_PROFILE_COMPETITION
+#include "profiles/competition.h"
+#undef GEAR_RATIO
+#undef MAX_MOTOR_RPM
+#undef PID_KP_DEFAULT
+#undef PID_KI_DEFAULT
+#undef PID_KD_DEFAULT
+#undef US_SAFETY_THRESHOLD_M
+#undef MAX_LINEAR_VEL
+#define GEAR_RATIO              COMPETITION_GEAR_RATIO
+#define MAX_MOTOR_RPM           COMPETITION_MAX_MOTOR_RPM
+#define PID_KP_DEFAULT          COMPETITION_PID_KP
+#define PID_KI_DEFAULT          COMPETITION_PID_KI
+#define PID_KD_DEFAULT          COMPETITION_PID_KD
+#define US_SAFETY_THRESHOLD_M   COMPETITION_US_THRESHOLD_M
+#define MAX_LINEAR_VEL          COMPETITION_MAX_VEL_LINEAR
+#endif
 
 #endif // ROBOT_PARAMS_H

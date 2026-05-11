@@ -115,24 +115,57 @@ menu "Robot Platform Configuration"
                 Industrial (500x400 chassis): 300mm
     endmenu
 
+    menu "Robot Profile"
+        choice ROBOT_PROFILE
+            prompt "Operating Profile"
+            default ROBOT_PROFILE_STANDARD
+            help
+                Select operational profile. Competition profile overrides motor
+                parameters for high-speed RoboCup-style operation (1:30 gear,
+                500 RPM, aggressive PID). Independent of SKU selection but
+                intended for use with standard-version competition chassis.
+
+            config ROBOT_PROFILE_STANDARD
+                bool "Standard (conservative safety margins, commercial deployment)"
+            config ROBOT_PROFILE_COMPETITION
+                bool "Competition (aggressive PID, 1:30 gear ratio, 0.8m/s max)"
+                help
+                    Activates competition parameters for RoboCup Logistics League etc.
+                    Requires N20 1:30 motor hardware and encoder with >=12 CPR.
+                    Only use with standard-version competition chassis (300x250mm).
+        endchoice
+
+        config MOTOR_PWM_DUTY_CAP_PCT
+            int "PWM duty cycle cap (percent)"
+            default 85
+            range 50 100
+            help
+                Maximum PWM duty cycle percentage. Protects DRV8833 from
+                sustained full-duty thermal damage. 85% keeps RMS current
+                below 1.0A (rated 1.2A), providing 20% thermal headroom.
+    endmenu
+
     menu "Motor PID Tuning"
         config MOTOR_PID_KP
             int "Proportional gain (x100)"
+            default 180 if ROBOT_PROFILE_COMPETITION
             default 120
             help
-                PID Kp * 100. Default 120 = 1.20
+                PID Kp * 100. Default 120 = 1.20 (standard), 180 = 1.80 (competition)
 
         config MOTOR_PID_KI
             int "Integral gain (x100)"
+            default 120 if ROBOT_PROFILE_COMPETITION
             default 80
             help
-                PID Ki * 100. Default 80 = 0.80
+                PID Ki * 100. Default 80 = 0.80 (standard), 120 = 1.20 (competition)
 
         config MOTOR_PID_KD
             int "Derivative gain (x100)"
+            default 2 if ROBOT_PROFILE_COMPETITION
             default 1
             help
-                PID Kd * 100. Default 1 = 0.01
+                PID Kd * 100. Default 1 = 0.01 (standard), 2 = 0.02 (competition)
     endmenu
 
     menu "Communication"
@@ -199,6 +232,39 @@ menu "Robot Platform Configuration"
                 Enable charging contact detection via ADC pogo pin sense.
                 Uses GPIO 9 (ADC1_CH8) which conflicts with US_ECHO_LEFT —
                 builds with docking enabled must omit side ultrasonics.
+    endmenu
+
+    menu "Basic SKU Mode"
+        config ROBOT_BASIC_STANDALONE
+            bool "Standalone mode (no Pi 5, no micro-ROS)"
+            default y if ROBOT_SKU_BASIC
+            default n
+            help
+                Basic SKU runs as standalone ESP32-S3 platform without
+                companion computer. Disables micro-ROS agent and UART to Pi 5.
+                Enables WiFi UDP direct control (V1 protocol).
+                Retains PID motor control, ultrasonic safety, and battery monitoring.
+    endmenu
+
+    menu "Current Sensing"
+        config CURRENT_SENSE_ENABLED
+            bool "Enable ACS712 motor current sensing"
+            default y if ROBOT_SKU_INDUSTRIAL
+            default n
+            help
+                Enable per-motor current sensing via ACS712 analog output.
+                Provides overcurrent protection (soft limit 3A, hard limit 8A)
+                and current telemetry on /motor/current topic.
+                Requires ACS712 modules wired to ADC-capable GPIOs.
+
+        config THERMAL_NTC_ENABLED
+            bool "Enable NTC thermistor temperature measurement"
+            default y if ROBOT_SKU_INDUSTRIAL
+            default n
+            help
+                Read motor driver temperature from NTC thermistor via ADC.
+                Supplements INA219 power-based thermal estimation.
+                Safety system uses the higher of both readings.
     endmenu
 
 endmenu

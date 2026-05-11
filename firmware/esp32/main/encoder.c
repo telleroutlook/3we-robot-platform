@@ -6,6 +6,8 @@
 #include "driver/pulse_cnt.h"
 #include "esp_log.h"
 
+#include <stdlib.h>
+
 static const char *TAG = "encoder";
 
 typedef struct {
@@ -23,6 +25,8 @@ static const encoder_pins_t enc_pins[MOTOR_COUNT] = {
 static pcnt_unit_handle_t pcnt_units[MOTOR_COUNT];
 static int32_t prev_count[MOTOR_COUNT];
 static float speed_rps[MOTOR_COUNT];
+
+static void encoder_validate_config(void);
 
 esp_err_t encoder_init(void)
 {
@@ -71,7 +75,29 @@ esp_err_t encoder_init(void)
     }
 
     ESP_LOGI(TAG, "Encoders initialized (PCNT, %d CPR)", ENCODER_CPR);
+
+    encoder_validate_config();
+
     return ESP_OK;
+}
+
+#define MIN_RAW_CPR  12
+
+static void encoder_validate_config(void)
+{
+    uint16_t raw_cpr = ENCODER_CPR / GEAR_RATIO;
+    if (raw_cpr < MIN_RAW_CPR) {
+        ESP_LOGW(TAG, "Raw encoder CPR %d < minimum %d — high-speed PID may oscillate",
+                 raw_cpr, MIN_RAW_CPR);
+    }
+
+    for (int i = 0; i < MOTOR_COUNT; i++) {
+        int count = 0;
+        pcnt_unit_get_count(pcnt_units[i], &count);
+        if (abs(count) > 2) {
+            ESP_LOGW(TAG, "Motor %d encoder non-zero at boot (%d) — check wiring", i, count);
+        }
+    }
 }
 
 int32_t encoder_get_count(motor_id_t id)

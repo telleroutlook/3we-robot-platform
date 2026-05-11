@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Simulation Acceptance
+
+on:
+  pull_request:
+    paths:
+      - 'ros2_ws/robot_navigation/**'
+      - 'ros2_ws/robot_simulation/**'
+      - 'ros2_ws/robot_bringup/**'
+      - 'firmware/config/**'
+  push:
+    branches: [main]
+    paths:
+      - 'ros2_ws/robot_navigation/**'
+      - 'ros2_ws/robot_simulation/**'
+  schedule:
+    - cron: '23 3 * * 1'  # Weekly Monday regression
+  workflow_dispatch:
+
+jobs:
+  nav2-patrol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    container:
+      image: osrf/ros:humble-desktop
+      options: --ipc=host
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update && apt-get install -y \
+            python3-pip \
+            ros-humble-nav2-bringup \
+            ros-humble-slam-toolbox \
+            ros-humble-robot-localization \
+            bc jq
+          pip3 install pytest
+
+      - name: Build simulation workspace
+        run: |
+          source /opt/ros/humble/setup.bash
+          cd ros2_ws
+          colcon build --packages-select \
+            robot_interfaces \
+            robot_description \
+            robot_simulation \
+            robot_bringup
+        shell: bash
+
+      - name: Run 5-point patrol acceptance test
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ros2_ws/install/setup.bash
+          ros2 launch robot_simulation acceptance_test.launch.py \
+            headless:=true \
+            trials:=10 \
+            timeout_per_trial:=120 &
+          LAUNCH_PID=$!
+          sleep 20
+          cd tests/integration
+          python3 -m pytest test_patrol_acceptance.py -v --timeout=600 \
+            --junit-xml=/tmp/patrol_results.xml
+          kill $LAUNCH_PID 2>/dev/null || true
+        shell: bash
+
+      - name: Check pass rate
+        if: always()
+        run: |
+          if [ -f /tmp/sim_results.json ]; then
+            PASS_RATE=$(jq '.pass_rate' /tmp/sim_results.json)
+            echo "Pass rate: $PASS_RATE"
+            if (( $(echo "$PASS_RATE < 0.95" | bc -l) )); then
+              echo "FAIL: Nav2 patrol pass rate $PASS_RATE < 95%"
+              exit 1
+            fi
+          fi
+        shell: bash
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-results
+          path: |
+            /tmp/sim_results.json
+            /tmp/patrol_results.xml

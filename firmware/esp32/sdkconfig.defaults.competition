@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Standard version - Competition configuration overlay
+# Usage: idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.competition" build
+CONFIG_ROBOT_PROFILE_COMPETITION=y
+CONFIG_MOTOR_PWM_DUTY_CAP_PCT=85

@@ -9,6 +9,7 @@
 #define THERMAL_WARNING_TEMP_C  70.0f
 #define THERMAL_CRITICAL_TEMP_C 85.0f
 #define THERMAL_CURRENT_MAX_A   3.0f
+#define THERMAL_HYSTERESIS_C    10.0f
 
 typedef enum {
     THERMAL_OK = 0,
@@ -23,6 +24,8 @@ typedef struct {
     float current_ma;
     float power_mw;
     float estimated_temp_c;
+    float ntc_temp_c;
+    float effective_temp_c;
     thermal_state_t state;
 } thermal_reading_t;
 
