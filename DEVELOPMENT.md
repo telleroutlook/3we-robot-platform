@@ -150,6 +150,7 @@ firmware/           → ESP32-S3 firmware (C, ESP-IDF)
   tests/            → Host-side unit tests (Unity framework)
 ros2_ws/            → ROS2 workspace
   robot_bringup/    → Launch files, QoS config, parameters
+  robot_competition/ → RoboCup Logistics League competition nodes
   robot_description/ → URDF/Xacro model
   robot_diagnostics/ → Health monitoring, diagnostics aggregator
   robot_docking/    → Autonomous docking controller (visual servo + contact verify)
@@ -165,7 +166,7 @@ sdk/                → Developer SDK
   payload_interface/ → Python library for PBC-34 payloads
   examples/         → Reference payload implementations
   tools/            → CLI tools (eeprom-validator, provision-keys)
-  web_control/      → TypeScript Web Components (Lit-style)
+  web_control/      → TypeScript Web Components (vanilla, Shadow DOM)
   web_basic/        → Minimal zero-dependency teleop page
 docs/               → User documentation
 scripts/            → Automation (setup, flash, validate, release)
@@ -221,7 +222,7 @@ Extensions:
 - **ESP-IDF** — Build, flash, monitor from VS Code
 - **C/C++** — IntelliSense for firmware code
 - **ROS** — ROS2 launch, topic, service integration
-- **Lit Plugin** — Web component development
+- **Web Components** — Custom elements development
 - **ESLint** + **Prettier** — TypeScript formatting
 
 Workspace settings (`.vscode/settings.json`):

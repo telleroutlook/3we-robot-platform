@@ -68,7 +68,7 @@ An open-source omnidirectional mobile robot platform designed for<br/>
 - ISO 13850 hardware E-stop
 - Dual-channel safety relay with self-test
 - DTLS 1.2 encrypted communication
-- Ed25519 signed OTA updates
+- ECDSA P-256 signed OTA updates
 
 </td>
 <td>
@@ -155,10 +155,11 @@ robot-platform/
 │
 ├── ros2_ws/                    # ROS2 workspace
 │   ├── robot_bringup/          #   Launch files, Nav2/SLAM config
+│   ├── robot_competition/      #   Competition nodes (RoboCup)
 │   ├── robot_description/      #   URDF model (Xacro)
 │   ├── robot_diagnostics/      #   Health monitoring, metrics
 │   ├── robot_docking/          #   Autonomous docking controller
-│   ├── robot_interfaces/       #   Custom msg/srv definitions
+│   ├── robot_interfaces/       #   Custom msg/srv/action definitions
 │   ├── robot_perception/       #   Camera + AI inference (Hailo)
 │   └── robot_simulation/       #   Gazebo simulation
 │
@@ -171,7 +172,7 @@ robot-platform/
 │   ├── payload_interface/      #   Python communication library
 │   ├── tools/                  #   EEPROM validator, diagnostics
 │   ├── examples/               #   Reference implementations
-│   ├── web_control/            #   TypeScript Web Components (Lit)
+│   ├── web_control/            #   TypeScript Web Components
 │   └── web_basic/              #   Browser-based teleop UI
 │
 └── docs/                       # Documentation
@@ -245,7 +246,7 @@ npm run build
 | Middleware | micro-ROS ↔ ROS2 | MCU–SBC bridge |
 | Navigation | Nav2 + slam_toolbox | SLAM and path planning |
 | Motor Driver | DRV8833 x2 | 4 × DC motor H-bridge |
-| Security | DTLS 1.2 + Ed25519 OTA | Encrypted control, signed updates |
+| Security | DTLS 1.2 + ECDSA P-256 OTA | Encrypted control, signed updates |
 | Safety | ISO 13850 E-stop | Hardware interlock |
 
 <br/>

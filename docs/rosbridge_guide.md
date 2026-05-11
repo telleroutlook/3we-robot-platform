@@ -1,6 +1,6 @@
 # Rosbridge Integration Guide
 
-> See also: [web_control_api.md](web_control_api.md) for the Web Components that use this connection, and [ros2_interface_reference.md](ros2_interface_reference.md) for the complete topic/service definitions.
+> See also: [network_architecture.md](network_architecture.md) for the full communication topology and security model, [web_control_api.md](web_control_api.md) for the Web Components that use this connection, and [ros2_interface_reference.md](ros2_interface_reference.md) for the complete topic/service definitions.
 
 ## What is Rosbridge?
 
@@ -46,13 +46,21 @@ ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 
 Default port: **9090** (WebSocket)
 
-### With Robot Stack
+### With Docker Deployment
 
-The robot bringup launch file includes rosbridge:
+The Docker image starts rosbridge automatically alongside the ROS2 stack:
 
 ```bash
-ros2 launch robot_bringup robot.launch.py
+docker compose up
 ```
+
+Rosbridge is launched on port 9090 inside the container (see `Dockerfile` entrypoint).
+
+> **Note:** The `robot_bringup` launch files do NOT include rosbridge. In non-Docker setups, start rosbridge separately:
+> ```bash
+> ros2 launch rosbridge_server rosbridge_websocket_launch.xml &
+> ros2 launch robot_bringup robot.launch.py
+> ```
 
 ### Custom Port
 

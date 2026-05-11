@@ -70,6 +70,7 @@ firmware/       → ESP32 firmware source, build configs
   config/       → Shared configuration schemas
 ros2_ws/        → ROS2 workspace (colcon packages)
   robot_bringup/     → Launch files, parameter configs
+  robot_competition/ → RoboCup Logistics League competition nodes
   robot_description/ → URDF/Xacro, meshes
   robot_diagnostics/ → Health monitoring, metrics exporter
   robot_docking/     → Autonomous docking
@@ -80,11 +81,15 @@ hardware/       → Hardware design files
   pcb/          → KiCad projects (schematic + layout)
   structure/    → Mechanical CAD exports, drawings
   bom/          → Bill of materials
+  charging_dock/ → Docking station hardware (PCB, BOM, docs)
+  production/   → Manufacturing outputs (Gerbers, drill, positions)
+  manufacturing/ → Manufacturing documentation
+  validation/   → Hardware validation tests
 sdk/            → Payload developer toolkit
   payload_interface/ → Library for payload communication
   examples/     → Reference payload implementations
   tools/        → CLI tools (eeprom_validator, provision_keys)
-  web_control/  → TypeScript Web Components (Lit-style)
+  web_control/  → TypeScript Web Components (vanilla, Shadow DOM)
   web_basic/    → Minimal zero-dependency teleop page
 monitoring/     → Prometheus + Grafana observability stack
 scripts/        → Automation (setup, validate, release)

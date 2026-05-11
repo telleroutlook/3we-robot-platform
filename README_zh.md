@@ -68,7 +68,7 @@
 - ISO 13850 硬件急停按钮
 - 双通道安全继电器（带自检）
 - DTLS 1.2 加密通信
-- Ed25519 签名 OTA 升级
+- ECDSA P-256 签名 OTA 升级
 
 </td>
 <td>
@@ -155,10 +155,11 @@ robot-platform/
 │
 ├── ros2_ws/                    # ROS2 工作空间
 │   ├── robot_bringup/          #   启动文件、Nav2/SLAM 配置
+│   ├── robot_competition/      #   竞赛节点 (RoboCup)
 │   ├── robot_description/      #   URDF 模型 (Xacro)
 │   ├── robot_diagnostics/      #   健康监控、指标导出
 │   ├── robot_docking/          #   自主对接控制器
-│   ├── robot_interfaces/       #   自定义消息/服务定义
+│   ├── robot_interfaces/       #   自定义消息/服务/动作定义
 │   ├── robot_perception/       #   摄像头 + AI 推理 (Hailo)
 │   └── robot_simulation/       #   Gazebo 仿真
 │
@@ -171,7 +172,7 @@ robot-platform/
 │   ├── payload_interface/      #   Python 通信库
 │   ├── tools/                  #   EEPROM 验证工具
 │   ├── examples/               #   参考实现
-│   ├── web_control/            #   TypeScript Web 组件 (Lit)
+│   ├── web_control/            #   TypeScript Web 组件
 │   └── web_basic/              #   浏览器遥控界面
 │
 └── docs/                       # 文档
@@ -245,7 +246,7 @@ npm run build
 | 中间件 | micro-ROS ↔ ROS2 | MCU–SBC 桥接 |
 | 导航 | Nav2 + slam_toolbox | SLAM 与路径规划 |
 | 电机驱动 | DRV8833 x2 | 4 路直流电机 H 桥 |
-| 安全加密 | DTLS 1.2 + Ed25519 OTA | 加密控制、签名升级 |
+| 安全加密 | DTLS 1.2 + ECDSA P-256 OTA | 加密控制、签名升级 |
 | 安全系统 | ISO 13850 急停 | 硬件互锁 |
 
 <br/>

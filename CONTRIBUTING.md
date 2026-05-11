@@ -149,7 +149,7 @@ Changes to the following areas require extra scrutiny:
 - **Emergency stop circuit** — Must maintain ISO 13850 compliance
 - **Motor control** — Must respect safety relay interlock
 - **Battery management** — Must preserve protection circuit integrity
-- **OTA updates** — Must maintain Ed25519 signature verification
+- **OTA updates** — Must maintain ECDSA P-256 signature verification
 
 These changes require review from at least two maintainers.
 

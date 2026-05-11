@@ -18,18 +18,15 @@ The Basic SKU (¥999) is a standalone ESP32-S3 mobile platform for learning embe
 
 ### Option A: ESP-IDF (Recommended)
 
-```bash
-# Install ESP-IDF 5.x (Linux/macOS)
-mkdir -p ~/esp && cd ~/esp
-git clone -b v5.2 --recursive https://github.com/espressif/esp-idf.git
-cd esp-idf && ./install.sh esp32s3
-source export.sh
+Follow the full setup in [firmware_guide.md — Prerequisites](firmware_guide.md#prerequisites) to install ESP-IDF 5.x and USB drivers for your platform. Then build the Basic firmware:
 
-# Build and flash the Basic firmware
-cd path/to/3we-robot-platform/firmware/esp32
+```bash
+cd firmware/esp32
 idf.py set-target esp32s3
 idf.py build flash monitor
 ```
+
+See [firmware_guide.md](firmware_guide.md) for detailed build options, menuconfig, and troubleshooting.
 
 ### Option B: Arduino IDE
 

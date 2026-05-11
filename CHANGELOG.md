@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- `pin_definitions.h`: `CHARGE_ADC_ATTEN` changed from deprecated `ADC_ATTEN_DB_11` to `ADC_ATTEN_DB_12`
+- `pin_definitions.h`: `CHARGE_ADC_ATTEN` uses `ADC_ATTEN_DB_11` (ESP-IDF 5.x naming; the deprecated `ADC_ATTEN_DB_12` constant from ESP-IDF 4.x is no longer referenced)
 - `charging_detect.c`: Switched from `adc_cali_line_fitting` (ESP32 only) to `adc_cali_curve_fitting` (ESP32-S3 compatible)
 - `gazebo.launch.py`: Added `headless` launch argument; RViz2 auto-suppressed when headless
 - Integration test `test_diagnostics_reports_estop`: Publishes E-stop message multiple times with spin to prevent DDS discovery race
@@ -48,11 +48,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Industrial SKU CAN bus support
 - micro-ROS DDS-XRCE communication layer (UART 921600 baud)
 - UDP plaintext telemetry fallback (port 5685)
-- ROS2 workspace with 4 packages:
-  - `robot_interfaces` — 3 messages (WheelSpeeds, EmergencyStopState, PayloadState) and 2 services (EmergencyStop, PayloadPower)
+- ROS2 workspace with 8 packages:
+  - `robot_interfaces` — 4 messages (WheelSpeeds, EmergencyStopState, PayloadState, DockingState), 3 services (EmergencyStop, PayloadPower, UndockRobot), 1 action (Dock)
   - `robot_description` — URDF/Xacro for mecanum platform with 4 ultrasonic sensors, IMU, payload mount
   - `robot_bringup` — Launch files for hardware, navigation (Nav2 + slam_toolbox), QoS profiles
   - `robot_simulation` — Gazebo Fortress environment with sensor plugins, obstacle worlds, RViz config
+  - `robot_diagnostics` — Health monitoring and diagnostics aggregator
+  - `robot_docking` — Autonomous docking controller with visual servo
+  - `robot_perception` — Camera + AI inference (Hailo accelerator)
+  - `robot_competition` — RoboCup Logistics League competition nodes
 - Nav2 configuration tuned for mecanum omnidirectional drive (DWB local planner with lateral velocity)
 - PBC-34 Payload Interface SDK (Python):
   - `PayloadDescriptor` frozen dataclass with EEPROM parsing
@@ -60,9 +64,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Capability flags module (I2C, SPI, UART, GPIO, ADC, PWM, CAN)
   - EEPROM validator CLI tool
   - Example payloads (hello_payload, sensor_payload)
-- Web control interface (Lit + TypeScript + Vite):
-  - 7 Web Components: joystick, battery-gauge, sensor-radar, estop-button, imu-attitude, wheel-speeds, payload-panel
-  - ROS bridge WebSocket connection manager
+- Web control interface (TypeScript Web Components + Vite):
+  - 8 Web Components: joystick, battery-gauge, sensor-radar, estop-button, imu-attitude, wheel-speeds, payload-panel, system-status
+  - ROS bridge WebSocket connection manager with exponential backoff reconnect
   - Zod schema validation for incoming messages
 - Minimal web_basic fallback interface (zero dependencies, plain HTML/JS)
 - Hardware design:
@@ -71,8 +75,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - 7 DXF mechanical drawings (chassis, motor bracket, payload plate)
   - 3 SKU BOMs (basic, standard, industrial) + optional add-ons
   - DRC validation scripts and Gerber generation
-- 23 firmware unit tests (Unity framework, host-side compilation)
-- Playwright E2E test suite for web_control (7 spec files)
+- 26 firmware unit tests (Unity framework, host-side compilation)
+- Playwright E2E test suite for web_control (8 spec files)
 - pytest suite for payload SDK (protocol, EEPROM validator, capability flags)
 - `validate-ros-types.ts` cross-layer type synchronization script
 - GitHub Actions CI:
@@ -82,7 +86,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Web control tests (Playwright)
   - Hardware DRC check
 - CLA/DCO enforcement workflows
-- 13 documentation guides: assembly, firmware flash, payload development, ROS2 interface reference, network architecture, web control API, rosbridge guide, performance benchmarks, troubleshooting, compliance checklist, SLAM alternatives, hardware rendering prompts
+- 19 documentation guides: assembly, firmware flash, getting started, payload development, ROS2 interface reference, network architecture, web control API, rosbridge guide, performance benchmarks, troubleshooting, compliance checklist, SLAM alternatives, secrets management, fleet OTA strategy, fleet telemetry, Hailo integration, production deployment, competitive analysis, architecture diagrams
 - Bilingual README (English + Chinese)
 - CONTRIBUTING.md with branch strategy, commit conventions, safety review requirements
 - DEVELOPMENT.md with per-subsystem workflows and validation checklist

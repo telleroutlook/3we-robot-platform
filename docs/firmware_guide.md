@@ -175,6 +175,8 @@ ros2 topic pub /cmd_vel geometry_msgs/Twist \
 
 ## OTA Update
 
+> For fleet-wide rollout strategy, staged deployments, and monitoring, see [fleet_ota_strategy.md](fleet_ota_strategy.md).
+
 Over-the-air firmware updates via ESP-IDF's native OTA mechanism:
 
 1. Build firmware binary: `idf.py build`
@@ -232,7 +234,7 @@ The `charging_detect.c` module monitors a pogo-pin voltage on ADC1_CH8 (GPIO 9).
 | Parameter | Value |
 |-----------|-------|
 | ADC channel | ADC1_CH8 (GPIO 9) |
-| Attenuation | 12 dB (0–3.3V range) |
+| Attenuation | 11 dB (0–3.1V range, ESP-IDF 5.x) |
 | Contact threshold | 2000 mV |
 | Calibration | Curve fitting (ESP32-S3) |
 

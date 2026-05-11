@@ -1,5 +1,7 @@
 # Fleet OTA Strategy
 
+> For single-device OTA implementation details (pre-flight checks, signing, validation window), see [firmware_guide.md — OTA Update](firmware_guide.md#ota-update).
+
 This document defines the over-the-air firmware update strategy for production fleet deployments.
 
 ## Update Architecture
