@@ -9,6 +9,8 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_timer.h"
+#include "nvs_flash.h"
+#include "nvs.h"
 #include "lwip/sockets.h"
 #include "lwip/netdb.h"
 #include "mbedtls/ssl.h"
@@ -362,8 +364,72 @@ esp_err_t dtls_register_operator(const dtls_operator_entry_t *op)
 
 esp_err_t dtls_load_operators_from_nvs(void)
 {
-    // Placeholder for NVS loading — implemented in Phase 5
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open("dtls_ops", NVS_READONLY, &handle);
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+        ESP_LOGI(TAG, "No saved operators in NVS");
+        return ESP_OK;
+    }
+    if (err != ESP_OK) return err;
+
+    uint8_t count = 0;
+    err = nvs_get_u8(handle, "count", &count);
+    if (err != ESP_OK || count == 0) {
+        nvs_close(handle);
+        return ESP_OK;
+    }
+
+    for (uint8_t i = 0; i < count && i < DTLS_MAX_OPERATORS; i++) {
+        char key[12];
+        snprintf(key, sizeof(key), "op_%d", i);
+
+        dtls_operator_entry_t op;
+        size_t len = sizeof(dtls_operator_entry_t);
+        err = nvs_get_blob(handle, key, &op, &len);
+        if (err != ESP_OK || len != sizeof(dtls_operator_entry_t)) {
+            ESP_LOGW(TAG, "Failed to load operator %d from NVS", i);
+            continue;
+        }
+        dtls_register_operator(&op);
+    }
+
+    nvs_close(handle);
+    ESP_LOGI(TAG, "Loaded %d operators from NVS", operator_count);
     return ESP_OK;
+}
+
+esp_err_t dtls_save_operator_to_nvs(const dtls_operator_entry_t *op)
+{
+    if (!op) return ESP_ERR_INVALID_ARG;
+
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open("dtls_ops", NVS_READWRITE, &handle);
+    if (err != ESP_OK) return err;
+
+    uint8_t count = 0;
+    nvs_get_u8(handle, "count", &count);
+
+    if (count >= DTLS_MAX_OPERATORS) {
+        nvs_close(handle);
+        return ESP_ERR_NO_MEM;
+    }
+
+    char key[12];
+    snprintf(key, sizeof(key), "op_%d", count);
+    err = nvs_set_blob(handle, key, op, sizeof(dtls_operator_entry_t));
+    if (err != ESP_OK) { nvs_close(handle); return err; }
+
+    count++;
+    err = nvs_set_u8(handle, "count", count);
+    if (err != ESP_OK) { nvs_close(handle); return err; }
+
+    err = nvs_commit(handle);
+    nvs_close(handle);
+
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "Saved operator '%s' to NVS (slot %d)", op->identity, count - 1);
+    }
+    return err;
 }
 
 static void handle_new_connection(void)

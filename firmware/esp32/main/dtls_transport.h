@@ -59,6 +59,7 @@ dtls_session_state_t dtls_get_session_state(uint8_t session_id);
 
 esp_err_t dtls_register_operator(const dtls_operator_entry_t *op);
 esp_err_t dtls_load_operators_from_nvs(void);
+esp_err_t dtls_save_operator_to_nvs(const dtls_operator_entry_t *op);
 
 void dtls_task(void *params);
 
