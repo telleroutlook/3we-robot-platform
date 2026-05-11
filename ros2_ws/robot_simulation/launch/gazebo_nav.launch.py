@@ -3,6 +3,7 @@
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
@@ -18,6 +19,24 @@ def generate_launch_description():
         "world",
         default_value=PathJoinSubstitution([pkg_simulation, "worlds", "obstacles.sdf"]),
         description="Path to the Gazebo world SDF file",
+    )
+
+    headless_arg = DeclareLaunchArgument(
+        "headless",
+        default_value="false",
+        description="Run Gazebo in server-only mode (no GUI)",
+    )
+
+    use_rviz_arg = DeclareLaunchArgument(
+        "use_rviz",
+        default_value="true",
+        description="Launch RViz2 with Nav2 configuration",
+    )
+
+    sku_arg = DeclareLaunchArgument(
+        "sku",
+        default_value="standard",
+        description="Robot SKU variant",
     )
 
     map_arg = DeclareLaunchArgument(
@@ -47,8 +66,10 @@ def generate_launch_description():
         ),
         launch_arguments={
             "world": LaunchConfiguration("world"),
+            "headless": LaunchConfiguration("headless"),
+            "sku": LaunchConfiguration("sku"),
             "use_sim_time": "true",
-            "use_rviz": "false",  # Nav2 brings its own RViz config
+            "use_rviz": "false",
         }.items(),
     )
 
@@ -65,7 +86,7 @@ def generate_launch_description():
         }.items(),
     )
 
-    # --- RViz with Nav2 config ---
+    # --- RViz with Nav2 config (disabled in headless mode) ---
     rviz_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([pkg_nav2_bringup, "launch", "rviz_launch.py"])
@@ -73,12 +94,16 @@ def generate_launch_description():
         launch_arguments={
             "use_sim_time": "true",
         }.items(),
+        condition=IfCondition(LaunchConfiguration("use_rviz")),
     )
 
     return LaunchDescription(
         [
             # Arguments
             world_arg,
+            headless_arg,
+            use_rviz_arg,
+            sku_arg,
             map_arg,
             use_slam_arg,
             nav2_params_arg,

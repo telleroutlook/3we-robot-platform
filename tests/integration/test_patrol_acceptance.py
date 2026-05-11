@@ -45,6 +45,7 @@ class PatrolTestNode(Node):
         self.nav_client = ActionClient(self, NavigateToPose, "navigate_to_pose")
         self.min_range = float("inf")
         self.collision_count = 0
+        self._server_ready = False
 
         self.range_sub = self.create_subscription(
             Range, "/ultrasonic/front", self._range_cb, 10
@@ -56,7 +57,25 @@ class PatrolTestNode(Node):
         if msg.range < 0.01:
             self.collision_count += 1
 
+    def wait_for_nav2(self, timeout_sec=120.0):
+        """Block until navigate_to_pose action server is available."""
+        self.get_logger().info("Waiting for navigate_to_pose action server...")
+        ready = self.nav_client.wait_for_server(timeout_sec=timeout_sec)
+        if ready:
+            self._server_ready = True
+            self.get_logger().info("Nav2 action server is ready.")
+        else:
+            self.get_logger().error(
+                f"Nav2 action server not available after {timeout_sec}s"
+            )
+        return ready
+
     def send_goal(self, x, y, yaw):
+        if not self._server_ready:
+            if not self.nav_client.wait_for_server(timeout_sec=60.0):
+                self.get_logger().error("Nav2 action server unavailable")
+                return False
+
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = PoseStamped()
         goal_msg.pose.header.frame_id = "map"
@@ -66,9 +85,11 @@ class PatrolTestNode(Node):
         goal_msg.pose.pose.orientation.z = math.sin(yaw / 2.0)
         goal_msg.pose.pose.orientation.w = math.cos(yaw / 2.0)
 
-        self.nav_client.wait_for_server(timeout_sec=30.0)
         future = self.nav_client.send_goal_async(goal_msg)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
+        rclpy.spin_until_future_complete(self, future, timeout_sec=10.0)
+
+        if not future.done():
+            return False
 
         goal_handle = future.result()
         if not goal_handle or not goal_handle.accepted:
@@ -89,6 +110,9 @@ class PatrolTestNode(Node):
 def patrol_node():
     rclpy.init()
     node = PatrolTestNode()
+    assert node.wait_for_nav2(timeout_sec=120.0), (
+        "Nav2 navigate_to_pose action server never became available"
+    )
     yield node
     node.destroy_node()
     rclpy.shutdown()

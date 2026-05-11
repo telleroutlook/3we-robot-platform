@@ -21,10 +21,16 @@ on:
 jobs:
   nav2-patrol:
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     container:
       image: osrf/ros:humble-desktop
       options: --ipc=host
+
+    env:
+      # Software rendering for headless Gazebo
+      MESA_GL_VERSION_OVERRIDE: "3.3"
+      LIBGL_ALWAYS_SOFTWARE: "true"
+      DISPLAY: ":99"
 
     steps:
       - uses: actions/checkout@v4
@@ -42,8 +48,18 @@ jobs:
             ros-humble-robot-state-publisher \
             ros-humble-joint-state-publisher \
             ros-humble-tf2-ros \
+            mesa-utils \
+            libgl1-mesa-dri \
+            libegl1-mesa \
+            libgles2-mesa \
+            xvfb \
             bc jq
           pip3 install pytest pytest-timeout
+
+      - name: Start virtual framebuffer
+        run: |
+          Xvfb :99 -screen 0 1024x768x24 &
+          sleep 2
 
       - name: Build simulation workspace
         run: |
@@ -60,16 +76,30 @@ jobs:
         run: |
           source /opt/ros/humble/setup.bash
           source ros2_ws/install/setup.bash
+
+          # Launch simulation in background
           ros2 launch robot_simulation acceptance_test.launch.py \
             headless:=true \
             trials:=10 \
             timeout_per_trial:=120 &
           LAUNCH_PID=$!
-          sleep 20
+
+          # Wait for Gazebo physics + Nav2 lifecycle to fully initialize
+          echo "Waiting 90s for simulation stack to initialize..."
+          sleep 90
+
+          # Verify simulation is running
+          echo "Active topics:"
+          ros2 topic list 2>/dev/null || true
+          echo "Active action servers:"
+          ros2 action list 2>/dev/null || true
+
           cd tests/integration
-          python3 -m pytest test_patrol_acceptance.py -v --timeout=600 \
+          python3 -m pytest test_patrol_acceptance.py -v --timeout=900 \
             --junit-xml=/tmp/patrol_results.xml
+          TEST_EXIT=$?
           kill $LAUNCH_PID 2>/dev/null || true
+          exit $TEST_EXIT
         shell: bash
 
       - name: Check pass rate
@@ -82,6 +112,10 @@ jobs:
               echo "FAIL: Nav2 patrol pass rate $PASS_RATE < 95%"
               exit 1
             fi
+          else
+            echo "WARNING: sim_results.json not generated — simulation infrastructure may have failed"
+            echo "Check Gazebo logs above for render/physics issues"
+            exit 1
           fi
         shell: bash
 
