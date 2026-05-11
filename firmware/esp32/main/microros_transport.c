@@ -17,6 +17,7 @@
 #include <geometry_msgs/msg/twist.h>
 #include <sensor_msgs/msg/range.h>
 #include <sensor_msgs/msg/battery_state.h>
+#include <sensor_msgs/msg/imu.h>
 #include <std_msgs/msg/float32_multi_array.h>
 
 #include <micro_ros_utilities/type_utilities.h>
@@ -37,6 +38,7 @@ static rcl_publisher_t odom_pub;
 static rcl_publisher_t range_pub[US_COUNT];
 static rcl_publisher_t battery_pub;
 static rcl_publisher_t wheel_speed_pub;
+static rcl_publisher_t imu_pub;
 
 // Subscribers
 static rcl_subscription_t cmd_vel_sub;
@@ -47,11 +49,13 @@ static geometry_msgs__msg__Twist cmd_vel_msg;
 static sensor_msgs__msg__Range range_msg;
 static sensor_msgs__msg__BatteryState battery_msg;
 static std_msgs__msg__Float32MultiArray wheel_msg;
+static sensor_msgs__msg__Imu imu_msg;
 
 // Timers
 static rcl_timer_t odom_timer;
 static rcl_timer_t range_timer;
 static rcl_timer_t battery_timer;
+static rcl_timer_t imu_timer;
 
 // Odometry state
 static float odom_x = 0.0f;
@@ -170,6 +174,51 @@ static void range_timer_callback(rcl_timer_t *timer, int64_t last_call_time)
     }
 }
 
+static void imu_timer_callback(rcl_timer_t *timer, int64_t last_call_time)
+{
+    (void)timer; (void)last_call_time;
+
+    quaternion_t q;
+    vec3_t gyro, accel;
+
+    if (imu_read_quaternion(&q) != ESP_OK) return;
+    imu_read_angular_velocity(&gyro);
+    imu_read_linear_accel(&accel);
+
+    imu_msg.header.frame_id.data = "imu_link";
+    imu_msg.header.frame_id.size = 8;
+
+    imu_msg.orientation.w = q.w;
+    imu_msg.orientation.x = q.x;
+    imu_msg.orientation.y = q.y;
+    imu_msg.orientation.z = q.z;
+
+    imu_msg.angular_velocity.x = gyro.x;
+    imu_msg.angular_velocity.y = gyro.y;
+    imu_msg.angular_velocity.z = gyro.z;
+
+    imu_msg.linear_acceleration.x = accel.x;
+    imu_msg.linear_acceleration.y = accel.y;
+    imu_msg.linear_acceleration.z = accel.z;
+
+    // Orientation covariance (BNO055 NDOF fusion)
+    imu_msg.orientation_covariance[0] = 0.01;
+    imu_msg.orientation_covariance[4] = 0.01;
+    imu_msg.orientation_covariance[8] = 0.01;
+
+    // Angular velocity covariance
+    imu_msg.angular_velocity_covariance[0] = 0.02;
+    imu_msg.angular_velocity_covariance[4] = 0.02;
+    imu_msg.angular_velocity_covariance[8] = 0.02;
+
+    // Linear acceleration covariance
+    imu_msg.linear_acceleration_covariance[0] = 0.05;
+    imu_msg.linear_acceleration_covariance[4] = 0.05;
+    imu_msg.linear_acceleration_covariance[8] = 0.05;
+
+    rcl_publish(&imu_pub, &imu_msg, NULL);
+}
+
 static void battery_timer_callback(rcl_timer_t *timer, int64_t last_call_time)
 {
     (void)timer; (void)last_call_time;
@@ -206,6 +255,8 @@ esp_err_t microros_init(void)
         ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray), "/wheel_speeds");
     rclc_publisher_init_default(&battery_pub, &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState), "/battery_state");
+    rclc_publisher_init_default(&imu_pub, &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), "/imu/data");
 
     const char *range_topics[] = {
         "/ultrasonic/front", "/ultrasonic/back",
@@ -227,14 +278,17 @@ esp_err_t microros_init(void)
         RCL_MS_TO_NS(1000 / ULTRASONIC_PUBLISH_HZ), range_timer_callback);
     rclc_timer_init_default(&battery_timer, &support,
         RCL_MS_TO_NS(1000 / BATTERY_PUBLISH_HZ), battery_timer_callback);
+    rclc_timer_init_default(&imu_timer, &support,
+        RCL_MS_TO_NS(1000 / ODOM_PUBLISH_HZ), imu_timer_callback);
 
     // Executor
-    rclc_executor_init(&executor, &support.context, 5, &allocator);
+    rclc_executor_init(&executor, &support.context, 6, &allocator);
     rclc_executor_add_subscription(&executor, &cmd_vel_sub, &cmd_vel_msg,
         &cmd_vel_callback, ON_NEW_DATA);
     rclc_executor_add_timer(&executor, &odom_timer);
     rclc_executor_add_timer(&executor, &range_timer);
     rclc_executor_add_timer(&executor, &battery_timer);
+    rclc_executor_add_timer(&executor, &imu_timer);
 
     // Allocate wheel speed array
     wheel_msg.data.capacity = 4;
