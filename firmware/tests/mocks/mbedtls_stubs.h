@@ -28,6 +28,10 @@ typedef struct {
 } mbedtls_ecp_keypair;
 
 int mbedtls_ecp_group_load(mbedtls_ecp_group *grp, int id);
+void mbedtls_ecp_group_init(mbedtls_ecp_group *grp);
+void mbedtls_ecp_group_free(mbedtls_ecp_group *grp);
+void mbedtls_ecp_point_init(mbedtls_ecp_point *pt);
+void mbedtls_ecp_point_free(mbedtls_ecp_point *pt);
 int mbedtls_ecp_point_read_binary(const mbedtls_ecp_group *grp, mbedtls_ecp_point *P,
                                    const unsigned char *buf, size_t ilen);
 

@@ -46,6 +46,11 @@ int mbedtls_ecp_group_load(mbedtls_ecp_group *grp, int id) {
     return 0;
 }
 
+void mbedtls_ecp_group_init(mbedtls_ecp_group *grp) { memset(grp, 0, sizeof(*grp)); }
+void mbedtls_ecp_group_free(mbedtls_ecp_group *grp) { memset(grp, 0, sizeof(*grp)); }
+void mbedtls_ecp_point_init(mbedtls_ecp_point *pt) { memset(pt, 0, sizeof(*pt)); }
+void mbedtls_ecp_point_free(mbedtls_ecp_point *pt) { memset(pt, 0, sizeof(*pt)); }
+
 int mbedtls_ecp_point_read_binary(const mbedtls_ecp_group *grp, mbedtls_ecp_point *P,
                                    const unsigned char *buf, size_t ilen) {
     (void)grp; (void)P; (void)buf; (void)ilen;

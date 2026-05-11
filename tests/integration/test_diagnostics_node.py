@@ -101,10 +101,16 @@ def test_diagnostics_reports_battery(
 ):
     """Verify diagnostics includes battery status after publishing battery data."""
     import rclpy
+    from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
     from diagnostic_msgs.msg import DiagnosticArray
     from sensor_msgs.msg import BatteryState
 
-    pub = test_node.create_publisher(BatteryState, "/battery_state", 10)
+    reliable_qos = QoSProfile(
+        depth=10,
+        reliability=ReliabilityPolicy.RELIABLE,
+        durability=DurabilityPolicy.TRANSIENT_LOCAL,
+    )
+    pub = test_node.create_publisher(BatteryState, "/battery_state", reliable_qos)
 
     battery_msg = BatteryState()
     battery_msg.percentage = 0.75
@@ -133,10 +139,16 @@ def test_diagnostics_reports_estop(
 ):
     """Verify diagnostics reflects E-stop state."""
     import rclpy
+    from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
     from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
     from std_msgs.msg import Bool
 
-    pub = test_node.create_publisher(Bool, "/emergency_stop_state", 10)
+    reliable_qos = QoSProfile(
+        depth=10,
+        reliability=ReliabilityPolicy.RELIABLE,
+        durability=DurabilityPolicy.TRANSIENT_LOCAL,
+    )
+    pub = test_node.create_publisher(Bool, "/emergency_stop", reliable_qos)
 
     estop_msg = Bool()
     estop_msg.data = True

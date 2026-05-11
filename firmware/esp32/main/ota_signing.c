@@ -5,7 +5,7 @@
 #include "esp_ota_ops.h"
 #include "esp_partition.h"
 #include "mbedtls/sha256.h"
-#include "mbedtls/pk.h"
+#include "mbedtls/ecdsa.h"
 #include "mbedtls/ecp.h"
 #include "mbedtls/md.h"
 #include "mbedtls/error.h"
@@ -51,68 +51,23 @@ bool ota_signing_check_upload_token(const char *auth_header)
     return constant_time_compare(token, ota_upload_token, expected_len);
 }
 
-static int raw_signature_to_der(const uint8_t *sig, size_t sig_len,
-                               uint8_t *der, size_t der_buf_size, size_t *der_len)
-{
-    if (sig_len != 64) return -1;
-
-    const uint8_t *r = sig;
-    const uint8_t *s = sig + 32;
-
-    // Each integer: skip leading zeros, add leading 0x00 if high bit set
-    int r_pad = (r[0] & 0x80) ? 1 : 0;
-    int s_pad = (s[0] & 0x80) ? 1 : 0;
-    int r_start = 0;
-    while (r_start < 31 && r[r_start] == 0 && !(r[r_start + 1] & 0x80)) r_start++;
-    int s_start = 0;
-    while (s_start < 31 && s[s_start] == 0 && !(s[s_start + 1] & 0x80)) s_start++;
-
-    int r_len = 32 - r_start + r_pad;
-    int s_len = 32 - s_start + s_pad;
-    int seq_len = 2 + r_len + 2 + s_len;
-    int total = 2 + seq_len;
-
-    if ((size_t)total > der_buf_size) return -1;
-
-    int pos = 0;
-    der[pos++] = 0x30;
-    der[pos++] = (uint8_t)seq_len;
-    der[pos++] = 0x02;
-    der[pos++] = (uint8_t)r_len;
-    if (r_pad) der[pos++] = 0x00;
-    memcpy(&der[pos], r + r_start, 32 - r_start);
-    pos += 32 - r_start;
-    der[pos++] = 0x02;
-    der[pos++] = (uint8_t)s_len;
-    if (s_pad) der[pos++] = 0x00;
-    memcpy(&der[pos], s + s_start, 32 - s_start);
-    pos += 32 - s_start;
-
-    *der_len = (size_t)pos;
-    return 0;
-}
-
 static bool ecdsa_p256_verify(const uint8_t *hash, size_t hash_len,
                               const uint8_t *signature, const uint8_t *pubkey)
 {
     int ret;
-    mbedtls_pk_context pk;
-    mbedtls_pk_init(&pk);
+    mbedtls_ecp_group grp;
+    mbedtls_ecp_point Q;
+    mbedtls_mpi r, s;
 
-    ret = mbedtls_pk_setup(&pk, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY));
-    if (ret != 0) {
-        ESP_LOGE(TAG, "pk_setup failed: -0x%04X", (unsigned int)-ret);
-        mbedtls_pk_free(&pk);
-        return false;
-    }
+    mbedtls_ecp_group_init(&grp);
+    mbedtls_ecp_point_init(&Q);
+    mbedtls_mpi_init(&r);
+    mbedtls_mpi_init(&s);
 
-    mbedtls_ecp_keypair *ec = mbedtls_pk_ec(pk);
-
-    ret = mbedtls_ecp_group_load(&ec->grp, MBEDTLS_ECP_DP_SECP256R1);
+    ret = mbedtls_ecp_group_load(&grp, MBEDTLS_ECP_DP_SECP256R1);
     if (ret != 0) {
         ESP_LOGE(TAG, "ecp_group_load P-256 failed: -0x%04X", (unsigned int)-ret);
-        mbedtls_pk_free(&pk);
-        return false;
+        goto cleanup;
     }
 
     // Load uncompressed public key (0x04 || X || Y = 65 bytes)
@@ -120,32 +75,34 @@ static bool ecdsa_p256_verify(const uint8_t *hash, size_t hash_len,
     uncompressed[0] = 0x04;
     memcpy(&uncompressed[1], pubkey, OTA_PUBKEY_SIZE);
 
-    ret = mbedtls_ecp_point_read_binary(&ec->grp, &ec->Q,
+    ret = mbedtls_ecp_point_read_binary(&grp, &Q,
                                          uncompressed, sizeof(uncompressed));
     if (ret != 0) {
         ESP_LOGE(TAG, "point_read_binary failed: -0x%04X", (unsigned int)-ret);
-        mbedtls_pk_free(&pk);
-        return false;
+        goto cleanup;
     }
 
-    // Convert raw r||s to DER for pk_verify
-    uint8_t der_sig[72];
-    size_t der_len = 0;
-    if (raw_signature_to_der(signature, OTA_SIGNATURE_SIZE, der_sig, sizeof(der_sig), &der_len) != 0) {
-        ESP_LOGE(TAG, "Failed to encode signature as DER");
-        mbedtls_pk_free(&pk);
-        return false;
+    // Parse raw r||s (32 bytes each) into mpi
+    ret = mbedtls_mpi_read_binary(&r, signature, 32);
+    if (ret == 0) {
+        ret = mbedtls_mpi_read_binary(&s, signature + 32, 32);
+    }
+    if (ret != 0) {
+        ESP_LOGE(TAG, "Failed to parse signature: -0x%04X", (unsigned int)-ret);
+        goto cleanup;
     }
 
-    ret = mbedtls_pk_verify(&pk, MBEDTLS_MD_SHA256, hash, hash_len, der_sig, der_len);
-    mbedtls_pk_free(&pk);
-
+    ret = mbedtls_ecdsa_verify(&grp, hash, hash_len, &Q, &r, &s);
     if (ret != 0) {
         ESP_LOGW(TAG, "Signature verification failed: -0x%04X", (unsigned int)-ret);
-        return false;
     }
 
-    return true;
+cleanup:
+    mbedtls_mpi_free(&s);
+    mbedtls_mpi_free(&r);
+    mbedtls_ecp_point_free(&Q);
+    mbedtls_ecp_group_free(&grp);
+    return ret == 0;
 }
 
 esp_err_t ota_signing_init(const uint8_t pubkey[OTA_PUBKEY_SIZE])
