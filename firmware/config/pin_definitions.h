@@ -92,7 +92,8 @@
 
 // Safety / E-stop (dedicated pins, no sharing)
 #define ESTOP_GPIO          41  // NC button, active-low when pressed
-#define SAFETY_RELAY_FB     42  // Relay feedback (verify relay state)
+#define SAFETY_RELAY_FB     42  // Relay feedback channel 1 (verify relay state)
+#define SAFETY_RELAY_FB2    22  // Relay feedback channel 2 (dual-channel redundancy for CE PL d)
 
 // Pi 5 power relay (heartbeat watchdog)
 // NOTE: GPIO 45 is VDD_SPI strapping pin. PCB pulls to 3.3V via 10k at boot

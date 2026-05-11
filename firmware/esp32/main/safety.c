@@ -60,6 +60,16 @@ esp_err_t safety_init(void)
     };
     ESP_ERROR_CHECK(gpio_config(&io_cfg));
 
+    // Configure dual-channel relay feedback inputs
+    gpio_config_t fb_cfg = {
+        .pin_bit_mask = (1ULL << SAFETY_RELAY_FB) | (1ULL << SAFETY_RELAY_FB2),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&fb_cfg));
+
     esp_err_t isr_ret = gpio_install_isr_service(0);
     if (isr_ret != ESP_OK && isr_ret != ESP_ERR_INVALID_STATE) {
         ESP_LOGE(TAG, "ISR service install failed: %s", esp_err_to_name(isr_ret));
@@ -238,8 +248,30 @@ void safety_task(void *params)
             }
         }
 
-        // Continuous relay feedback monitoring
+        // Continuous relay feedback monitoring (dual-channel for CE PL d Cat 3)
         int relay_fb = gpio_get_level(SAFETY_RELAY_FB);
+        int relay_fb2 = gpio_get_level(SAFETY_RELAY_FB2);
+
+        // Dual-channel consistency check: both channels must agree
+        if (relay_fb != relay_fb2) {
+            portENTER_CRITICAL(&safety_spinlock);
+            relay_fault_count++;
+            uint8_t fault_count = relay_fault_count;
+            state = SAFETY_ESTOPPED;
+            portEXIT_CRITICAL(&safety_spinlock);
+            motor_stop_all();
+            notify_state_change(SAFETY_ESTOPPED);
+            ESP_LOGE(TAG, "RELAY FAULT: dual-channel mismatch (CH1=%d, CH2=%d)", relay_fb, relay_fb2);
+            if (fault_count >= 3) {
+                portENTER_CRITICAL(&safety_spinlock);
+                state = SAFETY_RELAY_FAULT;
+                portEXIT_CRITICAL(&safety_spinlock);
+                notify_state_change(SAFETY_RELAY_FAULT);
+                persist_relay_fault();
+                ESP_LOGE(TAG, "RELAY FAULT ESCALATED: channel inconsistency - service required");
+            }
+        }
+
         portENTER_CRITICAL(&safety_spinlock);
         current_state = state;
         if (current_state == SAFETY_NORMAL && relay_fb == 0) {
@@ -304,9 +336,9 @@ void safety_task(void *params)
 
 esp_err_t safety_relay_selftest(void)
 {
-    // Configure feedback pin as input
+    // Configure feedback pins as input (may already be configured in init)
     gpio_config_t fb_cfg = {
-        .pin_bit_mask = (1ULL << SAFETY_RELAY_FB),
+        .pin_bit_mask = (1ULL << SAFETY_RELAY_FB) | (1ULL << SAFETY_RELAY_FB2),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_ENABLE,
@@ -315,12 +347,13 @@ esp_err_t safety_relay_selftest(void)
     ESP_ERROR_CHECK(gpio_config(&fb_cfg));
 
     // With E-stop NOT pressed (NC circuit closed), relay should be energized
-    // Feedback pin should read HIGH when relay is properly engaged
+    // Both feedback pins should read HIGH when relay is properly engaged
     if (gpio_get_level(ESTOP_GPIO) != 0) {
         vTaskDelay(pdMS_TO_TICKS(50));
         int fb_level = gpio_get_level(SAFETY_RELAY_FB);
-        if (fb_level == 0) {
-            ESP_LOGE(TAG, "SELF-TEST FAILED: Relay not energized despite E-stop released");
+        int fb2_level = gpio_get_level(SAFETY_RELAY_FB2);
+        if (fb_level == 0 || fb2_level == 0) {
+            ESP_LOGE(TAG, "SELF-TEST FAILED: Relay not energized (CH1=%d, CH2=%d)", fb_level, fb2_level);
             portENTER_CRITICAL(&safety_spinlock);
             relay_fault_count++;
             if (relay_fault_count >= 3) {
@@ -335,13 +368,15 @@ esp_err_t safety_relay_selftest(void)
         portENTER_CRITICAL(&safety_spinlock);
         relay_fault_count = 0;
         portEXIT_CRITICAL(&safety_spinlock);
-        ESP_LOGI(TAG, "Relay self-test PASSED (feedback=HIGH, relay energized)");
+        ESP_LOGI(TAG, "Relay self-test PASSED (CH1=%d, CH2=%d, relay energized)", fb_level, fb2_level);
     } else {
         // E-stop is pressed at boot — relay should be de-energized
         vTaskDelay(pdMS_TO_TICKS(50));
         int fb_level = gpio_get_level(SAFETY_RELAY_FB);
-        if (fb_level != 0) {
-            ESP_LOGE(TAG, "SELF-TEST FAILED: Relay energized despite E-stop pressed");
+        int fb2_level = gpio_get_level(SAFETY_RELAY_FB2);
+        if (fb_level != 0 || fb2_level != 0) {
+            ESP_LOGE(TAG, "SELF-TEST FAILED: Relay energized despite E-stop (CH1=%d, CH2=%d)",
+                     fb_level, fb2_level);
             portENTER_CRITICAL(&safety_spinlock);
             relay_fault_count++;
             if (relay_fault_count >= 3) {
@@ -356,7 +391,7 @@ esp_err_t safety_relay_selftest(void)
         portENTER_CRITICAL(&safety_spinlock);
         relay_fault_count = 0;
         portEXIT_CRITICAL(&safety_spinlock);
-        ESP_LOGI(TAG, "Relay self-test PASSED (feedback=LOW, E-stop active)");
+        ESP_LOGI(TAG, "Relay self-test PASSED (CH1=%d, CH2=%d, E-stop active)", fb_level, fb2_level);
     }
 
     return ESP_OK;
