@@ -23,6 +23,7 @@ set(SRCS
     "captive_portal.c"
     "heartbeat_monitor.c"
     "external_wdt.c"
+    "adc_manager.c"
 )
 
 set(PRIV_REQS "")
