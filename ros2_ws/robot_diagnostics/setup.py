@@ -31,6 +31,7 @@ setup(
             "health_monitor_node = robot_diagnostics.health_monitor_node:main",
             "notification_dispatcher = robot_diagnostics.notification_dispatcher:main",
             "payload_monitor_node = robot_diagnostics.payload_monitor_node:main",
+            "ota_manager_node = robot_diagnostics.ota_manager_node:main",
         ],
     },
 )
