@@ -61,7 +61,7 @@ Touch/pointer-based joystick for mecanum drive teleoperation.
 |----------|-------------|
 | ROS topic (publish) | `/cmd_vel` (`geometry_msgs/msg/Twist`) |
 | Publish rate | ~20 Hz while active |
-| Velocity range | ±0.37 m/s linear, ±3.0 rad/s angular |
+| Velocity range | ±1.0 m/s linear (default limit), ±3.0 rad/s angular |
 
 **Behavior:**
 - Drag the knob to publish velocity commands

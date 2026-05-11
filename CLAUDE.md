@@ -60,7 +60,7 @@ For hardware files under CERN-OHL-P:
 Conventional Commits: `type(scope): description`
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `hw`
-Scopes: `firmware`, `ros2`, `hardware`, `sdk`, `docs`
+Scopes: `firmware`, `ros2`, `hardware`, `sdk`, `web`, `docs`
 
 ## Directory Responsibilities
 
@@ -134,22 +134,22 @@ Run these checks (in order) to verify cross-layer consistency after any code cha
 Quick alias: `make all` runs lint + test + build from root.
 
 ```bash
-# 1. Firmware — host-side unit tests (247 tests)
+# 1. Firmware — host-side unit tests
 cd firmware/tests && make clean && make && ./test_runner
 
 # 2. SDK web_control — TypeScript type-check
 cd sdk/web_control && npx tsc --noEmit
 
-# 3. SDK web_control — unit tests (63 tests, vitest)
+# 3. SDK web_control — unit tests (vitest)
 cd sdk/web_control && npx vitest run
 
-# 4. SDK web_control — Playwright E2E (60 tests)
+# 4. SDK web_control — Playwright E2E
 cd sdk/web_control && npx playwright test
 
 # 5. SDK web_control — lint & format
 cd sdk/web_control && npx eslint src/ && npx prettier --check 'src/**/*.ts'
 
-# 6. Python SDK — tests (118 tests, pytest)
+# 6. Python SDK — tests (pytest)
 cd sdk && python3 -m pytest tests/ -v
 
 # 7. Python SDK — format and lint
@@ -182,6 +182,7 @@ If any step fails, fix before committing.
 ## What NOT to Put Here
 
 This file intentionally omits volatile information:
+- Test counts (run the commands to get current numbers)
 - Specific GPIO pin assignments (see firmware config files)
 - BOM pricing (see hardware/bom/)
 - Certification status (see project management tools)

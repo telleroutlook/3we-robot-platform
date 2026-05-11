@@ -157,6 +157,7 @@ robot-platform/
 │   ├── robot_bringup/          #   启动文件、Nav2/SLAM 配置
 │   ├── robot_description/      #   URDF 模型 (Xacro)
 │   ├── robot_diagnostics/      #   健康监控、指标导出
+│   ├── robot_docking/          #   自主对接控制器
 │   ├── robot_interfaces/       #   自定义消息/服务定义
 │   ├── robot_perception/       #   摄像头 + AI 推理 (Hailo)
 │   └── robot_simulation/       #   Gazebo 仿真
@@ -179,6 +180,10 @@ robot-platform/
     ├── pbc34_payload_guide.md  #   载荷开发完整参考
     ├── compliance_checklist.md #   法规合规检查清单
     └── performance_benchmarks.md
+
+monitoring/                     # Prometheus + Grafana 可观测性
+scripts/                        # 自动化脚本（验证、发版、环境配置）
+tests/                          # 集成测试与硬件验证测试
 ```
 
 <br/>
@@ -192,6 +197,8 @@ robot-platform/
 | [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/get-started/) | v5.x | 固件编译工具链 |
 | [ROS2](https://docs.ros.org/en/humble/Installation.html) | Humble / Jazzy | 机器人中间件 |
 | Python | 3.10+ | SDK 与工具 |
+| Node.js | 18+ | Web 控制界面、跨层验证 |
+| GCC | 12+ | 固件单元测试（主机构建） |
 | [KiCad](https://www.kicad.org/) | 8+ | 硬件修改（可选） |
 
 ### 1. 编译并烧录固件
@@ -215,6 +222,14 @@ source install/setup.bash
 
 ```bash
 ros2 launch robot_bringup robot.launch.py
+```
+
+### 4. 构建 Web 控制界面（可选）
+
+```bash
+cd sdk/web_control
+npm install
+npm run build
 ```
 
 <br/>

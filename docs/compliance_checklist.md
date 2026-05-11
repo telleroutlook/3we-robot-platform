@@ -32,7 +32,7 @@
 
 ### Article 3.3(d) — Cybersecurity (EN 303 645 / ETSI TS 103 701)
 - [x] DTLS 1.2 encryption for wireless control (PSK + AES-128-GCM)
-- [x] OTA firmware signing (Ed25519 over SHA-256)
+- [x] OTA firmware signing (ECDSA P-256 over SHA-256)
 - [x] No default/universal passwords (PSK configured per device)
 - [x] Secure boot capability (ESP32 eFuse-based)
 - [ ] Vulnerability disclosure policy published

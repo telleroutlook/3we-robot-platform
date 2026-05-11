@@ -119,21 +119,27 @@ cd firmware/tests && make clean && make && ./test_runner
 # 2. TypeScript type check
 cd sdk/web_control && npx tsc --noEmit
 
-# 3. Playwright E2E tests
+# 3. Web control unit tests (vitest)
+cd sdk/web_control && npx vitest run
+
+# 4. Playwright E2E tests
 cd sdk/web_control && npx playwright test
 
-# 4. Cross-layer type alignment (ROS2 ↔ TypeScript ↔ firmware)
+# 5. Web control lint & format
+cd sdk/web_control && npx eslint src/ && npx prettier --check 'src/**/*.ts'
+
+# 6. Cross-layer type alignment (ROS2 ↔ TypeScript ↔ firmware)
 npx tsx scripts/validate-ros-types.ts
 
-# 5. Python lint and format
+# 7. Python lint and format
 ruff format --check sdk/
 ruff check sdk/
 
-# 6. Python SDK tests
+# 8. Python SDK tests
 pytest sdk/tests/
 ```
 
-If any step fails, fix before committing. Step 4 catches interface drift between ROS2 message definitions, TypeScript types, and firmware enums.
+If any step fails, fix before committing. Step 6 catches interface drift between ROS2 message definitions, TypeScript types, and firmware enums.
 
 ## Project Structure
 

@@ -214,7 +214,7 @@ Rosbridge does **not** authenticate connections by default. Anyone with network 
 ### Safety Net
 
 Even if an unauthorized client publishes to `/cmd_vel`, the firmware enforces:
-- Speed clamping (max 0.37 m/s)
+- Speed clamping (configurable, default 1.0 m/s, hard cap 1.2 m/s)
 - Watchdog timeout (500ms)
 - E-stop override (hardware)
 

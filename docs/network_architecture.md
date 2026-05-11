@@ -124,7 +124,7 @@ The `rosbridge_server` runs on the companion computer and exposes the full ROS2 
 
 Regardless of which channel delivers a motor command, the firmware enforces:
 
-1. **Speed clamping** — velocity limited to `safety_get_speed_limit()` (configurable, max 0.37 m/s)
+1. **Speed clamping** — velocity limited to `safety_get_speed_limit()` (configurable, default 1.0 m/s, hard cap 1.2 m/s)
 2. **E-stop priority** — hardware E-stop cuts power via relay; software cannot override
 3. **Watchdog timeout** — if no `/cmd_vel` received for 500ms, motors stop
 4. **System watchdog** — if control loop stalls for 1000ms, full E-stop triggered

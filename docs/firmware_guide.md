@@ -178,7 +178,7 @@ ros2 topic pub /cmd_vel geometry_msgs/Twist \
 Over-the-air firmware updates via ESP-IDF's native OTA mechanism:
 
 1. Build firmware binary: `idf.py build`
-2. Sign with Ed25519 key: `espsecure.py sign_data --keyfile private.pem build/robot_platform_firmware.bin`
+2. Sign with ECDSA P-256 key (see `firmware/esp32/main/ota_signing.h` for format)
 3. Upload signed binary to OTA server
 4. Trigger update via ROS2 service or HTTP endpoint
 

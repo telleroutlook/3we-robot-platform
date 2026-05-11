@@ -55,7 +55,7 @@
 
 | Platform | Encrypted Comms | Signed OTA | HW Emergency Stop | Safety Relay | Payload Isolation |
 |:---------|:---:|:---:|:---:|:---:|:---:|
-| **This Project** | DTLS 1.2 | Ed25519 | ISO 13850 | Dual-channel + self-test | Sandboxed |
+| **This Project** | DTLS 1.2 | ECDSA P-256 | ISO 13850 | Dual-channel + self-test | Sandboxed |
 | TurtleBot 4 | None | None | Soft button | None | None |
 | Linorobot2 | None | None | None | None | None |
 | ROSbot XL | None | Husarion cloud | Software E-stop | None | None |
@@ -185,7 +185,7 @@
 
 | 平台 | 加密通信 | 签名 OTA | 硬件急停 | 安全继电器 | 载荷隔离 |
 |:-----|:---:|:---:|:---:|:---:|:---:|
-| **本项目** | DTLS 1.2 | Ed25519 | ISO 13850 | 双通道 + 自检 | 沙箱隔离 |
+| **本项目** | DTLS 1.2 | ECDSA P-256 | ISO 13850 | 双通道 + 自检 | 沙箱隔离 |
 | TurtleBot 4 | 无 | 无 | 软件按钮 | 无 | 无 |
 | Linorobot2 | 无 | 无 | 无 | 无 | 无 |
 | ROSbot XL | 无 | Husarion 云 | 软件急停 | 无 | 无 |

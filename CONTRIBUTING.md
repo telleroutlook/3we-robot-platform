@@ -64,6 +64,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 | `ros2` | ROS2 packages |
 | `hardware` | PCB, structure, BOM |
 | `sdk` | Payload SDK |
+| `web` | Web control UI |
 | `docs` | Documentation |
 
 ### Examples

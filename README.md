@@ -157,6 +157,7 @@ robot-platform/
 │   ├── robot_bringup/          #   Launch files, Nav2/SLAM config
 │   ├── robot_description/      #   URDF model (Xacro)
 │   ├── robot_diagnostics/      #   Health monitoring, metrics
+│   ├── robot_docking/          #   Autonomous docking controller
 │   ├── robot_interfaces/       #   Custom msg/srv definitions
 │   ├── robot_perception/       #   Camera + AI inference (Hailo)
 │   └── robot_simulation/       #   Gazebo simulation
@@ -179,6 +180,10 @@ robot-platform/
     ├── pbc34_payload_guide.md  #   Payload development reference
     ├── compliance_checklist.md #   Regulatory compliance
     └── performance_benchmarks.md
+
+monitoring/                     # Prometheus + Grafana observability
+scripts/                        # Automation (validate, release, setup)
+tests/                          # Integration & hardware validation tests
 ```
 
 <br/>
@@ -192,6 +197,8 @@ robot-platform/
 | [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/get-started/) | v5.x | Firmware build toolchain |
 | [ROS2](https://docs.ros.org/en/humble/Installation.html) | Humble / Jazzy | Robot middleware |
 | Python | 3.10+ | SDK and tools |
+| Node.js | 18+ | Web control UI, cross-layer validation |
+| GCC | 12+ | Firmware unit tests (host build) |
 | [KiCad](https://www.kicad.org/) | 8+ | Hardware modifications (optional) |
 
 ### 1. Build & Flash Firmware
@@ -215,6 +222,14 @@ source install/setup.bash
 
 ```bash
 ros2 launch robot_bringup robot.launch.py
+```
+
+### 4. Build Web Control UI (optional)
+
+```bash
+cd sdk/web_control
+npm install
+npm run build
 ```
 
 <br/>
