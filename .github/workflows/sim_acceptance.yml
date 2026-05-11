@@ -13,6 +13,7 @@ on:
     paths:
       - 'ros2_ws/robot_navigation/**'
       - 'ros2_ws/robot_simulation/**'
+      - '.github/workflows/sim_acceptance.yml'
   schedule:
     - cron: '23 3 * * 1'  # Weekly Monday regression
   workflow_dispatch:
