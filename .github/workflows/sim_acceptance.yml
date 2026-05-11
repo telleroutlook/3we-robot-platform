@@ -105,9 +105,15 @@ jobs:
           sleep 90
 
           # Verify simulation is running
-          echo "Active topics:"
+          echo "=== Diagnostic: Topic list ==="
           ros2 topic list 2>/dev/null || true
-          echo "Active action servers:"
+          echo "=== Diagnostic: Check /odom data flow ==="
+          timeout 5 ros2 topic echo /odom --once 2>/dev/null && echo "/odom: DATA FLOWING" || echo "/odom: NO DATA"
+          echo "=== Diagnostic: Check /clock data flow ==="
+          timeout 5 ros2 topic echo /clock --once 2>/dev/null && echo "/clock: DATA FLOWING" || echo "/clock: NO DATA"
+          echo "=== Diagnostic: TF tree ==="
+          timeout 5 ros2 run tf2_ros tf2_echo odom base_link 2>&1 | head -5 || true
+          echo "=== Diagnostic: Action servers ==="
           ros2 action list 2>/dev/null || true
 
           cd tests/integration
