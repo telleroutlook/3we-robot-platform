@@ -11,6 +11,29 @@ channels:
     template: default
     severity_filter: [critical, warning]
 
+  # DingTalk (钉钉) — uses actionCard format with buttons
+  - name: dingtalk
+    type: dingtalk
+    url: ${DINGTALK_WEBHOOK_URL}
+    secret: ${DINGTALK_WEBHOOK_SECRET}
+    dashboard_url: ${DASHBOARD_URL}
+    severity_filter: [critical, warning]
+
+  # Feishu (飞书/Lark) — uses interactive card with colored header
+  - name: feishu
+    type: feishu
+    url: ${FEISHU_WEBHOOK_URL}
+    secret: ${FEISHU_WEBHOOK_SECRET}
+    severity_filter: [critical, warning]
+
+  # Slack — uses Block Kit with rich formatting
+  - name: slack
+    type: slack
+    url: ${SLACK_WEBHOOK_URL}
+    secret: ""
+    dashboard_url: ${DASHBOARD_URL}
+    severity_filter: [critical]
+
 throttling:
   duplicate_window_seconds: 60
   quiet_hours:

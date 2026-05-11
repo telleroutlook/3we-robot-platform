@@ -125,8 +125,7 @@ class NotificationDispatcher(Node):
             if not url or url.startswith("${"):
                 continue
 
-            template_name = channel.get("template", "default")
-            payload = self._format_payload(event, template_name)
+            payload = self._format_for_channel(event, channel)
             secret = channel.get("secret", "")
 
             self._send_webhook(url, payload, secret, channel.get("name", "unnamed"))
@@ -158,6 +157,203 @@ class NotificationDispatcher(Node):
             "robot_id": event["robot_id"],
             "event_type": event["event_type"],
             "timestamp": event["timestamp"],
+        }
+
+    def _format_for_channel(
+        self, event: dict[str, Any], channel: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Format payload based on channel type (dingtalk, feishu, slack, or generic)."""
+        channel_type = channel.get("type", "webhook")
+        template_name = channel.get("template", "default")
+        base_payload = self._format_payload(event, template_name)
+
+        if channel_type == "dingtalk":
+            return self._format_dingtalk(base_payload, channel)
+        elif channel_type == "feishu":
+            return self._format_feishu(base_payload, channel)
+        elif channel_type == "slack":
+            return self._format_slack(base_payload, channel)
+        return base_payload
+
+    def _format_dingtalk(
+        self, payload: dict[str, Any], channel: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Format as DingTalk actionCard message."""
+        severity = payload["severity"]
+        color_map = {"critical": "#FF0000", "warning": "#FFA500"}
+        color = color_map.get(severity, "#333333")
+        dashboard_url = channel.get("dashboard_url", "")
+
+        markdown_body = (
+            f"### {payload['title']}\n\n"
+            f"**Robot:** {payload['robot_id']}  \n"
+            f"**Event:** {payload['event_type']}  \n"
+            f"**Time:** {payload['timestamp']}  \n\n"
+            f"{payload['body']}"
+        )
+
+        action_card: dict[str, Any] = {
+            "msgtype": "actionCard",
+            "actionCard": {
+                "title": payload["title"],
+                "text": markdown_body,
+                "hideAvatar": "0",
+                "btnOrientation": "0",
+            },
+        }
+
+        if dashboard_url:
+            action_card["actionCard"]["btns"] = [
+                {"title": "View Dashboard", "actionURL": dashboard_url},
+                {"title": "Acknowledge", "actionURL": f"{dashboard_url}/ack"},
+            ]
+        else:
+            action_card["actionCard"]["singleTitle"] = "View Details"
+            action_card["actionCard"]["singleURL"] = ""
+
+        return action_card
+
+    def _format_feishu(
+        self, payload: dict[str, Any], channel: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Format as Feishu (Lark) interactive card message."""
+        severity = payload["severity"]
+        color_map = {"critical": "red", "warning": "orange"}
+        template_color = color_map.get(severity, "blue")
+
+        return {
+            "msg_type": "interactive",
+            "card": {
+                "config": {"wide_screen_mode": True},
+                "header": {
+                    "title": {"tag": "plain_text", "content": payload["title"]},
+                    "template": template_color,
+                },
+                "elements": [
+                    {
+                        "tag": "div",
+                        "fields": [
+                            {
+                                "is_short": True,
+                                "text": {
+                                    "tag": "lark_md",
+                                    "content": f"**Robot:** {payload['robot_id']}",
+                                },
+                            },
+                            {
+                                "is_short": True,
+                                "text": {
+                                    "tag": "lark_md",
+                                    "content": f"**Severity:** {severity.upper()}",
+                                },
+                            },
+                            {
+                                "is_short": True,
+                                "text": {
+                                    "tag": "lark_md",
+                                    "content": f"**Event:** {payload['event_type']}",
+                                },
+                            },
+                            {
+                                "is_short": True,
+                                "text": {
+                                    "tag": "lark_md",
+                                    "content": f"**Time:** {payload['timestamp']}",
+                                },
+                            },
+                        ],
+                    },
+                    {"tag": "hr"},
+                    {
+                        "tag": "div",
+                        "text": {
+                            "tag": "lark_md",
+                            "content": payload["body"],
+                        },
+                    },
+                    {
+                        "tag": "action",
+                        "actions": [
+                            {
+                                "tag": "button",
+                                "text": {
+                                    "tag": "plain_text",
+                                    "content": "Acknowledge",
+                                },
+                                "type": "primary",
+                                "value": {
+                                    "action": "ack",
+                                    "robot_id": payload["robot_id"],
+                                },
+                            }
+                        ],
+                    },
+                ],
+            },
+        }
+
+    def _format_slack(
+        self, payload: dict[str, Any], channel: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Format as Slack Block Kit message."""
+        severity = payload["severity"]
+        emoji_map = {"critical": ":red_circle:", "warning": ":warning:"}
+        emoji = emoji_map.get(severity, ":information_source:")
+
+        return {
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"{emoji} {payload['title']}",
+                    },
+                },
+                {
+                    "type": "section",
+                    "fields": [
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*Robot:*\n{payload['robot_id']}",
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*Severity:*\n{severity.upper()}",
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*Event:*\n{payload['event_type']}",
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*Time:*\n{payload['timestamp']}",
+                        },
+                    ],
+                },
+                {"type": "divider"},
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": payload["body"]},
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Acknowledge"},
+                            "style": "primary",
+                            "action_id": "ack_alert",
+                            "value": payload["robot_id"],
+                        },
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "View Dashboard"},
+                            "url": channel.get("dashboard_url", ""),
+                            "action_id": "view_dashboard",
+                        },
+                    ],
+                },
+            ],
         }
 
     def _send_webhook(
