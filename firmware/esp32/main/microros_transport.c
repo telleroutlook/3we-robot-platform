@@ -120,6 +120,22 @@ static void odom_timer_callback(rcl_timer_t *timer, int64_t last_call_time)
     odom_msg.twist.twist.linear.y = vy;
     odom_msg.twist.twist.angular.z = wz;
 
+    // Pose covariance [6x6 row-major]: x, y, z, roll, pitch, yaw
+    odom_msg.pose.covariance[0]  = 0.01;   // x variance
+    odom_msg.pose.covariance[7]  = 0.01;   // y variance
+    odom_msg.pose.covariance[14] = 1e6;    // z (unused, large = unknown)
+    odom_msg.pose.covariance[21] = 1e6;    // roll (unused)
+    odom_msg.pose.covariance[28] = 1e6;    // pitch (unused)
+    odom_msg.pose.covariance[35] = 0.05;   // yaw variance
+
+    // Twist covariance [6x6 row-major]: vx, vy, vz, wx, wy, wz
+    odom_msg.twist.covariance[0]  = 0.1;   // vx variance
+    odom_msg.twist.covariance[7]  = 0.1;   // vy variance
+    odom_msg.twist.covariance[14] = 1e6;   // vz (unused)
+    odom_msg.twist.covariance[21] = 1e6;   // wx (unused)
+    odom_msg.twist.covariance[28] = 1e6;   // wy (unused)
+    odom_msg.twist.covariance[35] = 0.2;   // wz variance
+
     rcl_publish(&odom_pub, &odom_msg, NULL);
 
     // Publish wheel speeds
