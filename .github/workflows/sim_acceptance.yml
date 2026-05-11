@@ -4,15 +4,15 @@ name: Simulation Acceptance
 on:
   pull_request:
     paths:
-      - 'ros2_ws/robot_navigation/**'
       - 'ros2_ws/robot_simulation/**'
       - 'ros2_ws/robot_bringup/**'
+      - 'ros2_ws/robot_competition/**'
       - 'firmware/config/**'
   push:
     branches: [main]
     paths:
-      - 'ros2_ws/robot_navigation/**'
       - 'ros2_ws/robot_simulation/**'
+      - 'ros2_ws/robot_competition/**'
       - '.github/workflows/sim_acceptance.yml'
   schedule:
     - cron: '23 3 * * 1'  # Weekly Monday regression

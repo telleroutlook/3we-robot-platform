@@ -13,3 +13,14 @@ ENC1,IP54 Enclosure 500x400x100,-,-,-,1,280.00,Taobao,Aluminum sealed chassis (u
 SEAL1,Cable Gland PG9,-,-,-,6,3.00,Taobao,IP68 rated cable entries
 CON1,XT60 Battery Connector,-,-,-,2,5.00,LCSC,High-current (replaces XT30)
 RLY2,Redundant Safety Relay,-,-,-,1,15.00,Taobao,Second safety channel
+CS1-4,ACS712-05B,SOIC-8,Allegro,ACS712ELCTR-05B-T,4,8.00,LCSC,5A range motor current sensing
+NTC1-2,NTC 10K 0603,0603,Murata,NCP18XH103F03RB,2,0.50,LCSC,B=3950 driver temperature monitoring
+D1-8,FR107,SMA,MDD,FR107,8,0.30,LCSC,Fast recovery diode for motor flyback
+TVS1-4,SMAJ12A,SMA,Littelfuse,SMAJ12A,4,1.50,LCSC,12V TVS back-EMF clamp
+SSD1,NVMe M.2 2230 128GB,-,Western Digital,SN740,1,120.00,JD,System storage (NVMe boot)
+FPC1,PCIe FPC Adapter,-,Raspberry Pi,Pi 5 M.2 HAT+,1,25.00,Taobao,NVMe to Pi 5 connection
+FB1-4,Ferrite Bead 7mm,-,-,-,4,1.00,Taobao,EMI suppression on motor leads
+FAN1,40mm Axial Fan,40x40x10,Sunon,MF40101VX,1,8.00,LCSC,5V 0.1A forced cooling
+HS1-2,Aluminum Heatsink 20cm2,-,-,-,2,3.00,Taobao,BTS7960 thermal management
+COAT1,Conformal Coating PU,-,-,-,1,8.00,JLCPCB,Polyurethane 25-75um IP54 protection
+SEAL1-G,Silicone Gasket,-,-,-,1,5.00,Taobao,Custom enclosure seal

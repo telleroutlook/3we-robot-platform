@@ -87,6 +87,46 @@ Battery Pack(s) ─── XT30 ──→ P-MOS OR ──→ VBAT Bus (7.4V)
 - Decoupling capacitors placed within 3mm of IC power pins
 - USB differential pairs: 90Ω impedance controlled
 
+## Industrial SKU Motor Driver Strategy
+
+The mainboard PCB uses DRV8833 (dual H-bridge, 1.2A/ch) for Basic and Standard SKUs. The Industrial SKU requires BTS7960 (43A half-bridge) for 550 motors at 12V.
+
+### Approach A: External Module (Initial Batch)
+
+Recommended for first production run (< 100 units):
+
+- Mainboard PCB unchanged — no BTS7960 footprint on-board
+- Motor power output via 4× XT30 connectors (2-pin, 30A rated)
+- PWM/EN signals routed to GH1.25-4P connector (PWM_H, PWM_L, VCC, GND)
+- Off-the-shelf BTS7960 module (¥18/ea, 2 modules for 4 motors)
+- Mounting: M3 standoffs on chassis plate, 100mm motor wires
+
+Advantages: No PCB re-spin, fast iteration, replaceable if damaged.
+
+### Approach B: Integrated PCB (Volume Production)
+
+For production run > 500 units:
+
+- New KiCad variant: `robot-platform-industrial.kicad_pcb`
+- Replace DRV8833 area with 4× BTS7960 half-bridge ICs
+- Add ACS712-05B current sense on each motor phase
+- Requires: larger board (140×100mm), heatsink mounting holes, thermal vias under driver pads
+- Internal ground plane extended for thermal relief
+- Estimated NRE: ¥3,000 (4-layer prototype + stencil)
+
+### Decision Criteria
+
+| Factor | Approach A | Approach B |
+|--------|-----------|-----------|
+| Unit cost (motor driver) | ¥36 (2 modules) | ¥24 (bare ICs + passives) |
+| PCB NRE | ¥0 | ¥3,000 |
+| Break-even | — | ~250 units |
+| Assembly complexity | Higher (wiring) | Lower (SMT) |
+| Reliability | Module connectors | Soldered joints |
+| Thermal management | Module heatsink | PCB thermal vias + external heatsink |
+
+**Current decision**: Approach A for initial batch (Q2 2026). Evaluate Approach B after 100-unit production feedback.
+
 ## Manufacturing Notes
 
 - Gerber format: RS-274X

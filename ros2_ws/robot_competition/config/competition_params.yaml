@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0
+# RoboCup Logistics League competition parameters
+
+referee_client:
+  ros__parameters:
+    referee_host: "192.168.1.1"
+    referee_port: 4444
+    team_name: "3WE"
+    team_color: "CYAN"
+    reconnect_interval_sec: 5.0
+
+mps_detector:
+  ros__parameters:
+    model_path: ""
+    confidence_threshold: 0.7
+    camera_topic: "/camera/image_raw"
+    detection_rate_hz: 10.0
+
+task_executor:
+  ros__parameters:
+    bt_xml_path: ""
+    max_concurrent_orders: 2
+    nav2_action_timeout_sec: 30.0
+    pickup_approach_distance_m: 0.3
+
+fleet_coordinator:
+  ros__parameters:
+    robot_count: 3
+    robot_namespace_prefix: "robot_"
+    coordination_rate_hz: 10.0
+    path_conflict_radius_m: 0.5
+    deadlock_timeout_sec: 10.0
