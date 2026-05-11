@@ -31,6 +31,8 @@ jobs:
       MESA_GL_VERSION_OVERRIDE: "3.3"
       LIBGL_ALWAYS_SOFTWARE: "true"
       DISPLAY: ":99"
+      # Force OGRE 1.x renderer (more compatible with software rendering)
+      IGN_RENDERING_ENGINE: ogre
 
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +51,6 @@ jobs:
             ros-humble-robot-state-publisher \
             ros-humble-joint-state-publisher \
             ros-humble-tf2-ros \
-            libignition-rendering6-ogre \
             mesa-utils \
             libgl1-mesa-dri \
             libegl1-mesa \
@@ -62,6 +63,19 @@ jobs:
         run: |
           Xvfb :99 -screen 0 1024x768x24 &
           sleep 2
+          # Verify GL context works
+          glxinfo | grep "OpenGL version" || echo "glxinfo not available (non-fatal)"
+
+      - name: Verify Gazebo can start
+        run: |
+          source /opt/ros/humble/setup.bash
+          # Quick test: start ign gazebo server-only with empty world for 5s
+          timeout 10 ign gazebo -s --force-version 6 --iterations 100 || {
+            echo "WARNING: Gazebo server failed to start. Checking available rendering engines..."
+            dpkg -l | grep -i "ign\|ogre\|rendering" || true
+            echo "This may indicate missing rendering libraries for headless mode."
+          }
+        shell: bash
 
       - name: Build simulation workspace
         run: |
