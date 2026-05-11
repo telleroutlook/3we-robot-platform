@@ -33,6 +33,8 @@ jobs:
       DISPLAY: ":99"
       # Force OGRE 1.x renderer (more compatible with software rendering)
       IGN_RENDERING_ENGINE: ogre
+      # Ensure Gazebo can find system plugins
+      IGN_GAZEBO_SYSTEM_PLUGIN_PATH: /usr/lib/x86_64-linux-gnu/ign-gazebo-6/plugins
 
     steps:
       - uses: actions/checkout@v4
@@ -69,6 +71,12 @@ jobs:
       - name: Verify Gazebo can start
         run: |
           source /opt/ros/humble/setup.bash
+          # Check PlanarMove plugin exists
+          echo "Looking for PlanarMove plugin..."
+          find /usr/lib -name "*planar*" -o -name "*PlanarMove*" 2>/dev/null || echo "Not found in /usr/lib"
+          find /opt/ros -name "*planar*" 2>/dev/null || echo "Not found in /opt/ros"
+          echo "IGN plugin paths:"
+          ls /usr/lib/x86_64-linux-gnu/ign-gazebo-6/plugins/ 2>/dev/null | grep -i "planar\|move" || echo "No matching plugins found"
           # Quick test: start ign gazebo server-only with empty world for 5s
           timeout 10 ign gazebo -s --force-version 6 --iterations 100 || {
             echo "WARNING: Gazebo server failed to start. Checking available rendering engines..."
