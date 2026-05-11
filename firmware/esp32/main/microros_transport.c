@@ -6,6 +6,7 @@
 #include "imu.h"
 #include "battery.h"
 #include "safety.h"
+#include "payload_hotplug.h"
 #include "pin_definitions.h"
 #include "robot_params.h"
 
@@ -19,6 +20,7 @@
 #include <sensor_msgs/msg/battery_state.h>
 #include <sensor_msgs/msg/imu.h>
 #include <std_msgs/msg/float32_multi_array.h>
+#include <std_msgs/msg/string.h>
 
 #include <micro_ros_utilities/type_utilities.h>
 #include <micro_ros_utilities/string_utilities.h>
@@ -39,6 +41,7 @@ static rcl_publisher_t range_pub[US_COUNT];
 static rcl_publisher_t battery_pub;
 static rcl_publisher_t wheel_speed_pub;
 static rcl_publisher_t imu_pub;
+static rcl_publisher_t payload_pub;
 
 // Subscribers
 static rcl_subscription_t cmd_vel_sub;
@@ -50,6 +53,8 @@ static sensor_msgs__msg__Range range_msg;
 static sensor_msgs__msg__BatteryState battery_msg;
 static std_msgs__msg__Float32MultiArray wheel_msg;
 static sensor_msgs__msg__Imu imu_msg;
+static std_msgs__msg__String payload_msg;
+static char payload_json_buf[192];
 
 // Timers
 static rcl_timer_t odom_timer;
@@ -62,6 +67,37 @@ static float odom_x = 0.0f;
 static float odom_y = 0.0f;
 static float odom_theta = 0.0f;
 static int64_t last_cmd_vel_time = 0;
+
+static void payload_event_handler(payload_state_t pstate, const payload_descriptor_t *desc)
+{
+    const char *state_str;
+    switch (pstate) {
+        case PAYLOAD_STATE_ABSENT:      state_str = "absent"; break;
+        case PAYLOAD_STATE_DETECTED:    state_str = "detected"; break;
+        case PAYLOAD_STATE_IDENTIFYING: state_str = "identifying"; break;
+        case PAYLOAD_STATE_POWERING:    state_str = "powering"; break;
+        case PAYLOAD_STATE_READY:       state_str = "ready"; break;
+        case PAYLOAD_STATE_FAULT:       state_str = "fault"; break;
+        case PAYLOAD_STATE_REMOVING:    state_str = "removing"; break;
+        default:                        state_str = "unknown"; break;
+    }
+
+    int len = snprintf(payload_json_buf, sizeof(payload_json_buf),
+        "{\"state\":\"%s\",\"id\":\"%s\",\"name\":\"%s\","
+        "\"power_5v_ma\":%u,\"power_12v_ma\":%u,\"capabilities\":%u}",
+        state_str,
+        desc ? desc->payload_id : "",
+        desc ? desc->name : "",
+        desc ? desc->power_5v_ma : 0,
+        desc ? desc->power_12v_ma : 0,
+        desc ? desc->capabilities : 0);
+
+    payload_msg.data.data = payload_json_buf;
+    payload_msg.data.size = (size_t)len;
+    payload_msg.data.capacity = sizeof(payload_json_buf);
+
+    rcl_publish(&payload_pub, &payload_msg, NULL);
+}
 
 static void cmd_vel_callback(const void *msg_in)
 {
@@ -257,6 +293,8 @@ esp_err_t microros_init(void)
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState), "/battery_state");
     rclc_publisher_init_default(&imu_pub, &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), "/imu/data");
+    rclc_publisher_init_default(&payload_pub, &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String), "/payload/state_raw");
 
     const char *range_topics[] = {
         "/ultrasonic/front", "/ultrasonic/back",
@@ -294,6 +332,9 @@ esp_err_t microros_init(void)
     wheel_msg.data.capacity = 4;
     wheel_msg.data.size = 4;
     wheel_msg.data.data = (float *)allocator.allocate(4 * sizeof(float), allocator.state);
+
+    // Register payload hotplug event callback for state publishing
+    payload_register_callback(payload_event_handler);
 
     ESP_LOGI(TAG, "micro-ROS initialized (UART %d baud)", UROS_BAUD);
     return ESP_OK;

@@ -30,6 +30,7 @@ setup(
             "mqtt_bridge_node = robot_diagnostics.mqtt_bridge_node:main",
             "health_monitor_node = robot_diagnostics.health_monitor_node:main",
             "notification_dispatcher = robot_diagnostics.notification_dispatcher:main",
+            "payload_monitor_node = robot_diagnostics.payload_monitor_node:main",
         ],
     },
 )
