@@ -4,9 +4,14 @@
 Hardware validation runner — orchestrates subsystem tests on a physical robot.
 
 Requires:
-  - ROS2 Humble sourced
-  - micro-ROS agent running
-  - Robot powered on and connected
+  Standard/Industrial (ROS2 mode):
+    - ROS2 Humble sourced
+    - micro-ROS agent running
+    - Robot powered on and connected
+
+  Basic Standalone (no ROS2):
+    - Robot powered on with WiFi AP active
+    - UDP control port accessible (default: 192.168.4.1:8888)
 
 Usage:
   python3 scripts/run-hardware-validation.py              # run all subsystems
@@ -14,6 +19,7 @@ Usage:
   python3 scripts/run-hardware-validation.py --subsystem encoders
   python3 scripts/run-hardware-validation.py --subsystem ultrasonic
   python3 scripts/run-hardware-validation.py --output results.json
+  python3 scripts/run-hardware-validation.py --standalone  # Basic SKU mode
 """
 
 from __future__ import annotations
@@ -21,6 +27,8 @@ from __future__ import annotations
 import argparse
 import json
 import signal
+import socket
+import struct
 import subprocess
 import sys
 import time
@@ -405,13 +413,175 @@ SUBSYSTEM_RUNNERS = {
     "ultrasonic": run_ultrasonic_log,
 }
 
+# --- Standalone mode (Basic SKU, no ROS2) ---
+
+STANDALONE_DEFAULT_HOST = "192.168.4.1"
+STANDALONE_DEFAULT_PORT = 8888
+STANDALONE_UDP_TIMEOUT = 3.0
+
+
+def _udp_send_recv(
+    host: str, port: int, payload: bytes, timeout: float = STANDALONE_UDP_TIMEOUT
+) -> bytes | None:
+    """Send a UDP packet and wait for response."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(timeout)
+    try:
+        sock.sendto(payload, (host, port))
+        data, _ = sock.recvfrom(1024)
+        return data
+    except (socket.timeout, OSError):
+        return None
+    finally:
+        sock.close()
+
+
+def check_standalone_connected(host: str, port: int) -> bool:
+    """Ping the robot via UDP heartbeat command (0x01)."""
+    resp = _udp_send_recv(host, port, b"\x01")
+    return resp is not None and len(resp) >= 1
+
+
+def run_standalone_connectivity(report: ValidationReport, host: str, port: int) -> None:
+    """Verify UDP connectivity to standalone robot."""
+    start = time.time()
+    resp = _udp_send_recv(host, port, b"\x01")
+    duration = time.time() - start
+
+    passed = resp is not None and len(resp) >= 1
+    report.results.append(
+        TestResult(
+            subsystem="connectivity",
+            test_name="udp_heartbeat",
+            passed=passed,
+            duration_s=duration,
+            message=f"Response: {resp.hex()}" if passed else "No UDP response",
+        )
+    )
+
+
+def run_standalone_motor_test(report: ValidationReport, host: str, port: int) -> None:
+    """Send a brief motor command via UDP and verify acknowledgement."""
+    start = time.time()
+    # Command 0x10 = set velocity, payload: 4x int16 (FL, FR, RL, RR) in RPM
+    # Send low speed (30 RPM) forward for 0.5s, then stop
+    cmd_fwd = struct.pack("<B4h", 0x10, 30, 30, 30, 30)
+    cmd_stop = struct.pack("<B4h", 0x10, 0, 0, 0, 0)
+
+    resp = _udp_send_recv(host, port, cmd_fwd)
+    if resp is None:
+        duration = time.time() - start
+        report.results.append(
+            TestResult(
+                subsystem="motors",
+                test_name="standalone_motor_cmd",
+                passed=False,
+                duration_s=duration,
+                message="No response to motor command",
+            )
+        )
+        return
+
+    time.sleep(0.5)
+    _udp_send_recv(host, port, cmd_stop, timeout=1.0)
+    duration = time.time() - start
+
+    report.results.append(
+        TestResult(
+            subsystem="motors",
+            test_name="standalone_motor_cmd",
+            passed=True,
+            duration_s=duration,
+            message="Motor command acknowledged",
+        )
+    )
+
+
+def run_standalone_battery(report: ValidationReport, host: str, port: int) -> None:
+    """Query battery voltage via UDP command (0x20)."""
+    start = time.time()
+    resp = _udp_send_recv(host, port, b"\x20")
+    duration = time.time() - start
+
+    if resp is None or len(resp) < 3:
+        report.results.append(
+            TestResult(
+                subsystem="battery",
+                test_name="standalone_battery_check",
+                passed=False,
+                duration_s=duration,
+                message="No battery response",
+            )
+        )
+        return
+
+    # Response: cmd(1) + voltage_mv(uint16 LE)
+    voltage_mv = struct.unpack_from("<H", resp, 1)[0]
+    voltage = voltage_mv / 1000.0
+    passed = 6.0 <= voltage <= 8.5
+
+    report.results.append(
+        TestResult(
+            subsystem="battery",
+            test_name="standalone_battery_check",
+            passed=passed,
+            duration_s=duration,
+            message=f"Battery: {voltage:.2f}V"
+            + ("" if passed else " (outside 6.0-8.5V range)"),
+            data={"voltage": voltage},
+        )
+    )
+
+
+def run_standalone_ultrasonic(report: ValidationReport, host: str, port: int) -> None:
+    """Query ultrasonic distance via UDP command (0x30)."""
+    start = time.time()
+    resp = _udp_send_recv(host, port, b"\x30")
+    duration = time.time() - start
+
+    if resp is None or len(resp) < 3:
+        report.results.append(
+            TestResult(
+                subsystem="ultrasonic",
+                test_name="standalone_ultrasonic",
+                passed=False,
+                duration_s=duration,
+                message="No ultrasonic response",
+            )
+        )
+        return
+
+    # Response: cmd(1) + distance_mm(uint16 LE)
+    distance_mm = struct.unpack_from("<H", resp, 1)[0]
+    passed = 20 <= distance_mm <= 4000
+
+    report.results.append(
+        TestResult(
+            subsystem="ultrasonic",
+            test_name="standalone_ultrasonic",
+            passed=passed,
+            duration_s=duration,
+            message=f"Distance: {distance_mm}mm"
+            + ("" if passed else " (outside 20-4000mm range)"),
+            data={"distance_mm": distance_mm},
+        )
+    )
+
+
+def stop_motors_standalone(host: str, port: int) -> None:
+    """Send zero velocity via UDP."""
+    cmd_stop = struct.pack("<B4h", 0x10, 0, 0, 0, 0)
+    _udp_send_recv(host, port, cmd_stop, timeout=1.0)
+
 
 def main() -> None:
+    global TIMEOUT_SECONDS
+
     parser = argparse.ArgumentParser(description="Robot platform hardware validation")
     parser.add_argument(
         "--subsystem",
         choices=list(SUBSYSTEM_RUNNERS.keys()),
-        help="Run only a specific subsystem test",
+        help="Run only a specific subsystem test (ROS2 mode only)",
     )
     parser.add_argument(
         "--output",
@@ -424,10 +594,30 @@ def main() -> None:
         default=TIMEOUT_SECONDS,
         help=f"Per-test timeout in seconds (default: {TIMEOUT_SECONDS})",
     )
+    parser.add_argument(
+        "--standalone",
+        action="store_true",
+        help="Basic SKU standalone mode (UDP tests, no ROS2 required)",
+    )
+    parser.add_argument(
+        "--host",
+        default=STANDALONE_DEFAULT_HOST,
+        help=f"Robot IP for standalone mode (default: {STANDALONE_DEFAULT_HOST})",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=STANDALONE_DEFAULT_PORT,
+        help=f"Robot UDP port for standalone mode (default: {STANDALONE_DEFAULT_PORT})",
+    )
     args = parser.parse_args()
 
-    global TIMEOUT_SECONDS
     TIMEOUT_SECONDS = args.timeout
+
+    print("=== Hardware Validation Runner ===\n")
+
+    if args.standalone:
+        return _run_standalone(args)
 
     # Graceful shutdown on Ctrl+C
     def signal_handler(sig: int, frame: Any) -> None:
@@ -437,12 +627,13 @@ def main() -> None:
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    # Pre-flight checks
-    print("=== Hardware Validation Runner ===\n")
+    # Pre-flight checks (ROS2 mode)
+    print("Mode: ROS2 (Standard/Industrial)\n")
 
     print("Checking ROS2 environment...")
     if not check_ros2_available():
         print("ERROR: ROS2 not available. Source your ROS2 workspace first.")
+        print("  Hint: Use --standalone for Basic SKU without ROS2.")
         sys.exit(1)
     print("  ROS2: OK")
 
@@ -452,6 +643,7 @@ def main() -> None:
         print("  1. Robot is powered on")
         print("  2. micro-ROS agent is running")
         print("  3. Serial cable is connected")
+        print("  Hint: Use --standalone for Basic SKU without ROS2.")
         sys.exit(1)
     print("  Robot: Connected\n")
 
@@ -480,7 +672,67 @@ def main() -> None:
     report.duration_s = round(time.time() - start_time, 2)
     report.overall_passed = all(r.passed for r in report.results)
 
-    # Summary
+    _print_summary(report)
+    _write_report(report, args.output)
+    stop_motors()
+    sys.exit(0 if report.overall_passed else 1)
+
+
+def _run_standalone(args: argparse.Namespace) -> None:
+    """Run standalone (Basic SKU) validation via UDP."""
+    host = args.host
+    port = args.port
+
+    def signal_handler(sig: int, frame: Any) -> None:
+        print("\nInterrupted — stopping motors...")
+        stop_motors_standalone(host, port)
+        sys.exit(1)
+
+    signal.signal(signal.SIGINT, signal_handler)
+
+    print(f"Mode: Standalone (Basic SKU, UDP → {host}:{port})\n")
+
+    print("Checking UDP connectivity...")
+    if not check_standalone_connected(host, port):
+        print(f"ERROR: No response from {host}:{port}. Ensure:")
+        print("  1. Robot is powered on")
+        print("  2. Connected to robot's WiFi AP")
+        print(f"  3. UDP port {port} is accessible")
+        sys.exit(1)
+    print("  Robot: Connected (UDP)\n")
+
+    start_time = time.time()
+    report = ValidationReport(
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        duration_s=0,
+    )
+
+    standalone_tests = [
+        ("connectivity", run_standalone_connectivity),
+        ("motors", run_standalone_motor_test),
+        ("battery", run_standalone_battery),
+        ("ultrasonic", run_standalone_ultrasonic),
+    ]
+
+    for name, runner in standalone_tests:
+        print(f"--- Testing: {name} ---")
+        runner(report, host, port)
+        last_result = report.results[-1] if report.results else None
+        if last_result:
+            status = "PASS" if last_result.passed else "FAIL"
+            print(f"  [{status}] {last_result.test_name}: {last_result.message}")
+        print()
+
+    report.duration_s = round(time.time() - start_time, 2)
+    report.overall_passed = all(r.passed for r in report.results)
+
+    _print_summary(report)
+    _write_report(report, args.output)
+    stop_motors_standalone(host, port)
+    sys.exit(0 if report.overall_passed else 1)
+
+
+def _print_summary(report: ValidationReport) -> None:
     print("=== Results ===\n")
     passed = sum(1 for r in report.results if r.passed)
     failed = sum(1 for r in report.results if not r.passed)
@@ -499,15 +751,11 @@ def main() -> None:
     else:
         print("\nSome tests FAILED. See details above.")
 
-    # Write JSON report
-    if args.output:
-        args.output.write_text(json.dumps(report.to_dict(), indent=2))
-        print(f"\nReport written to: {args.output}")
 
-    # Ensure motors are stopped
-    stop_motors()
-
-    sys.exit(0 if report.overall_passed else 1)
+def _write_report(report: ValidationReport, output: Path | None) -> None:
+    if output:
+        output.write_text(json.dumps(report.to_dict(), indent=2))
+        print(f"\nReport written to: {output}")
 
 
 if __name__ == "__main__":

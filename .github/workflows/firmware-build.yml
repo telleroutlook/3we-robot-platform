@@ -20,24 +20,33 @@ jobs:
         include:
           - sku: ROBOT_SKU_BASIC
             sku_suffix: basic
+            profile: ""
             production: false
           - sku: ROBOT_SKU_STANDARD
             sku_suffix: standard
+            profile: ""
+            production: false
+          - sku: ROBOT_SKU_STANDARD
+            sku_suffix: standard
+            profile: competition
             production: false
           - sku: ROBOT_SKU_INDUSTRIAL
             sku_suffix: industrial
+            profile: ""
             production: false
           - sku: ROBOT_SKU_STANDARD
             sku_suffix: standard
+            profile: ""
             production: true
           - sku: ROBOT_SKU_INDUSTRIAL
             sku_suffix: industrial
+            profile: ""
             production: true
     steps:
       # actions/checkout v4
       - uses: actions/checkout@v4
 
-      - name: Build firmware (${{ matrix.sku_suffix }}${{ matrix.production && '-production' || '' }})
+      - name: Build firmware (${{ matrix.sku_suffix }}${{ matrix.profile != '' && format('-{0}', matrix.profile) || '' }}${{ matrix.production && '-production' || '' }})
         working-directory: firmware/esp32
         env:
           SECURE_BOOT_SIGNING_KEY: ${{ matrix.production == true && secrets.SECURE_BOOT_SIGNING_KEY || '' }}
@@ -53,6 +62,9 @@ jobs:
             echo "$SECURE_BOOT_SIGNING_KEY" | base64 -d > secure_boot_signing_key.pem
           fi
           CONFIGS="sdkconfig.defaults;sdkconfig.defaults.${{ matrix.sku_suffix }}"
+          if [ -n "${{ matrix.profile }}" ]; then
+            CONFIGS="$CONFIGS;sdkconfig.defaults.${{ matrix.profile }}"
+          fi
           if [ "${{ matrix.production }}" = "true" ]; then
             CONFIGS="$CONFIGS;sdkconfig.defaults.production"
           fi
