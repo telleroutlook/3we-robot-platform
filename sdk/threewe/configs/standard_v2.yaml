@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: Apache-2.0
+# 3we Standard Research Configuration v2
+# Raspberry Pi 5 (8GB) + Hailo-8L + ESP32-S3 + LD06 LiDAR + BNO055 IMU
+# Reproduction cost: ~$300 USD
+
+hardware:
+  platform: "3we_standard_v2"
+  wheels: "mecanum_65mm"
+  lidar: "ld06"
+  camera: "fisheye_1080p"
+  imu: "bno055"
+
+limits:
+  max_linear_velocity: 0.5     # m/s
+  max_angular_velocity: 1.0    # rad/s
+  safety_distance: 0.15        # m (ultrasonic e-stop threshold)
+
+navigation:
+  planner: "smac_2d"
+  controller: "dwb"
+  goal_tolerance: 0.1          # m
+
+api:
+  image_size: [640, 480]
+  lidar_points: 360
+  control_frequency: 50        # Hz

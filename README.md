@@ -2,281 +2,230 @@
 
 # 3WE Robot Platform
 
-**Universal Modular Mobile Platform**
+**AI-First Open Infrastructure for Embodied Robotics**
 
 [![License](https://img.shields.io/badge/Code-Apache_2.0-blue.svg)](LICENSE)
 [![License](https://img.shields.io/badge/Hardware-CERN--OHL--P_v2-green.svg)](LICENSE-HARDWARE)
-[![License](https://img.shields.io/badge/Docs-CC_BY--SA_4.0-orange.svg)](LICENSE-DOCS)
-[![ROS2](https://img.shields.io/badge/ROS2-Humble%20|%20Jazzy-blueviolet.svg)](https://ros.org/)
-[![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.x-red.svg)](https://github.com/espressif/esp-idf)
+[![PyPI](https://img.shields.io/badge/pip_install-threewe-orange.svg)](sdk/threewe/)
+[![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blueviolet.svg)](https://ros.org/)
 
-[![ESP32-S3](https://img.shields.io/badge/ESP32--S3-000000?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/en/products/socs/esp32-s3)
-[![ROS2](https://img.shields.io/badge/ROS2-22314E?style=for-the-badge&logo=ros&logoColor=white)](https://ros.org/)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![KiCad](https://img.shields.io/badge/KiCad-314CB0?style=for-the-badge&logo=kicad&logoColor=white)](https://www.kicad.org/)
-[![CI](https://img.shields.io/github/actions/workflow/status/3we/robot-platform/full-validation.yml?style=for-the-badge&label=CI)](../../actions)
-
-An open-source omnidirectional mobile robot platform designed for<br/>
-**modularity**, **extensibility**, and **rapid payload integration**.
-
-<img src="docs/images/robot-platform-hero.png" alt="Robot Platform" width="600"/>
-
-[Getting Started](#-quick-start) &bull;
-[Documentation](docs/) &bull;
-[Contributing](CONTRIBUTING.md) &bull;
-[Hardware](hardware/)
-
-**[English](README.md) | [中文](README_zh.md)**
+The **open-source PyTorch for Embodied AI** — a complete robot platform
+where the same 5 lines of Python run identically in simulation and on real hardware.
 
 </div>
 
 ---
 
-> [!NOTE]
-> This project is under active development. Hardware designs and firmware are being validated.
+## 5 Lines to a Moving Robot
 
-<br/>
+```python
+from threewe import Robot
 
-## ✦ Core Capabilities
-
-<table>
-<tr>
-<td width="50%">
-
-**Motion & Control**
-- Omnidirectional mecanum drive
-- Closed-loop PID with encoder feedback
-- 50 Hz control loop, < 20 ms latency
-- Configurable speed limit (max 1.2 m/s)
-
-</td>
-<td width="50%">
-
-**Intelligence & Navigation**
-- Edge AI inference (Hailo-8/8L)
-- Nav2 autonomous navigation
-- SLAM with slam_toolbox
-- ROS2 native integration
-
-</td>
-</tr>
-<tr>
-<td>
-
-**Safety & Security**
-- ISO 13850 hardware E-stop
-- Dual-channel safety relay with self-test
-- DTLS 1.2 encrypted communication
-- ECDSA P-256 signed OTA updates
-
-</td>
-<td>
-
-**Modularity & Extensibility**
-- PBC-34 hot-plug payload bus
-- EEPROM auto-identification
-- Power sequencing & budget management
-- Multi-protocol: Wi-Fi / BLE / 4G / 5G / LoRa
-
-</td>
-</tr>
-</table>
-
-<br/>
-
-## ✦ Why This Project
-
-| Pain Point | How We Solve It |
-|:-----------|:----------------|
-| Building a robot platform from scratch takes months | Complete open-source stack: hardware → firmware → ROS2 → SDK, ready to customize |
-| Most platforms have closed hardware designs | Fully open PCB (KiCad) + mechanical drawings under CERN-OHL-P |
-| No standard payload interface exists | PBC-34 hot-plug bus with EEPROM auto-discovery — plug in your sensor and go |
-| Education platforms don't scale to industry | 3 SKUs from classroom (Basic) to factory floor (Industrial) — same codebase |
-| Security is bolted on as an afterthought | DTLS 1.2 encrypted comms + signed OTA + hardware E-stop from day one |
-
-### Who Is This For?
-
-- **Students & Educators** — Learn real embedded systems, ROS2, and mechatronics with production-grade code instead of toy examples
-- **Researchers** — Skip 6 months of platform building; focus on your algorithm with a validated, sensor-fused base
-- **Product Developers** — Prototype to product on the same platform; swap SKU configs without rewriting code
-- **Industrial Integrators** — IP65, CAN bus, 5G, hardware safety relays — deploy in real facilities with confidence
-
-<br/>
-
-## ✦ Product Line
-
-| | **Basic** | **Standard** | **Industrial** |
-|:--|:--:|:--:|:--:|
-| **Target** | Education | Research / Development | Industrial deployment |
-| **Chassis** | 300×250 mm | 400×320 mm | 500×400 mm |
-| **Wheels** | 48 mm Mecanum | 65 mm Mecanum | 97 mm Mecanum |
-| **Payload** | 1 kg | 5 kg | 15 kg |
-| **AI** | — | Hailo-8L (13 TOPS) | Hailo-8 (26 TOPS) |
-| **Connectivity** | Wi-Fi + BLE | Wi-Fi + BLE | + 5G + LoRa |
-| **CAN Bus** | — | — | MCP2515 + TJA1050 |
-| **Protection** | IP20 | IP20 | IP54 |
-
-Optional add-ons for Standard: Hailo-8 upgrade, 4G modem, LD06 LiDAR, rear camera.
-
-<br/>
-
-## ✦ Architecture
-
-```
-┌───────────────────────────────────────────────────────────┐
-│                       Payload Layer                         │
-│            User devices via PBC-34 connector               │
-├───────────────────────────────────────────────────────────┤
-│                    Application Layer                        │
-│          ROS2  ·  Nav2  ·  SLAM  ·  Custom Nodes          │
-├───────────────────────────────────────────────────────────┤
-│                     Compute Layer                           │
-│          Raspberry Pi 5  +  AI Accelerator (Hailo)         │
-├───────────────────────────────────────────────────────────┤
-│                     Firmware Layer                          │
-│     ESP32-S3  ·  Motor  ·  Sensors  ·  Safety  ·  Comm    │
-├───────────────────────────────────────────────────────────┤
-│                     Hardware Layer                          │
-│   Mecanum Wheels  ·  DRV8833  ·  Battery  ·  E-Stop       │
-└───────────────────────────────────────────────────────────┘
+async with Robot(backend="gazebo") as robot:
+    image = robot.get_image()
+    await robot.move_to(x=2.0, y=1.0)
+    pose = robot.get_pose()
 ```
 
-<br/>
+Switch `backend="gazebo"` to `backend="real"` — zero code changes, same API.
 
-## ✦ Repository Structure
+---
 
-```
-robot-platform/
-│
-├── firmware/                    # ESP32-S3 firmware (ESP-IDF + micro-ROS)
-│   ├── esp32/main/             #   Application source
-│   └── config/                 #   Pin definitions, robot parameters
-│
-├── ros2_ws/                    # ROS2 workspace
-│   ├── robot_bringup/          #   Launch files, Nav2/SLAM config
-│   ├── robot_collection/       #   Ball collection demo (state machine)
-│   ├── robot_competition/      #   Competition nodes (RoboCup)
-│   ├── robot_description/      #   URDF model (Xacro)
-│   ├── robot_diagnostics/      #   Health monitoring, metrics
-│   ├── robot_docking/          #   Autonomous docking controller
-│   ├── robot_interfaces/       #   Custom msg/srv/action definitions
-│   ├── robot_perception/       #   Camera + AI inference (Hailo)
-│   └── robot_simulation/       #   Gazebo simulation
-│
-├── hardware/                   # Hardware design
-│   ├── pcb/                    #   PCB specs, PBC-34 pinout
-│   ├── structure/              #   Mechanical drawings
-│   ├── bom/                    #   Bill of materials (3 SKUs + optional add-ons)
-│   ├── charging_dock/          #   Docking station hardware (PCB, BOM, docs)
-│   ├── production/             #   Manufacturing outputs (Gerbers, drill)
-│   ├── manufacturing/          #   Manufacturing documentation
-│   └── validation/             #   Hardware validation tests
-│
-├── sdk/                        # Payload developer toolkit
-│   ├── payload_interface/      #   Python communication library
-│   ├── tools/                  #   EEPROM validator, diagnostics
-│   ├── examples/               #   Reference implementations
-│   ├── web_control/            #   TypeScript Web Components
-│   └── web_basic/              #   Browser-based teleop UI
-│
-└── docs/                       # Documentation
-    ├── assembly_guide.md       #   Hardware assembly
-    ├── firmware_guide.md        #   Build & flash guide
-    ├── pbc34_payload_guide.md  #   Payload development reference
-    ├── compliance_checklist.md #   Regulatory compliance
-    └── performance_benchmarks.md
+## Why 3we?
 
-monitoring/                     # Prometheus + Grafana observability
-scripts/                        # Automation (validate, release, setup)
-tests/                          # Integration & hardware validation tests
-```
+| If you are... | 3we gives you... |
+|:---|:---|
+| **AI/ML Researcher** | Gymnasium envs, VLM/VLA integration, trajectory recording — focus on your model, not ROS2 |
+| **Robotics Student** | Full stack from PCB to Python, <$500 hardware, production-grade code instead of toy examples |
+| **RL Practitioner** | `gymnasium.make("3we/Navigation-v1")` — standard RL interface with real Sim2Real transfer |
+| **Product Developer** | Prototype to product on one platform; same codebase scales from classroom to factory |
 
-<br/>
+---
 
-## ✦ Quick Start
-
-### Prerequisites
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/get-started/) | v5.x | Firmware build toolchain |
-| [ROS2](https://docs.ros.org/en/humble/Installation.html) | Humble / Jazzy | Robot middleware |
-| Python | 3.10+ | SDK and tools |
-| Node.js | 18+ | Web control UI, cross-layer validation |
-| GCC | 12+ | Firmware unit tests (host build) |
-| [KiCad](https://www.kicad.org/) | 8+ | Hardware modifications (optional) |
-
-### 1. Build & Flash Firmware
+## Quick Start
 
 ```bash
-cd firmware/esp32
-idf.py set-target esp32s3
-idf.py build
-idf.py flash monitor
+pip install threewe[sim]
 ```
 
-### 2. Build ROS2 Workspace
+```python
+import asyncio
+from threewe import Robot
+
+async def main():
+    async with Robot(backend="gazebo") as robot:
+        # Navigate
+        result = await robot.move_to(x=2.0, y=1.0)
+        print(f"Reached: {result.success}")
+
+        # VLM-powered instruction (requires: pip install threewe[ai])
+        result = await robot.execute_instruction("go to the red door")
+
+        # Get sensor data
+        scan = robot.get_lidar_scan()
+        imu = robot.get_imu()
+
+asyncio.run(main())
+```
+
+### RL Training
+
+```python
+import gymnasium
+import threewe.gym  # registers environments
+
+env = gymnasium.make("3we/Navigation-v1")
+obs, info = env.reset()
+
+for _ in range(1000):
+    action = env.action_space.sample()
+    obs, reward, terminated, truncated, info = env.step(action)
+    if terminated or truncated:
+        obs, info = env.reset()
+```
+
+### Benchmarks
 
 ```bash
-cd ros2_ws
-colcon build --symlink-install
-source install/setup.bash
+threewe benchmark run --task pointnav --episodes 100 --backend gazebo
 ```
 
-### 3. Launch the Robot
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      Your Python Code                            │
+│  robot.move_to() · robot.get_image() · robot.execute_instruction│
+├─────────────────────────────────────────────────────────────────┤
+│                     threewe Python API                           │
+│  Robot · Types · Config · AI (VLM/VLA) · Gym · Data · Benchmark │
+├──────────────────┬──────────────────┬───────────────────────────┤
+│  GazeboBackend   │   RealBackend    │   IsaacSimBackend (P2)    │
+│  (Gazebo Harmonic│   (ROS2 Topics)  │   (Future)               │
+│   + ros_gz_bridge│                  │                           │
+├──────────────────┴──────────────────┴───────────────────────────┤
+│                     ROS2 Jazzy + Nav2                            │
+│   /cmd_vel · /scan · /odom · /camera · NavigateToPose Action    │
+├─────────────────────────────────────────────────────────────────┤
+│                     Firmware (ESP32-S3)                          │
+│   Motor PID · Encoders · IMU · Safety Relay · micro-ROS         │
+├─────────────────────────────────────────────────────────────────┤
+│                     Hardware Layer                               │
+│   Mecanum · DRV8833 · LD06 LiDAR · BNO055 · Battery · E-Stop   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Platform Comparison
+
+| Feature | **3we** | TurtleBot 4 | LeRobot | Isaac Lab |
+|:--------|:---:|:---:|:---:|:---:|
+| Python API (no ROS2 knowledge) | **Yes** | No | N/A | Partial |
+| Sim2Real (zero code change) | **Yes** | No | No | Yes |
+| Open Hardware (PCB + BOM) | **Full** | Partial | N/A | N/A |
+| Gymnasium Interface | **Yes** | No | Partial | Yes |
+| VLM/VLA Integration | **Built-in** | No | Yes | No |
+| Hardware Cost | **<$500** | ~$1200 | ~$2000+ | N/A |
+| Payload Hot-plug Bus | **PBC-34** | USB | N/A | N/A |
+| Safety (HW E-stop) | **ISO 13850** | Software | N/A | N/A |
+| Encrypted Comms | **DTLS 1.2** | None | N/A | N/A |
+
+---
+
+## Hardware Specs
+
+| Spec | Standard v2 |
+|:-----|:---|
+| Drive | 4-wheel Mecanum (65mm), omnidirectional |
+| MCU | ESP32-S3 (dual-core 240MHz) |
+| SBC | Raspberry Pi 5 (8GB) |
+| AI Accelerator | Hailo-8L (13 TOPS) |
+| LiDAR | LD06 (360°, 12m range) |
+| IMU | BNO055 (9-axis fused) |
+| Max Velocity | 0.5 m/s linear, 1.0 rad/s angular |
+| Battery | 7.4V Li-ion, ~2h runtime |
+| Safety | ISO 13850 E-stop + dual-channel relay |
+| Connectivity | Wi-Fi + BLE (+ 4G/5G optional) |
+| Reproduction Cost | <$500 |
+
+---
+
+## Repository Structure
+
+```
+3we-robot-platform/
+├── sdk/threewe/          # AI-First Python package (pip install threewe)
+│   ├── src/threewe/      #   Robot, Types, Backends, Gym, AI, Data, Benchmark
+│   └── tests/            #   76+ unit tests
+├── examples/             # Ready-to-run demo scripts
+├── firmware/             # ESP32-S3 firmware (ESP-IDF + micro-ROS)
+├── ros2_ws/              # ROS2 packages (Nav2, SLAM, Gazebo, Perception)
+├── hardware/             # Open hardware (KiCad PCB, BOM, mechanical)
+├── sdk/payload_interface/# Payload communication library
+├── sdk/web_control/      # TypeScript Web Components control panel
+├── monitoring/           # Prometheus + Grafana observability
+└── docs/                 # Guides, API reference, tutorials
+```
+
+---
+
+## Installation Options
 
 ```bash
-ros2 launch robot_bringup robot.launch.py
+# Core (types, Robot class, config)
+pip install threewe
+
+# With simulation (adds gymnasium)
+pip install threewe[sim]
+
+# With AI integration (adds openai, Pillow)
+pip install threewe[ai]
+
+# With data recording (adds h5py)
+pip install threewe[data]
+
+# Everything
+pip install threewe[all]
 ```
 
-### 4. Build Web Control UI (optional)
-
+For the **real hardware** backend, you also need ROS2 Jazzy:
 ```bash
-cd sdk/web_control
-npm install
-npm run build
+# Ubuntu 24.04
+sudo apt install ros-jazzy-desktop
 ```
 
-<br/>
+---
 
-## ✦ Tech Stack
+## Examples
 
-| Layer | Technology | Role |
-|:------|:-----------|:-----|
-| MCU | ESP32-S3 | Dual-core 240 MHz, Wi-Fi + BLE |
-| SBC | Raspberry Pi 5 (8 GB) | ROS2, navigation, vision |
-| AI | Hailo-8L / Hailo-8 | 13–26 TOPS edge inference |
-| RTOS | FreeRTOS (ESP-IDF) | Real-time motor + sensor control |
-| Middleware | micro-ROS ↔ ROS2 | MCU–SBC bridge |
-| Navigation | Nav2 + slam_toolbox | SLAM and path planning |
-| Motor Driver | DRV8833 x2 | 4 × DC motor H-bridge |
-| Security | DTLS 1.2 + ECDSA P-256 OTA | Encrypted control, signed updates |
-| Safety | ISO 13850 E-stop | Hardware interlock |
+| Script | Description |
+|:-------|:-----------|
+| [`hello_world.py`](examples/hello_world.py) | Connect, capture image, navigate |
+| [`vlm_navigation.py`](examples/vlm_navigation.py) | GPT-4o visual navigation |
+| [`rl_obstacle_avoidance.py`](examples/rl_obstacle_avoidance.py) | PPO training in simulation |
+| [`slam_exploration.py`](examples/slam_exploration.py) | Autonomous SLAM exploration |
+| [`sim2real_demo.py`](examples/sim2real_demo.py) | Same code, different backends |
 
-<br/>
+---
 
-## ✦ Comparison with Alternatives
+## Roadmap
 
-| Feature | **This Project** | TurtleBot 4 | Linorobot2 | ROSbot XL | Yahboom X3 |
-|:--------|:---:|:---:|:---:|:---:|:---:|
-| **Open Hardware** | Full (CERN-OHL-P) | Partial | Partial | Closed | Closed |
-| **Mecanum Drive** | 4-wheel omnidirectional | Differential | Configurable | Mecanum | Mecanum |
-| **Payload System** | PBC-34 hot-plug bus | USB/serial | None | GPIO header | None |
-| **Encrypted Comms** | DTLS 1.2 | None | None | None | None |
-| **Multi-SKU** | 3 variants (1 codebase) | Single | Single | 2 variants | Single |
-| **Web Control UI** | Built-in (TypeScript) | Via RViz | None | ROSbot UI | App only |
-| **HW Safety Relay** | ISO 13850 + self-test | Software only | None | Software only | None |
+- [x] **Phase 1**: ESP32 firmware + ROS2 stack + Hardware design
+- [x] **Phase 1**: `threewe` Python API + Sim2Real backends
+- [x] **Phase 1**: Gymnasium environments + VLM/VLA integration
+- [x] **Phase 1**: Benchmark framework + Example scripts
+- [ ] **Phase 2**: Isaac Sim backend
+- [ ] **Phase 2**: Hardware Abstraction Layer for 3rd-party robots
+- [ ] **Phase 2**: Foundation model fine-tuning pipelines
+- [ ] **Phase 3**: 3we Hub (model/dataset sharing)
+- [ ] **Phase 3**: Multi-robot fleet management
 
-This platform occupies a unique position: **fully open hardware with production-grade security**, bridging the gap between educational kits and closed industrial robots. No other open-source platform combines a standardized payload bus, encrypted communication, and multi-SKU scalability in a single architecture.
+---
 
-> See **[docs/competitive_analysis.md](docs/competitive_analysis.md)** for detailed multi-dimensional comparison.
-
-<br/>
-
-## ✦ Licensing
-
-This project uses an **Open Core** multi-license structure:
+## Licensing
 
 | Component | License | File |
 |:----------|:--------|:-----|
@@ -284,22 +233,15 @@ This project uses an **Open Core** multi-license structure:
 | Hardware Designs | CERN-OHL-P v2 | [`LICENSE-HARDWARE`](LICENSE-HARDWARE) |
 | Documentation | CC BY-SA 4.0 | [`LICENSE-DOCS`](LICENSE-DOCS) |
 
-Third-party attributions: [`NOTICE`](NOTICE)
+---
 
-<br/>
+## Contributing
 
-## ✦ Contributing
+We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for development setup, branch strategy, and PR process.
 
-We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
+---
 
-- Development environment setup
-- Branch strategy & conventional commits
-- Pull request process
-- Safety-critical contribution rules
-
-<br/>
-
-## ✦ Safety Notice
+## Safety Notice
 
 > [!WARNING]
 > This platform contains **moving mechanical parts** and **lithium batteries**.
@@ -307,33 +249,3 @@ We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
 - Always verify E-stop function before operation
 - Never bypass or modify the safety relay circuit
 - Follow battery handling guidelines in documentation
-- Keep clear of wheel assemblies during operation
-
-<br/>
-
-## ✦ Community & Support
-
-| Channel | Purpose |
-|---------|---------|
-| [GitHub Issues](../../issues) | Bug reports, feature requests |
-| [GitHub Discussions](../../discussions) | Questions, ideas, show & tell |
-
-<br/>
-
-## ✦ Acknowledgments
-
-Built on the shoulders of:
-
-| Project | Maintainer |
-|---------|-----------|
-| [ESP-IDF](https://github.com/espressif/esp-idf) | Espressif Systems |
-| [micro-ROS](https://micro.ros.org/) | eProsima |
-| [ROS 2](https://ros.org/) | Open Robotics |
-| [Nav2](https://nav2.org/) | Steve Macenski et al. |
-| [KiCad](https://www.kicad.org/) | KiCad Community |
-
----
-
-<div align="center">
-<sub>Made with care for the robotics community.</sub>
-</div>
