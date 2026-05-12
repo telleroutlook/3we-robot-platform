@@ -7,7 +7,7 @@
 .PHONY: web-build web-test web-lint web-format
 .PHONY: python-lint python-test
 .PHONY: docker-build docker-up docker-down
-.PHONY: validate-types coverage
+.PHONY: validate-types validate-params validate-pins validate-bom validate-kconfig coverage
 
 # Default target
 all: lint test build
@@ -23,7 +23,12 @@ help:
 	@echo "  build            Build all subsystems"
 	@echo "  test             Run all tests"
 	@echo "  lint             Run all linters"
-	@echo "  validate         Cross-layer type validation"
+	@echo "  validate         Cross-layer validation (all checks)"
+	@echo "  validate-types   ROS2 ↔ TypeScript ↔ firmware type alignment"
+	@echo "  validate-params  Firmware params ↔ ROS2 launch file"
+	@echo "  validate-pins    GPIO pin conflict detection"
+	@echo "  validate-bom     BOM ↔ firmware component alignment"
+	@echo "  validate-kconfig Kconfig constraint validation"
 	@echo "  coverage         Generate test coverage reports"
 	@echo "  clean            Remove build artifacts"
 	@echo ""
@@ -90,7 +95,19 @@ python-test:
 validate-types:
 	npx tsx scripts/validate-ros-types.ts
 
-validate: validate-types web-lint python-lint
+validate-params:
+	npx tsx scripts/validate-robot-params.ts
+
+validate-pins:
+	python3 scripts/validate-pin-conflicts.py
+
+validate-bom:
+	python3 scripts/validate-bom-firmware.py
+
+validate-kconfig:
+	python3 scripts/validate-kconfig-constraints.py
+
+validate: validate-types validate-params validate-pins validate-bom validate-kconfig web-lint python-lint
 
 # ─── Coverage ─────────────────────────────────────────────────────────────────
 

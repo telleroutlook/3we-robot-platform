@@ -163,6 +163,14 @@ ruff format --check sdk/ && ruff check sdk/
 
 # 8. Cross-layer — ROS2 ↔ TypeScript ↔ firmware enum alignment
 npx tsx scripts/validate-ros-types.ts
+
+# 9. Cross-layer — firmware params ↔ ROS2 launch file
+npx tsx scripts/validate-robot-params.ts
+
+# 10. Cross-layer — GPIO pin conflicts, BOM alignment, Kconfig constraints
+python3 scripts/validate-pin-conflicts.py
+python3 scripts/validate-bom-firmware.py
+python3 scripts/validate-kconfig-constraints.py
 ```
 
 If any step fails, fix before committing.

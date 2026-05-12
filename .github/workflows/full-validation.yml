@@ -80,6 +80,13 @@ jobs:
         run: |
           npm ci
           npx tsx scripts/validate-ros-types.ts
+          npx tsx scripts/validate-robot-params.ts
+
+      - name: Validate firmware constraints
+        run: |
+          python3 scripts/validate-pin-conflicts.py
+          python3 scripts/validate-bom-firmware.py
+          python3 scripts/validate-kconfig-constraints.py
 
   ros2-build:
     runs-on: ubuntu-latest
