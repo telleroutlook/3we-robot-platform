@@ -16,7 +16,7 @@ jobs:
     container: ros:humble
     steps:
       # actions/checkout v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Install dependencies
         run: |
@@ -26,7 +26,7 @@ jobs:
           rosdep install --from-paths ros2_ws --ignore-src -y --skip-keys="micro_ros_agent"
 
       - name: Cache colcon workspace
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ros2_ws/build
           key: colcon-${{ runner.os }}-${{ hashFiles('ros2_ws/*/CMakeLists.txt', 'ros2_ws/*/package.xml', 'ros2_ws/*/setup.py') }}
@@ -40,7 +40,7 @@ jobs:
           colcon build --symlink-install
 
       - name: Upload build workspace
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ros2-build-workspace
           path: |

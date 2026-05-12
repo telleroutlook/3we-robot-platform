@@ -23,12 +23,25 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 from pathlib import Path
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+
+
+def _safe_extractall(tar: tarfile.TarFile, path: str) -> None:
+    """Extract tar archive safely, guarding against path traversal."""
+
+    if sys.version_info >= (3, 12):
+        tar.extractall(path=path, filter="data")
+    else:
+        for member in tar.getmembers():
+            if member.name.startswith("/") or ".." in member.name.split("/"):
+                raise ValueError(f"Unsafe path in archive: {member.name}")
+        tar.extractall(path=path)
 
 
 class OtaManagerNode(Node):
@@ -332,18 +345,8 @@ class OtaManagerNode(Node):
         extract_dir = Path(tempfile.mkdtemp(prefix="ros2_update_"))
 
         try:
-            import tarfile
-
             with tarfile.open(file_path, "r:gz") as tar:
-                if sys.version_info >= (3, 12):
-                    tar.extractall(path=str(extract_dir), filter="data")
-                else:
-                    for member in tar.getmembers():
-                        if member.name.startswith("/") or ".." in member.name.split(
-                            "/"
-                        ):
-                            raise ValueError(f"Unsafe path in archive: {member.name}")
-                    tar.extractall(path=str(extract_dir))
+                _safe_extractall(tar, str(extract_dir))
 
             src_dir = extract_dir / "src"
             if not src_dir.exists():
@@ -395,18 +398,8 @@ class OtaManagerNode(Node):
         config_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            import tarfile
-
             with tarfile.open(file_path, "r:gz") as tar:
-                if sys.version_info >= (3, 12):
-                    tar.extractall(path=str(config_dir), filter="data")
-                else:
-                    for member in tar.getmembers():
-                        if member.name.startswith("/") or ".." in member.name.split(
-                            "/"
-                        ):
-                            raise ValueError(f"Unsafe path in archive: {member.name}")
-                    tar.extractall(path=str(config_dir))
+                _safe_extractall(tar, str(config_dir))
             return True
         except Exception as e:
             self.get_logger().error(f"Config update failed: {e}")
