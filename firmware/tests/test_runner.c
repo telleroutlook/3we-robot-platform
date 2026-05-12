@@ -300,6 +300,30 @@ extern void test_battery_percentage_bounded(void);
 extern void test_battery_percentage_boundary_zero(void);
 extern void test_battery_percentage_boundary_full(void);
 
+// test_current_sense.c
+extern void test_current_sense_init_returns_ok(void);
+extern void test_current_sense_read_null_returns_invalid_arg(void);
+extern void test_current_sense_read_zeroed_after_init(void);
+extern void test_current_sense_get_state_invalid_channel(void);
+extern void test_current_sense_get_state_normal_after_init(void);
+extern void test_current_sense_update_zero_current(void);
+extern void test_current_sense_update_normal_current(void);
+extern void test_current_sense_soft_limit_requires_duration(void);
+extern void test_current_sense_hard_limit_triggers_after_duration(void);
+extern void test_current_sense_overcurrent_clears_when_normal(void);
+extern void test_current_sense_total_current_sums_channels(void);
+extern void test_current_sense_hard_limit_sets_overcurrent_flags(void);
+extern void test_current_sense_negative_current_uses_absolute(void);
+
+// test_charging_detect.c
+extern void test_charging_detect_init_success(void);
+extern void test_charging_detect_not_connected_below_threshold(void);
+extern void test_charging_detect_connected_at_threshold(void);
+extern void test_charging_detect_connected_above_threshold(void);
+extern void test_charging_detect_voltage_returns_calibrated(void);
+extern void test_charging_detect_voltage_zero_before_init(void);
+extern void test_charging_detect_boundary_just_below_threshold(void);
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -602,6 +626,30 @@ int main(void)
     RUN_TEST(test_authority_check_idle_expired_releases_and_returns_true);
     RUN_TEST(test_authority_check_idle_exact_boundary_not_expired);
     RUN_TEST(test_authority_sequence_preempt_release_rerequest);
+
+    // Current sense (ACS712)
+    RUN_TEST(test_current_sense_init_returns_ok);
+    RUN_TEST(test_current_sense_read_null_returns_invalid_arg);
+    RUN_TEST(test_current_sense_read_zeroed_after_init);
+    RUN_TEST(test_current_sense_get_state_invalid_channel);
+    RUN_TEST(test_current_sense_get_state_normal_after_init);
+    RUN_TEST(test_current_sense_update_zero_current);
+    RUN_TEST(test_current_sense_update_normal_current);
+    RUN_TEST(test_current_sense_soft_limit_requires_duration);
+    RUN_TEST(test_current_sense_hard_limit_triggers_after_duration);
+    RUN_TEST(test_current_sense_overcurrent_clears_when_normal);
+    RUN_TEST(test_current_sense_total_current_sums_channels);
+    RUN_TEST(test_current_sense_hard_limit_sets_overcurrent_flags);
+    RUN_TEST(test_current_sense_negative_current_uses_absolute);
+
+    // Charging detect
+    RUN_TEST(test_charging_detect_init_success);
+    RUN_TEST(test_charging_detect_not_connected_below_threshold);
+    RUN_TEST(test_charging_detect_connected_at_threshold);
+    RUN_TEST(test_charging_detect_connected_above_threshold);
+    RUN_TEST(test_charging_detect_voltage_returns_calibrated);
+    RUN_TEST(test_charging_detect_voltage_zero_before_init);
+    RUN_TEST(test_charging_detect_boundary_just_below_threshold);
 
     return UNITY_END();
 }

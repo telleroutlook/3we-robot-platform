@@ -5,6 +5,8 @@ Subscribes to /diagnostics, routes events by severity to configured webhook
 endpoints with throttling, quiet hours, and HMAC signature support.
 """
 
+from __future__ import annotations
+
 import hashlib
 import hmac
 import json

@@ -144,6 +144,8 @@ typedef void* adc_cali_handle_t;
 #define ADC_ATTEN_DB_11   3
 #define ADC_ATTEN_DB_12   3
 #define ADC_BITWIDTH_12   12
+#define ADC_CHANNEL_0     0
+#define ADC_CHANNEL_1     1
 #define ADC_CHANNEL_2     2
 #define ADC_CHANNEL_3     3
 #define ADC_CHANNEL_8     8

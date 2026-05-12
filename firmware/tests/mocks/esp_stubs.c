@@ -206,7 +206,7 @@ esp_err_t adc_cali_create_scheme_line_fitting(const adc_cali_line_fitting_config
     (void)cfg; *handle = NULL; return ESP_OK;
 }
 esp_err_t adc_cali_create_scheme_curve_fitting(const adc_cali_curve_fitting_config_t *cfg, adc_cali_handle_t *handle) {
-    (void)cfg; *handle = NULL; return ESP_OK;
+    (void)cfg; *handle = (void*)(intptr_t)2; return ESP_OK;
 }
 esp_err_t adc_cali_raw_to_voltage(adc_cali_handle_t handle, int raw, int *mv) {
     (void)handle; (void)raw;

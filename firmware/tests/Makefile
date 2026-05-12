@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Makefile for firmware unit tests (alternative to CMake)
 CC = gcc
-CFLAGS = -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -g -std=c11 -DUNIT_TEST_BUILD -include mocks/esp_stubs.h -include mocks/mbedtls_stubs.h -include mocks/mbedtls_ssl_stubs.h
+CFLAGS = -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -g -std=c11 -DUNIT_TEST_BUILD -DCONFIG_CURRENT_SENSE_ENABLED -DCONFIG_ROBOT_DOCKING_ENABLED -include mocks/esp_stubs.h -include mocks/mbedtls_stubs.h -include mocks/mbedtls_ssl_stubs.h
 
 FIRMWARE_SRC = ../esp32/main
 FIRMWARE_CONFIG = ../config
@@ -34,6 +34,8 @@ SRCS = test_runner.c \
        test_external_wdt.c \
        test_battery_multipack.c \
        test_microros_messages.c \
+       test_current_sense.c \
+       test_charging_detect.c \
        mocks/esp_stubs.c \
        mocks/i2c_stubs.c \
        mocks/spi_stubs.c \
@@ -57,7 +59,9 @@ SRCS = test_runner.c \
        $(FIRMWARE_SRC)/udp_transport.c \
        $(FIRMWARE_SRC)/dtls_authority.c \
        $(FIRMWARE_SRC)/heartbeat_monitor.c \
-       $(FIRMWARE_SRC)/external_wdt.c
+       $(FIRMWARE_SRC)/external_wdt.c \
+       $(FIRMWARE_SRC)/current_sense.c \
+       $(FIRMWARE_SRC)/charging_detect.c
 
 BUILD_DIR = build
 TARGET = $(BUILD_DIR)/test_runner
