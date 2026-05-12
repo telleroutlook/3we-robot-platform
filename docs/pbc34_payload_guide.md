@@ -108,7 +108,7 @@ Total: 64 bytes.
 | 4 | `CAP_ADC` | `0x10` | Analog-to-digital converter |
 | 5 | `CAP_PWM` | `0x20` | PWM output |
 | 6 | `CAP_CAN` | `0x40` | CAN bus interface |
-| 7 | `CAP_RESERVED` | `0x80` | Reserved for future use |
+| 7 | `CAP_CAMERA` | `0x80` | Camera interface |
 
 ---
 

@@ -1,6 +1,6 @@
 # Web Control API Reference
 
-The web control interface provides 8 custom Web Components for robot teleoperation and monitoring. Components connect to the robot via the [rosbridge WebSocket protocol](rosbridge_guide.md).
+The web control interface provides 9 custom Web Components for robot teleoperation and monitoring. Components connect to the robot via the [rosbridge WebSocket protocol](rosbridge_guide.md).
 
 ## Setup
 
@@ -26,6 +26,7 @@ npm run dev      # development server with hot reload
 <robot-wheel-speeds></robot-wheel-speeds>
 <robot-imu-attitude></robot-imu-attitude>
 <robot-system-status></robot-system-status>
+<robot-collection-status></robot-collection-status>
 ```
 
 ### Connection
@@ -238,6 +239,38 @@ Aggregated system health overview from ROS2 diagnostics.
 | Property | Default | Description |
 |----------|---------|-------------|
 | `--color-surface-raised` | `#f5f5f5` | Item background color |
+
+---
+
+### `<robot-collection-status>`
+
+Autonomous ball collection state display and controls.
+
+| Property | Description |
+|----------|-------------|
+| ROS topic (subscribe) | `/collection/state` (`robot_interfaces/msg/CollectionState`) |
+| ROS topic (publish) | `/collection/command` (`std_msgs/String`) |
+
+**Display:**
+- Stage badge showing current state: IDLE, SEARCHING, APPROACHING, PICKING, RETURNING, DUMPING
+- Color-coded by stage (blue → amber → green → amber → red)
+- Statistics: balls in basket and total collected
+- Stage flow indicator with progressive dot highlighting
+- Start/Stop control buttons
+
+**Behavior:**
+- Publishes `"start"` or `"stop"` commands on button click
+- Start button disabled when not IDLE; Stop button disabled when IDLE
+- Updates in real-time from `/collection/state` topic
+
+**CSS Custom Properties:**
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `--color-accent` | `#3b82f6` | Searching stage color |
+| `--color-warning` | `#f59e0b` | Approaching/returning stage color |
+| `--color-success` | `#22c55e` | Picking stage color |
+| `--color-danger` | `#ef4444` | Dumping stage color |
 
 ---
 

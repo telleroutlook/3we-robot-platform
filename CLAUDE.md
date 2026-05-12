@@ -70,6 +70,7 @@ firmware/       → ESP32 firmware source, build configs
   config/       → Shared configuration schemas
 ros2_ws/        → ROS2 workspace (colcon packages)
   robot_bringup/     → Launch files, parameter configs
+  robot_collection/  → Autonomous ball collection demo (state machine)
   robot_competition/ → RoboCup Logistics League competition nodes
   robot_description/ → URDF/Xacro, meshes
   robot_diagnostics/ → Health monitoring, metrics exporter

@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **ROS2 — `robot_collection` package**: Autonomous ball collection demo with state machine orchestrating camera, robotic arm + vacuum pump, and tipping basket payloads. Nodes: `collection_manager`, `ball_tracker`, `arm_controller`, `basket_controller`
+- **ROS2 — `ball_detector` node** (`robot_perception`): HSV color detection with HoughCircles fallback for ping-pong ball detection
+- **ROS2 — CollectBalls action** (`robot_interfaces/action/CollectBalls`): Main task action for autonomous ball collection
+- **ROS2 — CollectionState message** (`robot_interfaces/msg/CollectionState`): 6-stage state machine feedback (IDLE → SEARCHING → APPROACHING → PICKING → RETURNING → DUMPING)
+- **ROS2 — ArmCommand service** (`robot_interfaces/srv/ArmCommand`): Arm position + vacuum pump control
+- **ROS2 — BasketDump service** (`robot_interfaces/srv/BasketDump`): Basket tipping control
+- **Web — `<robot-collection-status>`**: Real-time collection state display with stage badges, statistics, and start/stop controls
+- **Launch — `collection_demo.launch.py`**: Combined launch for all collection subsystems via `robot_bringup`
+- **Firmware — Capability flags update**: Added `CAP_CAMERA` (bit 7), reassigned `CAP_CAN` to bit 6 in `payload_hotplug.c`
 - **Firmware — OTA Pre-flight Checks**: Battery ≥50%, Wi-Fi RSSI ≥-70 dBm, motors idle, thermal OK, safety not triggered. 30-second validation window after boot; auto-rollback after 3 consecutive boot failures (`ota_preflight.c`)
 - **Firmware — OTA Compatibility Matrix**: Protocol version gate prevents incompatible firmware from being applied (`ota_compat.c`)
 - **Firmware — Heartbeat Monitor**: 5-second timeout on Raspberry Pi heartbeat. Triggers graceful motor shutdown and safety relay pulse after 3 consecutive resets within 30 minutes (`heartbeat_monitor.c`)

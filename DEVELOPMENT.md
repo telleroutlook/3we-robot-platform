@@ -150,6 +150,7 @@ firmware/           → ESP32-S3 firmware (C, ESP-IDF)
   tests/            → Host-side unit tests (Unity framework)
 ros2_ws/            → ROS2 workspace
   robot_bringup/    → Launch files, QoS config, parameters
+  robot_collection/ → Autonomous ball collection demo (state machine)
   robot_competition/ → RoboCup Logistics League competition nodes
   robot_description/ → URDF/Xacro model
   robot_diagnostics/ → Health monitoring, diagnostics aggregator
@@ -161,7 +162,10 @@ hardware/           → Hardware design
   pcb/              → KiCad 8 project (4-layer PCB)
   structure/        → Mechanical DXF drawings
   bom/              → Bill of materials (per SKU)
-  manufacturing/    → Gerber/drill generation scripts
+  charging_dock/    → Docking station hardware (PCB, BOM, docs)
+  production/       → Manufacturing outputs (Gerbers, drill, positions)
+  manufacturing/    → Manufacturing documentation
+  validation/       → Hardware validation tests
 sdk/                → Developer SDK
   payload_interface/ → Python library for PBC-34 payloads
   examples/         → Reference payload implementations

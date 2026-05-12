@@ -155,6 +155,7 @@ robot-platform/
 │
 ├── ros2_ws/                    # ROS2 工作空间
 │   ├── robot_bringup/          #   启动文件、Nav2/SLAM 配置
+│   ├── robot_collection/       #   自主捡球演示（状态机）
 │   ├── robot_competition/      #   竞赛节点 (RoboCup)
 │   ├── robot_description/      #   URDF 模型 (Xacro)
 │   ├── robot_diagnostics/      #   健康监控、指标导出
@@ -166,7 +167,11 @@ robot-platform/
 ├── hardware/                   # 硬件设计
 │   ├── pcb/                    #   PCB 规格、PBC-34 引脚表
 │   ├── structure/              #   结构设计图纸
-│   └── bom/                    #   物料清单（3 个 SKU + 可选附件）
+│   ├── bom/                    #   物料清单（3 个 SKU + 可选附件）
+│   ├── charging_dock/          #   充电坞硬件（PCB、BOM、文档）
+│   ├── production/             #   生产输出文件（Gerber、钻孔）
+│   ├── manufacturing/          #   制造工艺文档
+│   └── validation/             #   硬件验证测试
 │
 ├── sdk/                        # 载荷开发工具包
 │   ├── payload_interface/      #   Python 通信库

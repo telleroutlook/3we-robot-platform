@@ -155,6 +155,7 @@ robot-platform/
 │
 ├── ros2_ws/                    # ROS2 workspace
 │   ├── robot_bringup/          #   Launch files, Nav2/SLAM config
+│   ├── robot_collection/       #   Ball collection demo (state machine)
 │   ├── robot_competition/      #   Competition nodes (RoboCup)
 │   ├── robot_description/      #   URDF model (Xacro)
 │   ├── robot_diagnostics/      #   Health monitoring, metrics
@@ -166,7 +167,11 @@ robot-platform/
 ├── hardware/                   # Hardware design
 │   ├── pcb/                    #   PCB specs, PBC-34 pinout
 │   ├── structure/              #   Mechanical drawings
-│   └── bom/                    #   Bill of materials (3 SKUs + optional add-ons)
+│   ├── bom/                    #   Bill of materials (3 SKUs + optional add-ons)
+│   ├── charging_dock/          #   Docking station hardware (PCB, BOM, docs)
+│   ├── production/             #   Manufacturing outputs (Gerbers, drill)
+│   ├── manufacturing/          #   Manufacturing documentation
+│   └── validation/             #   Hardware validation tests
 │
 ├── sdk/                        # Payload developer toolkit
 │   ├── payload_interface/      #   Python communication library

@@ -195,6 +195,41 @@ bool success
 string error_message
 ```
 
+### /arm_command
+
+| Property | Value |
+|----------|-------|
+| Type | `robot_interfaces/srv/ArmCommand` |
+| Behavior | Command the robotic arm + vacuum pump payload |
+
+```
+# Request
+string command              # "pick", "place", "home", etc.
+float64 target_x
+float64 target_y
+float64 target_z
+
+# Response
+bool success
+string message
+```
+
+### /basket_dump
+
+| Property | Value |
+|----------|-------|
+| Type | `robot_interfaces/srv/BasketDump` |
+| Behavior | Command the tipping basket servo |
+
+```
+# Request
+bool dump                   # true = tip to dump, false = return to upright
+
+# Response
+bool success
+string message
+```
+
 ## Actions
 
 ### /dock
@@ -221,6 +256,33 @@ float64 distance_to_dock
 
 Stages: IDLE(0) → APPROACH(1) → VISUAL_SERVO_COARSE(2) → VISUAL_SERVO_FINE(3) → CONTACT_VERIFY(4) → DOCKED(5). UNDOCKING(6) and FAILED(7) are terminal/error states.
 
+### /collect_balls
+
+| Property | Value |
+|----------|-------|
+| Type | `robot_interfaces/action/CollectBalls` |
+| Behavior | Autonomous ball collection cycle (search → pick → return → dump) |
+
+```
+# Goal
+string zone_id              # Target zone for collection (empty = all)
+uint8 max_balls 0           # Stop after N balls (0 = unlimited)
+
+# Result
+bool success
+string error_message
+uint8 total_collected
+float32 total_duration_sec
+
+# Feedback
+uint8 state                 # CollectionState enum (0-5)
+uint8 balls_in_basket
+uint8 total_collected
+string current_phase
+```
+
+Stages: IDLE(0) → SEARCHING(1) → APPROACHING(2) → PICKING(3) → RETURNING(4) → DUMPING(5).
+
 ## Additional Published Topics
 
 ### /docking_state
@@ -246,6 +308,30 @@ float32 progress            # 0.0-1.0 overall progress estimate
 string error_message        # Non-empty when stage==FAILED
 float64 distance_to_dock    # Meters (from visual estimate), -1 if unknown
 ```
+
+### /collection/state
+
+| Property | Value |
+|----------|-------|
+| Type | `robot_interfaces/msg/CollectionState` |
+| Rate | On change |
+| QoS | Reliable, Transient Local, Keep Last 1 |
+
+```
+uint8 IDLE=0
+uint8 SEARCHING=1
+uint8 APPROACHING=2
+uint8 PICKING=3
+uint8 RETURNING=4
+uint8 DUMPING=5
+
+uint8 state
+uint8 balls_in_basket
+uint8 total_collected
+string error_message
+```
+
+Published by `collection_manager` node. State machine feedback for autonomous ball collection.
 
 ### /diagnostics
 
