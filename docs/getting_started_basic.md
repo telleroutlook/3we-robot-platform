@@ -4,6 +4,19 @@
 
 The Basic SKU (¥999) is a standalone ESP32-S3 mobile platform for learning embedded programming, robotics fundamentals, and FreeRTOS concepts. No companion computer (Pi 5) or ROS2 knowledge is required.
 
+## Learning Path
+
+This repo contains code for the full product line — from basic teleop to autonomous competition robots. Use this table to focus on what matters for your goal and safely ignore the rest:
+
+| Goal | Packages to focus on | Safe to ignore |
+|:-----|:---------------------|:---------------|
+| Remote-controlled chassis | `firmware/`, `robot_bringup/`, `sdk/web_basic/` | competition, collection, docking, perception, simulation |
+| Custom payload development | + `sdk/payload_interface/`, `sdk/examples/` | competition, collection |
+| Autonomous navigation | + `robot_description/`, `robot_perception/`, `robot_simulation/` | competition, collection |
+| Competition / ball collection demo | All packages | — |
+
+Each row builds on the previous. Start from the top and expand downward as your project requires.
+
 ## What's in the Box
 
 - 4WD Mecanum chassis (300 × 250 mm)
