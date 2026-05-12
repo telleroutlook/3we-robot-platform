@@ -134,6 +134,11 @@ motor_output_t motor_mecanum_drive(const cmd_vel_t *cmd)
 
     for (int i = 0; i < MOTOR_COUNT; i++) {
         out.speeds[i] = (raw[i] * scale) / MAX_LINEAR_VEL;
+        if (safety_is_estopped()) {
+            motor_stop_all();
+            memset(&out, 0, sizeof(out));
+            return out;
+        }
         motor_set_speed((motor_id_t)i, out.speeds[i]);
     }
 

@@ -224,7 +224,9 @@ void safety_feed_watchdog(void)
         ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
         return;
     }
-    last_watchdog_feed = now;
+    if (state == SAFETY_NORMAL) {
+        last_watchdog_feed = now;
+    }
     portEXIT_CRITICAL(&safety_spinlock);
 }
 
@@ -255,50 +257,54 @@ void safety_task(void *params)
         // Dual-channel consistency check: both channels must agree
         if (relay_fb != relay_fb2) {
             portENTER_CRITICAL(&safety_spinlock);
-            relay_fault_count++;
+            if (relay_fault_count < UINT8_MAX) relay_fault_count++;
             uint8_t fault_count = relay_fault_count;
-            state = SAFETY_ESTOPPED;
+            if (fault_count >= 3) {
+                state = SAFETY_RELAY_FAULT;
+            } else {
+                state = SAFETY_ESTOPPED;
+            }
             portEXIT_CRITICAL(&safety_spinlock);
             motor_stop_all();
-            notify_state_change(SAFETY_ESTOPPED);
-            ESP_LOGE(TAG, "RELAY FAULT: dual-channel mismatch (CH1=%d, CH2=%d)", relay_fb, relay_fb2);
             if (fault_count >= 3) {
-                portENTER_CRITICAL(&safety_spinlock);
-                state = SAFETY_RELAY_FAULT;
-                portEXIT_CRITICAL(&safety_spinlock);
                 notify_state_change(SAFETY_RELAY_FAULT);
                 persist_relay_fault();
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: channel inconsistency - service required");
+            } else {
+                notify_state_change(SAFETY_ESTOPPED);
             }
+            ESP_LOGE(TAG, "RELAY FAULT: dual-channel mismatch (CH1=%d, CH2=%d)", relay_fb, relay_fb2);
         }
 
         portENTER_CRITICAL(&safety_spinlock);
         current_state = state;
         if (current_state == SAFETY_NORMAL && relay_fb == 0) {
-            relay_fault_count++;
+            if (relay_fault_count < UINT8_MAX) relay_fault_count++;
             uint8_t fault_count = relay_fault_count;
-            state = SAFETY_ESTOPPED;
+            if (fault_count >= 3) {
+                state = SAFETY_RELAY_FAULT;
+            } else {
+                state = SAFETY_ESTOPPED;
+            }
             portEXIT_CRITICAL(&safety_spinlock);
             motor_stop_all();
-            notify_state_change(SAFETY_ESTOPPED);
-            ESP_LOGE(TAG, "RELAY FAULT: relay unexpectedly de-energized in NORMAL state");
             if (fault_count >= 3) {
-                portENTER_CRITICAL(&safety_spinlock);
-                state = SAFETY_RELAY_FAULT;
-                portEXIT_CRITICAL(&safety_spinlock);
                 notify_state_change(SAFETY_RELAY_FAULT);
                 persist_relay_fault();
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: hardware damage suspected - service required");
+            } else {
+                notify_state_change(SAFETY_ESTOPPED);
             }
+            ESP_LOGE(TAG, "RELAY FAULT: relay unexpectedly de-energized in NORMAL state");
         } else if (current_state == SAFETY_ESTOPPED && relay_fb != 0) {
-            relay_fault_count++;
+            if (relay_fault_count < UINT8_MAX) relay_fault_count++;
             uint8_t fault_count = relay_fault_count;
+            if (fault_count >= 3) {
+                state = SAFETY_RELAY_FAULT;
+            }
             portEXIT_CRITICAL(&safety_spinlock);
             ESP_LOGE(TAG, "RELAY FAULT: relay energized while E-stopped - possible welded contact");
             if (fault_count >= 3) {
-                portENTER_CRITICAL(&safety_spinlock);
-                state = SAFETY_RELAY_FAULT;
-                portEXIT_CRITICAL(&safety_spinlock);
                 notify_state_change(SAFETY_RELAY_FAULT);
                 persist_relay_fault();
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: welded contact confirmed - service required");
@@ -354,13 +360,15 @@ esp_err_t safety_relay_selftest(void)
         int fb2_level = gpio_get_level(SAFETY_RELAY_FB2);
         if (fb_level == 0 || fb2_level == 0) {
             ESP_LOGE(TAG, "SELF-TEST FAILED: Relay not energized (CH1=%d, CH2=%d)", fb_level, fb2_level);
+            bool escalated = false;
             portENTER_CRITICAL(&safety_spinlock);
-            relay_fault_count++;
+            if (relay_fault_count < UINT8_MAX) relay_fault_count++;
             if (relay_fault_count >= 3) {
                 state = SAFETY_RELAY_FAULT;
+                escalated = true;
             }
             portEXIT_CRITICAL(&safety_spinlock);
-            if (relay_fault_count >= 3) {
+            if (escalated) {
                 persist_relay_fault();
             }
             return ESP_ERR_INVALID_STATE;
@@ -377,13 +385,15 @@ esp_err_t safety_relay_selftest(void)
         if (fb_level != 0 || fb2_level != 0) {
             ESP_LOGE(TAG, "SELF-TEST FAILED: Relay energized despite E-stop (CH1=%d, CH2=%d)",
                      fb_level, fb2_level);
+            bool escalated = false;
             portENTER_CRITICAL(&safety_spinlock);
-            relay_fault_count++;
+            if (relay_fault_count < UINT8_MAX) relay_fault_count++;
             if (relay_fault_count >= 3) {
                 state = SAFETY_RELAY_FAULT;
+                escalated = true;
             }
             portEXIT_CRITICAL(&safety_spinlock);
-            if (relay_fault_count >= 3) {
+            if (escalated) {
                 persist_relay_fault();
             }
             return ESP_ERR_INVALID_STATE;

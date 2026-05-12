@@ -174,8 +174,9 @@ void test_authority_check_idle_no_holder_returns_false(void) {
 
 void test_authority_check_idle_no_feed_yet_returns_false(void) {
     setUp_authority();
+    mock_set_timer(1000000);
     authority_request(&auth, 0, 10, NULL);
-    TEST_ASSERT_FALSE(authority_check_idle(&auth, 5000000, 1000000));
+    TEST_ASSERT_FALSE(authority_check_idle(&auth, 1500000, 1000000));
 }
 
 void test_authority_check_idle_within_timeout_returns_false(void) {

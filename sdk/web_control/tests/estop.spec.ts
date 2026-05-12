@@ -19,7 +19,11 @@ test.describe('E-stop safety flow', () => {
   });
 
   test('trigger E-stop zeroes joystick and calls service', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     // Click the E-stop button
     const estopBtn = page.locator('robot-estop-button').locator('button#estopBtn');
@@ -38,12 +42,16 @@ test.describe('E-stop safety flow', () => {
       return m.op === 'call_service' && m.service === '/emergency_stop';
     });
 
-    const svc = serviceCall as { op: string; service: string; args: { data: boolean } };
-    expect(svc.args.data).toBe(true);
+    const svc = serviceCall as { op: string; service: string; args: { reason: string } };
+    expect(svc.args.reason).toBe('manual');
   });
 
   test('E-stop state syncs from topic subscription', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     const estopBtn = page.locator('robot-estop-button').locator('button#estopBtn');
     await expect(estopBtn).toHaveClass(/normal/);
@@ -66,7 +74,11 @@ test.describe('E-stop safety flow', () => {
   });
 
   test('reset flow shows confirmation dialog', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     const estopBtn = page.locator('robot-estop-button').locator('button#estopBtn');
 
@@ -101,7 +113,11 @@ test.describe('E-stop safety flow', () => {
   });
 
   test('confirm reset calls service and transitions to recovery', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     const estopBtn = page.locator('robot-estop-button').locator('button#estopBtn');
 
@@ -120,16 +136,20 @@ test.describe('E-stop safety flow', () => {
     await expect(estopBtn).toHaveClass(/recovery_pending/);
     await expect(estopBtn).toContainText('RESETTING');
 
-    // Service call should have been sent with data: false
+    // Service call should have been sent with reason: ''
     const resetCall = await mock.waitForMessage((msg: unknown) => {
-      const m = msg as { op?: string; service?: string; args?: { data?: boolean } };
-      return m.op === 'call_service' && m.service === '/emergency_stop' && m.args?.data === false;
+      const m = msg as { op?: string; service?: string; args?: { reason?: string } };
+      return m.op === 'call_service' && m.service === '/emergency_stop' && m.args?.reason === '';
     });
     expect(resetCall).toBeTruthy();
   });
 
   test('state recovers to normal via topic after reset confirmed', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     const estopBtn = page.locator('robot-estop-button').locator('button#estopBtn');
 
@@ -158,7 +178,11 @@ test.describe('E-stop safety flow', () => {
   });
 
   test('joystick publishes zero velocity after E-stop trigger', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     // Verify that after E-stop, any subsequent joystick publish has zero velocity
     const estopBtn = page.locator('robot-estop-button').locator('button#estopBtn');

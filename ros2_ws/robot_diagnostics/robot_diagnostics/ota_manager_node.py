@@ -22,6 +22,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -184,7 +185,12 @@ class OtaManagerNode(Node):
                 self._publish_status("error", "Download failed")
                 return
 
-            if expected_sha256 and not self._verify_sha256(local_path, expected_sha256):
+            if not expected_sha256:
+                self._publish_status("error", "SHA256 hash required but not provided")
+                self.get_logger().error("OTA rejected: missing sha256 field")
+                return
+
+            if not self._verify_sha256(local_path, expected_sha256):
                 self._publish_status("error", "SHA256 verification failed")
                 os.unlink(local_path)
                 return
@@ -329,7 +335,15 @@ class OtaManagerNode(Node):
             import tarfile
 
             with tarfile.open(file_path, "r:gz") as tar:
-                tar.extractall(path=str(extract_dir), filter="data")
+                if sys.version_info >= (3, 12):
+                    tar.extractall(path=str(extract_dir), filter="data")
+                else:
+                    for member in tar.getmembers():
+                        if member.name.startswith("/") or ".." in member.name.split(
+                            "/"
+                        ):
+                            raise ValueError(f"Unsafe path in archive: {member.name}")
+                    tar.extractall(path=str(extract_dir))
 
             src_dir = extract_dir / "src"
             if not src_dir.exists():
@@ -384,7 +398,15 @@ class OtaManagerNode(Node):
             import tarfile
 
             with tarfile.open(file_path, "r:gz") as tar:
-                tar.extractall(path=str(config_dir), filter="data")
+                if sys.version_info >= (3, 12):
+                    tar.extractall(path=str(config_dir), filter="data")
+                else:
+                    for member in tar.getmembers():
+                        if member.name.startswith("/") or ".." in member.name.split(
+                            "/"
+                        ):
+                            raise ValueError(f"Unsafe path in archive: {member.name}")
+                    tar.extractall(path=str(config_dir))
             return True
         except Exception as e:
             self.get_logger().error(f"Config update failed: {e}")

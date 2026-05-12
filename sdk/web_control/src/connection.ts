@@ -305,12 +305,12 @@ export class RosbridgeConnection extends EventTarget {
     this.missedPongs = 0;
     this.heartbeatTimer = setInterval(() => {
       if (!this.isConnected()) return;
-      this.missedPongs++;
       if (this.missedPongs >= this.maxMissedPongs) {
         this.stopHeartbeat();
         this.ws?.close();
         return;
       }
+      this.missedPongs++;
       this.ws?.send(JSON.stringify({ op: 'ping' }));
     }, this.heartbeatIntervalMs);
   }

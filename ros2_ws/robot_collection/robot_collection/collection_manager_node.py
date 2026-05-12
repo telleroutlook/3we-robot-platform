@@ -55,6 +55,7 @@ class CollectionManagerNode(Node):
         self._battery_percent = 100.0
         self._ball_target: Optional[PoseStamped] = None
         self._arm_status = "idle"
+        self._arm_pick_requested = False
         self._nav2_goal_handle = None
         self._nav2_result_future = None
         self._nav2_succeeded = False
@@ -160,7 +161,9 @@ class CollectionManagerNode(Node):
         self._arm_status = msg.data
 
     def _on_battery(self, msg: BatteryState) -> None:
-        self._battery_percent = msg.percentage * 100.0
+        self._battery_percent = (
+            msg.percentage * 100.0 if msg.percentage <= 1.0 else msg.percentage
+        )
 
     def _execute_collection(self, goal_handle: ServerGoalHandle):
         self.get_logger().info("Executing collection action")
@@ -269,6 +272,12 @@ class CollectionManagerNode(Node):
                 self._stage_start_time = self._now()
 
     def _handle_picking(self) -> None:
+        if self._arm_pick_requested and self._arm_status != "idle":
+            self._arm_pick_requested = False
+
+        if self._arm_pick_requested:
+            return
+
         if self._arm_status == "idle":
             self._balls_in_basket += 1
             self._total_collected += 1
@@ -404,6 +413,7 @@ class CollectionManagerNode(Node):
             self._nav2_goal_handle = None
 
     def _request_arm_pick(self) -> None:
+        self._arm_pick_requested = True
         if self._arm_client is None or self._ball_target is None:
             return
 

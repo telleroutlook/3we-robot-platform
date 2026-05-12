@@ -75,7 +75,7 @@ class DiagnosticsNode(Node):
 
     def _on_estop(self, msg: Bool) -> None:
         self._estop_active = msg.data
-        self._record_topic_rate("/emergency_stop_state")
+        self._record_topic_rate("/emergency_stop")
 
     def _record_topic_rate(self, topic: str) -> None:
         now = time.monotonic()

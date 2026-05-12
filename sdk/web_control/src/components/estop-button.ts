@@ -257,7 +257,9 @@ export class RobotEstopButton extends HTMLElement {
     document.dispatchEvent(new CustomEvent('robot-estop', { detail: { estopped: true } }));
 
     try {
-      await connection.callService('/emergency_stop', 'std_srvs/SetBool', { data: true });
+      await connection.callService('/emergency_stop', 'robot_interfaces/EmergencyStop', {
+        reason: 'manual',
+      });
     } catch (e: unknown) {
       // E-stop UI stays in stopped state for safety, but log the failure prominently.
       // On reconnect, the topic subscription will re-sync actual hardware state.
@@ -283,7 +285,9 @@ export class RobotEstopButton extends HTMLElement {
     this.setVisualState('recovery_pending');
 
     try {
-      await connection.callService('/emergency_stop', 'std_srvs/SetBool', { data: false });
+      await connection.callService('/emergency_stop', 'robot_interfaces/EmergencyStop', {
+        reason: '',
+      });
       // State will be cleared by onEstopState when topic confirms
     } catch {
       // Remain in estopped state on failure

@@ -15,7 +15,7 @@ groups:
 
       - alert: EmergencyStopActive
         expr: robot_estop_active == 1
-        for: 30s
+        for: 0s
         labels:
           severity: critical
         annotations:

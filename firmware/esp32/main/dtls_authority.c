@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "dtls_authority.h"
+#include "esp_timer.h"
 
 void authority_init(dtls_authority_t *auth)
 {
@@ -20,10 +21,12 @@ authority_result_t authority_request(dtls_authority_t *auth,
         return AUTHORITY_RESULT_DENIED;
     }
 
+    int64_t now = esp_timer_get_time();
+
     if (auth->holder_idx < 0) {
         auth->holder_idx = (int8_t)session_idx;
         auth->holder_priority = priority;
-        auth->last_cmd_us = 0;
+        auth->last_cmd_us = now;
         return AUTHORITY_RESULT_GRANTED;
     }
 
@@ -37,7 +40,7 @@ authority_result_t authority_request(dtls_authority_t *auth,
         }
         auth->holder_idx = (int8_t)session_idx;
         auth->holder_priority = priority;
-        auth->last_cmd_us = 0;
+        auth->last_cmd_us = now;
         return AUTHORITY_RESULT_PREEMPTED;
     }
 
@@ -79,10 +82,6 @@ bool authority_check_idle(dtls_authority_t *auth, int64_t now_us,
                           uint32_t idle_timeout_us)
 {
     if (auth->holder_idx < 0) {
-        return false;
-    }
-
-    if (auth->last_cmd_us == 0) {
         return false;
     }
 

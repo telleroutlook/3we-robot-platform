@@ -10,6 +10,7 @@
 
 static const char *TAG = "heartbeat";
 
+static portMUX_TYPE hb_spinlock = portMUX_INITIALIZER_UNLOCKED;
 static volatile int64_t s_last_heartbeat_us = 0;
 static volatile heartbeat_state_t s_state = HB_STATE_WAITING;
 static uint8_t s_reset_count = 0;
@@ -39,25 +40,32 @@ esp_err_t heartbeat_monitor_init(void)
 
 void heartbeat_feed(void)
 {
+    portENTER_CRITICAL(&hb_spinlock);
     s_last_heartbeat_us = esp_timer_get_time();
     if (s_state == HB_STATE_WAITING || s_state == HB_STATE_TIMEOUT) {
         s_state = HB_STATE_ACTIVE;
     }
+    portEXIT_CRITICAL(&hb_spinlock);
 }
 
 heartbeat_state_t heartbeat_get_state(void)
 {
-    return s_state;
+    portENTER_CRITICAL(&hb_spinlock);
+    heartbeat_state_t st = s_state;
+    portEXIT_CRITICAL(&hb_spinlock);
+    return st;
 }
 
 heartbeat_status_t heartbeat_get_status(void)
 {
+    portENTER_CRITICAL(&hb_spinlock);
     heartbeat_status_t status = {
         .state = s_state,
         .last_heartbeat_us = s_last_heartbeat_us,
         .reset_count = s_reset_count,
         .first_reset_us = s_first_reset_us,
     };
+    portEXIT_CRITICAL(&hb_spinlock);
     return status;
 }
 
@@ -101,21 +109,28 @@ void heartbeat_monitor_task(void *params)
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(1000));
 
-        if (s_state == HB_STATE_SAFE_MODE) {
-            continue; // Stay in safe mode until manual intervention
+        portENTER_CRITICAL(&hb_spinlock);
+        heartbeat_state_t current_state = s_state;
+        int64_t last_hb = s_last_heartbeat_us;
+        portEXIT_CRITICAL(&hb_spinlock);
+
+        if (current_state == HB_STATE_SAFE_MODE) {
+            continue;
         }
 
-        if (s_state == HB_STATE_WAITING) {
-            continue; // Haven't received first heartbeat yet
+        if (current_state == HB_STATE_WAITING) {
+            continue;
         }
 
         int64_t now = esp_timer_get_time();
-        int64_t elapsed_ms = (now - s_last_heartbeat_us) / 1000;
+        int64_t elapsed_ms = (now - last_hb) / 1000;
 
         if (elapsed_ms > HEARTBEAT_TIMEOUT_MS) {
             ESP_LOGW(TAG, "Heartbeat timeout (%lld ms > %d ms)",
                      (long long)elapsed_ms, HEARTBEAT_TIMEOUT_MS);
+            portENTER_CRITICAL(&hb_spinlock);
             s_state = HB_STATE_TIMEOUT;
+            portEXIT_CRITICAL(&hb_spinlock);
             power_cycle_pi5();
         }
     }

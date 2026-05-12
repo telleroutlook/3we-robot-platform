@@ -81,7 +81,7 @@ planner_server:
   ros__parameters:
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "smac_planner/SmacPlanner2D"
+      plugin: "nav2_smac_planner/SmacPlanner2D"
       tolerance: 0.125
       allow_unknown: true
       max_iterations: 1000000
@@ -193,10 +193,10 @@ behavior_server:
   ros__parameters:
     behavior_plugins: ["clear_costmap", "spin", "backup", "wait"]
     clear_costmap:
-      plugin: "nav2_behaviors::ClearEntireCostmap"
+      plugin: "nav2_behaviors/ClearEntireCostmap"
     spin:
-      plugin: "nav2_behaviors::Spin"
+      plugin: "nav2_behaviors/Spin"
     backup:
-      plugin: "nav2_behaviors::BackUp"
+      plugin: "nav2_behaviors/BackUp"
     wait:
-      plugin: "nav2_behaviors::Wait"
+      plugin: "nav2_behaviors/Wait"

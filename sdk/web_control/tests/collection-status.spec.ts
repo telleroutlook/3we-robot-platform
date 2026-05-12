@@ -22,6 +22,7 @@ test.describe('robot-collection-status', () => {
     await page.goto('/');
     await page.fill('#wsUrlInput', 'ws://localhost:9090');
     await page.click('#connectBtn');
+    await page.waitForTimeout(100);
 
     await mock.sendToClient({
       op: 'publish',
@@ -44,13 +45,14 @@ test.describe('robot-collection-status', () => {
     await page.goto('/');
     await page.fill('#wsUrlInput', 'ws://localhost:9090');
     await page.click('#connectBtn');
+    await page.waitForTimeout(100);
 
     await mock.sendToClient({
       op: 'publish',
       topic: '/collection/state',
       msg: {
         header: { stamp: { sec: 0, nanosec: 0 }, frame_id: '' },
-        state: 3,
+        state: 2,
         balls_in_basket: 4,
         total_collected: 7,
         error_message: '',
@@ -69,14 +71,15 @@ test.describe('robot-collection-status', () => {
     await page.goto('/');
     await page.fill('#wsUrlInput', 'ws://localhost:9090');
     await page.click('#connectBtn');
+    await page.waitForTimeout(100);
 
     const startBtn = page.locator('robot-collection-status').locator('#startBtn');
     await startBtn.click();
 
-    const messages = await mock.getClientMessages();
-    const publishMsg = messages.find(
-      (m: { op: string; topic?: string }) => m.op === 'publish' && m.topic === '/collection/command'
-    );
+    const publishMsg = await mock.waitForMessage((m: unknown) => {
+      const msg = m as { op?: string; topic?: string };
+      return msg.op === 'publish' && msg.topic === '/collection/command';
+    }, 3000);
     expect(publishMsg).toBeDefined();
   });
 
@@ -95,6 +98,7 @@ test.describe('robot-collection-status', () => {
     await page.goto('/');
     await page.fill('#wsUrlInput', 'ws://localhost:9090');
     await page.click('#connectBtn');
+    await page.waitForTimeout(100);
 
     await mock.sendToClient({
       op: 'publish',
@@ -117,6 +121,7 @@ test.describe('robot-collection-status', () => {
     await page.goto('/');
     await page.fill('#wsUrlInput', 'ws://localhost:9090');
     await page.click('#connectBtn');
+    await page.waitForTimeout(100);
 
     await mock.sendToClient({
       op: 'publish',

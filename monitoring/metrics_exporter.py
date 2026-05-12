@@ -70,7 +70,7 @@ class MetricsExporter(Node):
         super().__init__("metrics_exporter")
 
         self.declare_parameter("port", 9101)
-        self.declare_parameter("bind_address", "127.0.0.1")
+        self.declare_parameter("bind_address", "0.0.0.0")
         port = self.get_parameter("port").get_parameter_value().integer_value
         bind_addr = (
             self.get_parameter("bind_address").get_parameter_value().string_value
@@ -78,7 +78,7 @@ class MetricsExporter(Node):
 
         self.create_subscription(BatteryState, "/battery_state", self._on_battery, 10)
         self.create_subscription(Twist, "/cmd_vel", self._on_cmd_vel, 10)
-        self.create_subscription(Bool, "/emergency_stop_state", self._on_estop, 10)
+        self.create_subscription(Bool, "/emergency_stop", self._on_estop, 10)
         self.create_subscription(Imu, "/imu/data", self._on_imu, 10)
         self.create_subscription(Range, "/ultrasonic/front", self._on_range_front, 10)
 
@@ -93,7 +93,8 @@ class MetricsExporter(Node):
     def _on_battery(self, msg: BatteryState) -> None:
         store.set("robot_battery_voltage", msg.voltage)
         store.set("robot_battery_current_amps", msg.current)
-        store.set("robot_battery_percentage", msg.percentage)
+        pct = msg.percentage * 100.0 if msg.percentage <= 1.0 else msg.percentage
+        store.set("robot_battery_percent", pct)
         store.set("robot_battery_power_supply_status", float(msg.power_supply_status))
 
     def _on_cmd_vel(self, msg: Twist) -> None:
@@ -101,7 +102,7 @@ class MetricsExporter(Node):
         store.set("robot_cmd_vel_angular_z", msg.angular.z)
 
     def _on_estop(self, msg: Bool) -> None:
-        store.set("robot_emergency_stop_active", 1.0 if msg.data else 0.0)
+        store.set("robot_estop_active", 1.0 if msg.data else 0.0)
 
     def _on_imu(self, msg: Imu) -> None:
         store.set("robot_imu_linear_accel_x", msg.linear_acceleration.x)
