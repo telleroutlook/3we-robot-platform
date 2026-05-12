@@ -16,6 +16,7 @@ set(SRCS
     "ota_preflight.c"
     "ota_compat.c"
     "payload_hotplug.c"
+    "payload_power.c"
     "canbus.c"
     "thermal_monitor.c"
     "udp_transport.c"

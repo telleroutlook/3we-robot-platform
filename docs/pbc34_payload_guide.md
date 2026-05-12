@@ -58,6 +58,24 @@ See `hardware/pcb/README.md` for the complete 34-pin assignment table.
 - **Fault feedback**: Payload asserts FAULT pin (26) to signal internal error
 - **Platform response**: Disable power rails, publish `/payload/fault` event
 
+### Power Rail Architecture
+
+Each payload power rail (5V, 12V, VBAT) is independently controlled via a P-channel
+MOSFET high-side switch, driven by the MCP23017 I2C GPIO expander:
+
+| Rail | MOSFET | Control Bit | Max Current | Gate Pull-up |
+|------|--------|-------------|-------------|--------------|
+| 5V | Si2301CDS (Q3) | GPA0 | 5A | R15 100k |
+| 12V | AO3401A (Q4) | GPA1 | 4A (3A rated) | R16 100k |
+| VBAT | (direct relay) | GPA2 | 10A | — |
+
+Design properties:
+- **Default-off**: 100k gate-to-source pull-up holds P-MOS off when MCP23017 is unpowered or not driving
+- **Independent control**: Each rail can be enabled/disabled individually without affecting other rails
+- **Configurable soft-start**: Per-rail ramp delay (default 10ms) prevents inrush current spikes
+- **Per-rail overcurrent threshold**: Configurable in firmware; exceeding threshold for the configured duration triggers rail shutdown
+- **Extensible**: The firmware `payload_power` module supports up to 4 rails via a config array — adding a future rail (24V, variable voltage) requires only a new config entry and corresponding hardware switch circuit
+
 ---
 
 ## EEPROM Descriptor Format

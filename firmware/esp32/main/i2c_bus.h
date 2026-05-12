@@ -5,9 +5,15 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "esp_err.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 esp_err_t i2c_bus_init(void);
 SemaphoreHandle_t i2c_bus_get_mutex(void);
+
+// MCP23017 register-level helpers (shared by payload_hotplug, payload_power)
+esp_err_t mcp23017_write_bit(uint8_t device_addr, uint8_t reg_addr, uint8_t bit, bool value);
+esp_err_t mcp23017_read_register(uint8_t device_addr, uint8_t reg_addr, uint8_t *out);
 
 #define I2C_BUS_LOCK_TIMEOUT pdMS_TO_TICKS(200)
 

@@ -12,7 +12,6 @@
 
 #define COMPETITION_GEAR_RATIO          30
 #define COMPETITION_MAX_MOTOR_RPM       500
-#define COMPETITION_ENCODER_PPR         360     // 12-line x 30 gear = 360 PPR
 
 #define COMPETITION_WHEEL_RADIUS_MM     24.0f
 #define COMPETITION_TRACK_WIDTH_MM      200.0f

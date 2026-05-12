@@ -24,7 +24,7 @@ static const char *TAG = "current_sense";
 #define HARD_LIMIT_DURATION_MS       20
 
 static const int adc_channels[CURRENT_SENSE_CHANNELS] = {
-    ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2, ADC_CHANNEL_3,
+    ADC_CHANNEL_4, ADC_CHANNEL_5, ADC_CHANNEL_6, ADC_CHANNEL_7,
 };
 
 static adc_cali_handle_t cali_handle;

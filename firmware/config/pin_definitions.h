@@ -77,17 +77,13 @@
 #define BATT_ADC_ATTEN      ADC_ATTEN_DB_11
 
 // Battery pack 2 ADC (extended battery SKU)
-// WARNING: GPIO 4 is shared with ENC_RR_B. Only one can be active at a time.
-// Multi-pack battery sensing requires the extended encoder wiring (ENC_RR_B on GPIO 15
-// via alternate routing) or a dedicated ADC-only build with 3-wheel encoder feedback.
-#ifndef CONFIG_ROBOT_DUAL_BATTERY
+// GPIO 4 is shared with ENC_RR_B. Dual-battery mode reroutes ENC_RR_B
+// to CONFIG_ENC_RR_B_ALT_GPIO (default GPIO 15) via PCB jumper.
+#ifdef CONFIG_ROBOT_DUAL_BATTERY
 #define BATT_PACK2_ADC_GPIO     4
 #define BATT_PACK2_ADC_CHANNEL  ADC_CHANNEL_3   // ESP32-S3: GPIO 4 = ADC1_CH3
-#else
-// When dual-battery is enabled, ENC_RR_B must use alternate GPIO.
-// See Kconfig CONFIG_ENC_RR_B_ALT_GPIO for reroute.
-#define BATT_PACK2_ADC_GPIO     4
-#define BATT_PACK2_ADC_CHANNEL  ADC_CHANNEL_3
+#undef ENC_RR_B
+#define ENC_RR_B                CONFIG_ENC_RR_B_ALT_GPIO
 #endif
 
 // Safety / E-stop (dedicated pins, no sharing)
@@ -111,6 +107,10 @@
 #define CHARGE_ADC_GPIO     9   // ADC1_CH8 on ESP32-S3
 #define CHARGE_ADC_CHANNEL  ADC_CHANNEL_8
 #define CHARGE_ADC_ATTEN    ADC_ATTEN_DB_11  // ESP-IDF 5.x (was ADC_ATTEN_DB_12 in 4.x)
+
+#ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
+#define CHARGE_DIGITAL_DETECT_GPIO  CONFIG_CHARGE_DIGITAL_DETECT_GPIO
+#endif
 #endif
 
 // Payload bus control (via MCP23017 I2C expander)
@@ -152,14 +152,14 @@
 // Industrial SKU: ACS712 Current Sensing (ADC)
 // =============================================================================
 // ACS712 outputs analog voltage proportional to motor current (2.5V = 0A).
-// Industrial PCB routes 4x ACS712 outputs to ADC-capable GPIOs via the
-// industrial expansion header. Channels are read by current_sense.c.
-// NOTE: Final GPIO assignment depends on Industrial PCB rev ≥ 3.2 routing.
+// Industrial PCB rev ≥ 3.2 routes 4x ACS712 outputs to GPIO 5–8 (ADC1_CH4–CH7).
+// These pins overlap with encoder A/B on Basic/Standard SKU, but Industrial SKU
+// uses a dedicated LS7366R quadrature decoder on SPI (freeing GPIO 5–8 for ADC).
 #ifdef CONFIG_CURRENT_SENSE_ENABLED
-#define CURRENT_SENSE_FL_GPIO       1   // ADC1_CH0 (placeholder — confirm with PCB)
-#define CURRENT_SENSE_FR_GPIO       2   // ADC1_CH1 (placeholder — confirm with PCB)
-#define CURRENT_SENSE_RL_GPIO       3   // ADC1_CH2 (placeholder — confirm with PCB)
-#define CURRENT_SENSE_RR_GPIO       4   // ADC1_CH3 (placeholder — confirm with PCB)
+#define CURRENT_SENSE_FL_GPIO       5   // ADC1_CH4 (Industrial PCB: ACS712 motor FL)
+#define CURRENT_SENSE_FR_GPIO       6   // ADC1_CH5 (Industrial PCB: ACS712 motor FR)
+#define CURRENT_SENSE_RL_GPIO       7   // ADC1_CH6 (Industrial PCB: ACS712 motor RL)
+#define CURRENT_SENSE_RR_GPIO       8   // ADC1_CH7 (Industrial PCB: ACS712 motor RR)
 #define CURRENT_SENSE_ADC_ATTEN     ADC_ATTEN_DB_11
 #endif
 

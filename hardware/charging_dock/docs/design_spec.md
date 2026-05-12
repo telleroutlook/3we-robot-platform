@@ -49,10 +49,30 @@ marker, then makes contact via mechanical guide rails that funnel into alignment
 
 | Pin | Function | Notes |
 |-----|----------|-------|
-| 1 | V+ (charge) | 8.4V max, 2A |
+| 1 | V+ (charge/sense) | 8.4V max, 2A. Voltage-divided to 0–3.3V for robot-side ADC dock detection AND charge level monitoring |
 | 2 | GND | Power ground |
 | 3 | DATA | UART TX/RX (3.3V logic) |
-| 4 | DETECT | Pull-low when docked (robot detection) |
+| 4 | RESERVED | Available for future use (digital detect, auxiliary data, or sense) |
+
+### Dock Detection Method
+
+The robot detects docking state via **analog voltage sensing** on Pin 1. A resistor
+divider on the robot-side pogo pin scales the charge voltage (0–8.4V) down to the
+ESP32-S3 ADC range (0–3.3V). The firmware applies a threshold (default 2.0V after
+divider) to determine contact:
+
+- **Above threshold**: Docked — charge voltage present, pogo contact confirmed
+- **Below threshold**: Undocked — no charge source connected
+
+This approach is preferred over a dedicated digital DETECT pin because:
+1. It provides richer information (partial contact, charge level, connection quality)
+2. It uses fewer pogo pins (Pin 4 freed for future use)
+3. A digital "docked" signal is trivially derived from the analog reading
+
+For future dock revisions requiring a separate digital detection line, the firmware
+supports an optional secondary GPIO input (compile-time configurable via Kconfig
+`CONFIG_ROBOT_DOCKING_DIGITAL_DETECT`). When both methods are enabled, OR-logic
+applies — either method confirming contact is sufficient.
 
 ## ATtiny85 Firmware
 

@@ -45,37 +45,15 @@ static payload_descriptor_t descriptor;
 static payload_event_callback_t event_callback = NULL;
 static bool detect_pin_low = false;
 
-static esp_err_t mcp23017_write_bit(uint8_t bit, bool value)
+static esp_err_t payload_mcp_write_bit(uint8_t bit, bool value)
 {
-    uint8_t reg_val = 0;
-    uint8_t reg_addr = MCP_OLATA;
-
-    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
-
-    esp_err_t read_err = i2c_master_write_read_device(I2C_NUM_0, MCP23017_ADDR, &reg_addr, 1,
-                                                       &reg_val, 1, pdMS_TO_TICKS(50));
-    if (read_err != ESP_OK) {
-        i2c_bus_unlock();
-        return read_err;
-    }
-
-    if (value) reg_val |= (1 << bit);
-    else reg_val &= ~(1 << bit);
-
-    uint8_t buf[2] = { MCP_OLATA, reg_val };
-    esp_err_t err = i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf, 2, pdMS_TO_TICKS(50));
-    i2c_bus_unlock();
-    return err;
+    return mcp23017_write_bit(MCP23017_ADDR, MCP_OLATA, bit, value);
 }
 
 static bool read_detect_pin(void)
 {
-    uint8_t reg_addr = MCP_GPIOA;
     uint8_t reg_val = 0;
-    if (!i2c_bus_lock()) return false;
-    esp_err_t err = i2c_master_write_read_device(I2C_NUM_0, MCP23017_ADDR, &reg_addr, 1,
-                                                  &reg_val, 1, pdMS_TO_TICKS(50));
-    i2c_bus_unlock();
+    esp_err_t err = mcp23017_read_register(MCP23017_ADDR, MCP_GPIOA, &reg_val);
     if (err != ESP_OK) return false;
     return !(reg_val & (1 << PAYLOAD_DETECT_BIT));  // Active low
 }
@@ -183,9 +161,9 @@ void payload_register_callback(payload_event_callback_t cb)
 
 esp_err_t payload_power_off(void)
 {
-    mcp23017_write_bit(PAYLOAD_VBAT_EN_BIT, false);
-    mcp23017_write_bit(PAYLOAD_12V_EN_BIT, false);
-    mcp23017_write_bit(PAYLOAD_5V_EN_BIT, false);
+    payload_mcp_write_bit(PAYLOAD_VBAT_EN_BIT, false);
+    payload_mcp_write_bit(PAYLOAD_12V_EN_BIT, false);
+    payload_mcp_write_bit(PAYLOAD_5V_EN_BIT, false);
 
     state = PAYLOAD_STATE_ABSENT;
     notify_event();
@@ -239,12 +217,12 @@ void payload_hotplug_task(void *params)
         case PAYLOAD_STATE_POWERING:
             // T+40ms: Enable 3.3V ref (always on via hardware, no software control)
             // T+50ms: Enable 5V with soft-start ramp
-            mcp23017_write_bit(PAYLOAD_5V_EN_BIT, true);
+            payload_mcp_write_bit(PAYLOAD_5V_EN_BIT, true);
             vTaskDelay(pdMS_TO_TICKS(POWER_RAMP_MS + 10));
 
             // T+70ms: Enable 12V if requested
             if (descriptor.power_12v_ma > 0) {
-                mcp23017_write_bit(PAYLOAD_12V_EN_BIT, true);
+                payload_mcp_write_bit(PAYLOAD_12V_EN_BIT, true);
                 vTaskDelay(pdMS_TO_TICKS(POWER_RAMP_MS + 10));
             }
 

@@ -42,3 +42,37 @@ TESTABLE_WEAK SemaphoreHandle_t i2c_bus_get_mutex(void)
 {
     return i2c_mutex;
 }
+
+TESTABLE_WEAK esp_err_t mcp23017_write_bit(uint8_t device_addr, uint8_t reg_addr, uint8_t bit, bool value)
+{
+    uint8_t reg_val = 0;
+
+    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
+
+    esp_err_t err = i2c_master_write_read_device(I2C_NUM_0, device_addr, &reg_addr, 1,
+                                                  &reg_val, 1, pdMS_TO_TICKS(50));
+    if (err != ESP_OK) {
+        i2c_bus_unlock();
+        return err;
+    }
+
+    if (value) reg_val |= (1 << bit);
+    else reg_val &= ~(1 << bit);
+
+    uint8_t buf[2] = { reg_addr, reg_val };
+    err = i2c_master_write_to_device(I2C_NUM_0, device_addr, buf, 2, pdMS_TO_TICKS(50));
+    i2c_bus_unlock();
+    return err;
+}
+
+TESTABLE_WEAK esp_err_t mcp23017_read_register(uint8_t device_addr, uint8_t reg_addr, uint8_t *out)
+{
+    if (out == NULL) return ESP_ERR_INVALID_ARG;
+
+    if (!i2c_bus_lock()) return ESP_ERR_TIMEOUT;
+
+    esp_err_t err = i2c_master_write_read_device(I2C_NUM_0, device_addr, &reg_addr, 1,
+                                                  out, 1, pdMS_TO_TICKS(50));
+    i2c_bus_unlock();
+    return err;
+}

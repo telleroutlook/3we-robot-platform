@@ -222,6 +222,23 @@ menu "Robot Platform Configuration"
         config BATTERY_CELLS
             int "Number of cells in series"
             default 2
+
+        config ROBOT_DUAL_BATTERY
+            bool "Enable dual battery pack monitoring"
+            default n
+            help
+                Enable second battery pack ADC sensing on GPIO 4 (ADC1_CH3).
+                Requires ENC_RR_B to be rerouted to an alternate GPIO on the PCB.
+                When enabled, ENC_RR_B moves to GPIO 15 (shared with ENC_FR_B —
+                requires PCB jumper or Standard+ SKU wiring).
+
+        config ENC_RR_B_ALT_GPIO
+            int "Alternate GPIO for ENC_RR_B (dual-battery mode)"
+            default 15
+            depends on ROBOT_DUAL_BATTERY
+            help
+                GPIO used for ENC_RR_B when dual-battery mode is active.
+                Default 15 = ENC_FR_B position (requires PCB modification).
     endmenu
 
     menu "Docking"
@@ -232,6 +249,24 @@ menu "Robot Platform Configuration"
                 Enable charging contact detection via ADC pogo pin sense.
                 Uses GPIO 9 (ADC1_CH8) which conflicts with US_ECHO_LEFT —
                 builds with docking enabled must omit side ultrasonics.
+
+        config ROBOT_DOCKING_DIGITAL_DETECT
+            bool "Enable secondary digital detection GPIO"
+            default n
+            depends on ROBOT_DOCKING_ENABLED
+            help
+                Enable a secondary digital GPIO input for dock detection.
+                Useful for dock hardware revisions that provide a separate
+                digital DETECT line. When enabled, docking is confirmed when
+                EITHER the analog threshold OR the digital pin asserts.
+
+        config CHARGE_DIGITAL_DETECT_GPIO
+            int "Digital detect GPIO number"
+            default 23
+            depends on ROBOT_DOCKING_DIGITAL_DETECT
+            help
+                GPIO pin for optional digital dock detection (active-low).
+                Must not conflict with other assigned pins for the current SKU.
     endmenu
 
     menu "Basic SKU Mode"

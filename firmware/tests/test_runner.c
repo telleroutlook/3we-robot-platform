@@ -323,6 +323,29 @@ extern void test_charging_detect_connected_above_threshold(void);
 extern void test_charging_detect_voltage_returns_calibrated(void);
 extern void test_charging_detect_voltage_zero_before_init(void);
 extern void test_charging_detect_boundary_just_below_threshold(void);
+#ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
+extern void test_charging_detect_digital_asserted_when_low(void);
+extern void test_charging_detect_connected_via_analog_only(void);
+extern void test_charging_detect_connected_via_digital_only(void);
+extern void test_charging_detect_method_reports_both(void);
+#endif
+extern void test_charging_detect_method_analog_when_connected(void);
+extern void test_charging_detect_method_none_when_disconnected(void);
+
+// test_payload_power.c
+extern void power_test_setUp(void);
+extern void test_power_init_configures_rails(void);
+extern void test_power_init_rejects_null(void);
+extern void test_power_init_rejects_zero_rails(void);
+extern void test_power_init_rejects_too_many_rails(void);
+extern void test_power_enable_rail_writes_mcp_bit(void);
+extern void test_power_disable_rail_clears_mcp_bit(void);
+extern void test_power_disable_all_clears_all_bits(void);
+extern void test_power_state_transitions(void);
+extern void test_power_invalid_rail_index_returns_error(void);
+extern void test_power_enable_disabled_rail_returns_error(void);
+extern void test_power_get_status_returns_current_state(void);
+extern void test_power_get_status_null_returns_error(void);
 
 int main(void)
 {
@@ -650,6 +673,30 @@ int main(void)
     RUN_TEST(test_charging_detect_voltage_returns_calibrated);
     RUN_TEST(test_charging_detect_voltage_zero_before_init);
     RUN_TEST(test_charging_detect_boundary_just_below_threshold);
+#ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
+    RUN_TEST(test_charging_detect_digital_asserted_when_low);
+    RUN_TEST(test_charging_detect_connected_via_analog_only);
+    RUN_TEST(test_charging_detect_connected_via_digital_only);
+    RUN_TEST(test_charging_detect_method_reports_both);
+#endif
+    RUN_TEST(test_charging_detect_method_analog_when_connected);
+    RUN_TEST(test_charging_detect_method_none_when_disconnected);
+
+    // Payload power rail controller
+#define RUN_POWER_TEST(f) do { power_test_setUp(); RUN_TEST(f); } while(0)
+    RUN_POWER_TEST(test_power_init_configures_rails);
+    RUN_POWER_TEST(test_power_init_rejects_null);
+    RUN_POWER_TEST(test_power_init_rejects_zero_rails);
+    RUN_POWER_TEST(test_power_init_rejects_too_many_rails);
+    RUN_POWER_TEST(test_power_enable_rail_writes_mcp_bit);
+    RUN_POWER_TEST(test_power_disable_rail_clears_mcp_bit);
+    RUN_POWER_TEST(test_power_disable_all_clears_all_bits);
+    RUN_POWER_TEST(test_power_state_transitions);
+    RUN_POWER_TEST(test_power_invalid_rail_index_returns_error);
+    RUN_POWER_TEST(test_power_enable_disabled_rail_returns_error);
+    RUN_POWER_TEST(test_power_get_status_returns_current_state);
+    RUN_POWER_TEST(test_power_get_status_null_returns_error);
+#undef RUN_POWER_TEST
 
     return UNITY_END();
 }

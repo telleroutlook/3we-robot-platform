@@ -50,11 +50,11 @@ Battery Pack(s) ─── XT30 ──→ P-MOS OR ──→ VBAT Bus (7.4V)
 
 | Pin | Function | Rating | Notes |
 |-----|----------|--------|-------|
-| 1-2 | +5V Power | 3A max | MOSFET soft-start, TPS5430 supply (Standard+ SKU) |
+| 1-2 | +5V Power | 3A max | P-MOS soft-start, switched from +5V_ESP via MCP23017 GPA0 |
 | 3-4 | +12V Power | 3A max | MOSFET soft-start |
 | 5-6 | GND (Power) | — | Wide traces (1mm) |
-| 7 | I2C SDA | 3.3V | Via PCA9546 mux |
-| 8 | I2C SCL | 3.3V | Via PCA9546 mux |
+| 7 | I2C SDA | 3.3V | Direct (shared bus with IMU, INA219, MCP23017) |
+| 8 | I2C SCL | 3.3V | Direct (shared bus with IMU, INA219, MCP23017) |
 | 9 | UART TX | 3.3V | From payload to platform |
 | 10 | UART RX | 3.3V | From platform to payload |
 | 11-18 | GPIO ×8 | 3.3V | Via MCP23017 expander |

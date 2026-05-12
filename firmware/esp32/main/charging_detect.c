@@ -8,11 +8,22 @@
 #include "esp_adc/adc_cali_scheme.h"
 #include "esp_log.h"
 
+#ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
+#include "driver/gpio.h"
+#endif
+
 static const char *TAG = "charging";
 
 static adc_cali_handle_t s_cali_handle = NULL;
 static int s_last_voltage_mv = 0;
 static bool s_initialized = false;
+
+#ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
+static bool digital_detect_asserted(void)
+{
+    return gpio_get_level(CHARGE_DIGITAL_DETECT_GPIO) == 0;
+}
+#endif
 
 esp_err_t charging_detect_init(void)
 {
@@ -36,6 +47,20 @@ esp_err_t charging_detect_init(void)
         ESP_LOGW(TAG, "ADC calibration scheme not available - using raw values");
         s_cali_handle = NULL;
     }
+
+#ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
+    gpio_config_t io_cfg = {
+        .pin_bit_mask = (1ULL << CHARGE_DIGITAL_DETECT_GPIO),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    err = gpio_config(&io_cfg);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "Digital detect GPIO config failed: 0x%x", err);
+    }
+#endif
 
     s_initialized = true;
     ESP_LOGI(TAG, "Charging detect initialized (threshold=%dmV)", CHARGE_CONTACT_THRESHOLD_MV);
@@ -64,5 +89,27 @@ int charging_detect_get_voltage_mv(void)
 
 bool charging_detect_is_connected(void)
 {
-    return charging_detect_get_voltage_mv() >= CHARGE_CONTACT_THRESHOLD_MV;
+    bool analog = charging_detect_get_voltage_mv() >= CHARGE_CONTACT_THRESHOLD_MV;
+
+#ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
+    return analog || digital_detect_asserted();
+#else
+    return analog;
+#endif
+}
+
+charge_detect_method_t charging_detect_get_method(void)
+{
+    bool analog = charging_detect_get_voltage_mv() >= CHARGE_CONTACT_THRESHOLD_MV;
+
+#ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
+    bool digital = digital_detect_asserted();
+    if (analog && digital) return CHARGE_DETECT_BOTH;
+    if (analog) return CHARGE_DETECT_ANALOG;
+    if (digital) return CHARGE_DETECT_DIGITAL;
+#else
+    if (analog) return CHARGE_DETECT_ANALOG;
+#endif
+
+    return CHARGE_DETECT_NONE;
 }
