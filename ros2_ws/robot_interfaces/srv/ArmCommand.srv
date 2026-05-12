@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+# Command the robotic arm + vacuum pump payload.
+string command
+float64 target_x
+float64 target_y
+float64 target_z
+---
+bool success
+string message

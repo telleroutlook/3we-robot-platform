@@ -1,11 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Launch file for the Hailo AI perception pipeline."""
+"""Launch file for the perception pipeline.
+
+Supports two modes:
+  - Hailo AI inference (default): use_ball_detector:=false
+  - Traditional CV ball detection: use_ball_detector:=true
+"""
 
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -34,7 +40,13 @@ def generate_launch_description() -> LaunchDescription:
         description="Hailo device ID to use",
     )
 
-    # Hailo inference node
+    use_ball_detector_arg = DeclareLaunchArgument(
+        "use_ball_detector",
+        default_value="false",
+        description="Use traditional CV ball detector instead of Hailo inference",
+    )
+
+    # Hailo inference node (default)
     inference_node = Node(
         package="robot_perception",
         executable="inference_node",
@@ -48,27 +60,30 @@ def generate_launch_description() -> LaunchDescription:
             },
         ],
         output="screen",
+        condition=UnlessCondition(LaunchConfiguration("use_ball_detector")),
     )
 
-    # Uncomment to launch a camera node alongside the perception pipeline:
-    # camera_node = Node(
-    #     package="v4l2_camera",
-    #     executable="v4l2_camera_node",
-    #     name="camera",
-    #     parameters=[{
-    #         "video_device": "/dev/video0",
-    #         "image_size": [640, 480],
-    #         "pixel_format": "YUYV",
-    #     }],
-    #     output="screen",
-    # )
+    # Traditional CV ball detector (fallback for Standard-C / Basic)
+    ball_detector_node = Node(
+        package="robot_perception",
+        executable="ball_detector",
+        name="ball_detector",
+        parameters=[
+            {
+                "confidence_threshold": LaunchConfiguration("confidence_threshold"),
+            },
+        ],
+        output="screen",
+        condition=IfCondition(LaunchConfiguration("use_ball_detector")),
+    )
 
     return LaunchDescription(
         [
             model_path_arg,
             confidence_threshold_arg,
             device_id_arg,
+            use_ball_detector_arg,
             inference_node,
-            # camera_node,
+            ball_detector_node,
         ]
     )

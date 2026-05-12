@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+# Ball collection task action — drives the full pickup-return-dump cycle.
+# Goal
+string zone_id
+uint8 max_balls 0
+---
+# Result
+bool success
+string error_message
+uint8 total_collected
+float32 total_duration_sec
+---
+# Feedback
+uint8 state
+uint8 balls_in_basket
+uint8 total_collected
+string current_phase

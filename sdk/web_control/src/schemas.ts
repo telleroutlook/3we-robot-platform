@@ -129,3 +129,11 @@ export const emergencyStopResponseSchema = z.object({
   current_state: z.number(),
   message: z.string(),
 });
+
+export const collectionStateSchema = z.object({
+  header: headerSchema,
+  state: z.number().int().min(0).max(5),
+  balls_in_basket: z.number().int().min(0),
+  total_collected: z.number().int().min(0),
+  error_message: z.string(),
+});

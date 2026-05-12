@@ -1,0 +1,34 @@
+collection_manager:
+  ros__parameters:
+    search_timeout_s: 30.0
+    approach_distance_m: 0.15
+    basket_capacity: 6
+    max_pick_retries: 2
+    low_battery_threshold: 20.0
+    dump_zone_x: 0.0
+    dump_zone_y: 0.0
+    dump_zone_yaw: 1.5708
+    cmd_vel_topic: /cmd_vel
+
+ball_tracker:
+  ros__parameters:
+    ball_class_id: "ping_pong_ball"
+    min_confidence: 0.6
+    min_consecutive_frames: 3
+    ball_diameter_m: 0.04
+    camera_frame: "camera_link"
+
+arm_controller:
+  ros__parameters:
+    pick_height_m: 0.02
+    drop_height_m: 0.15
+    vacuum_hold_time_s: 0.5
+    payload_id: "arm-payload-01"
+
+basket_controller:
+  ros__parameters:
+    dump_angle_deg: 120
+    home_angle_deg: 0
+    dump_hold_time_s: 2.0
+    reset_time_s: 1.0
+    payload_id: "basket-payload-01"

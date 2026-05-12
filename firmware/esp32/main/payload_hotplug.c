@@ -23,15 +23,17 @@ static const char *TAG = "hotplug";
 #define INIT_WAIT_MS        110
 #define READY_CONFIRM_MS    100
 
-// Capability bit allowlist: only these interfaces are supported by hardware
-#define CAP_I2C     (1 << 0)
-#define CAP_SPI     (1 << 1)
-#define CAP_UART    (1 << 2)
-#define CAP_GPIO    (1 << 3)
-#define CAP_CAN     (1 << 4)
-#define ALLOWED_CAPABILITIES (CAP_I2C | CAP_SPI | CAP_UART | CAP_GPIO | CAP_CAN)
-// Allowed GPIO mask: only pins exposed on the payload connector
-#define ALLOWED_GPIO_MASK   0x0F
+// Capability bit definitions — aligned with sdk/payload_interface/capability_flags.py
+#define CAP_I2C     (1 << 0)  // 0x01
+#define CAP_SPI     (1 << 1)  // 0x02
+#define CAP_UART    (1 << 2)  // 0x04
+#define CAP_GPIO    (1 << 3)  // 0x08
+#define CAP_ADC     (1 << 4)  // 0x10
+#define CAP_PWM     (1 << 5)  // 0x20
+#define CAP_CAN     (1 << 6)  // 0x40
+#define CAP_CAMERA  (1 << 7)  // 0x80
+#define ALLOWED_CAPABILITIES 0xFF
+#define ALLOWED_GPIO_MASK    0x0F
 
 // MCP23017 register addresses for payload power control
 #define MCP_IODIRA          0x00

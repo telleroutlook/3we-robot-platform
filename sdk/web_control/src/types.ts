@@ -130,6 +130,35 @@ export interface UndockRobotResponse {
   error_message: string;
 }
 
+export interface ArmCommandRequest {
+  command: string;
+  target_x: number;
+  target_y: number;
+  target_z: number;
+}
+
+export interface ArmCommandResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface BasketDumpRequest {
+  dump: boolean;
+}
+
+export interface BasketDumpResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface CollectionState {
+  header: Header;
+  state: number;
+  balls_in_basket: number;
+  total_collected: number;
+  error_message: string;
+}
+
 // --- Connection state ---
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';

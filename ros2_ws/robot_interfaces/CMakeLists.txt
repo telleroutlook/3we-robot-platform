@@ -13,10 +13,14 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PayloadState.msg"
   "msg/WheelSpeeds.msg"
   "msg/DockingState.msg"
+  "msg/CollectionState.msg"
   "srv/PayloadPower.srv"
   "srv/EmergencyStop.srv"
   "srv/UndockRobot.srv"
+  "srv/ArmCommand.srv"
+  "srv/BasketDump.srv"
   "action/Dock.action"
+  "action/CollectBalls.action"
   DEPENDENCIES std_msgs geometry_msgs action_msgs
 )
 

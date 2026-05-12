@@ -13,6 +13,7 @@ import './components/payload-panel';
 import './components/wheel-speeds';
 import './components/imu-attitude';
 import './components/system-status';
+import './components/collection-status';
 
 /**
  * Initialize the control panel application.

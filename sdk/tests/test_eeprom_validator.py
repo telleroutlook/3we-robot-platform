@@ -153,12 +153,12 @@ class TestValidateDescriptor:
         assert result.passed is True
         assert any("high" in w.lower() for w in result.warnings)
 
-    def test_reserved_cap_warning(self):
+    def test_camera_cap_valid(self):
         desc = self._make_valid()
-        desc.capabilities = 0x80  # CAP_RESERVED
+        desc.capabilities = 0x80  # CAP_CAMERA
         result = validate_descriptor(desc)
         assert result.passed is True
-        assert any("reserved" in w.lower() for w in result.warnings)
+        assert not any("reserved" in w.lower() for w in result.warnings)
 
     def test_gpio_mask_without_capability(self):
         desc = self._make_valid()

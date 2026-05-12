@@ -12,7 +12,7 @@ CAP_GPIO = 0x08
 CAP_ADC = 0x10
 CAP_PWM = 0x20
 CAP_CAN = 0x40
-CAP_RESERVED = 0x80
+CAP_CAMERA = 0x80
 
 CAPABILITY_NAMES = {
     CAP_I2C: "I2C Slave",
@@ -22,4 +22,5 @@ CAPABILITY_NAMES = {
     CAP_ADC: "ADC",
     CAP_PWM: "PWM",
     CAP_CAN: "CAN",
+    CAP_CAMERA: "Camera",
 }

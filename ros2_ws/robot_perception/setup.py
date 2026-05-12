@@ -22,6 +22,7 @@ setup(
     entry_points={
         "console_scripts": [
             "inference_node = robot_perception.inference_node:main",
+            "ball_detector = robot_perception.ball_detector_node:main",
         ],
     },
 )

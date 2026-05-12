@@ -23,7 +23,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from payload_interface.capability_flags import (
     CAP_GPIO,
-    CAP_RESERVED,
     CAPABILITY_NAMES,
 )
 
@@ -200,10 +199,6 @@ def validate_descriptor(desc: EepromDescriptor) -> ValidationResult:
         result.add_error(f"Total power exceeds 50W: {total_power_w:.1f}W")
     elif total_power_w > 35.0:
         result.add_warning(f"Total power is high: {total_power_w:.1f}W (>70% budget)")
-
-    # Capabilities validation
-    if desc.capabilities & CAP_RESERVED:
-        result.add_warning("Reserved capability bit is set")
 
     # GPIO mask validation
     if desc.gpio_mask != 0 and not (desc.capabilities & CAP_GPIO):

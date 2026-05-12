@@ -3,11 +3,11 @@
 
 from payload_interface.capability_flags import (
     CAP_ADC,
+    CAP_CAMERA,
     CAP_CAN,
     CAP_GPIO,
     CAP_I2C,
     CAP_PWM,
-    CAP_RESERVED,
     CAP_SPI,
     CAP_UART,
     CAPABILITY_NAMES,
@@ -21,7 +21,7 @@ ALL_FLAGS = [
     CAP_ADC,
     CAP_PWM,
     CAP_CAN,
-    CAP_RESERVED,
+    CAP_CAMERA,
 ]
 
 
@@ -38,22 +38,18 @@ def test_no_flag_overlap():
         combined |= flag
 
 
-def test_capability_names_covers_all_non_reserved():
+def test_capability_names_covers_all_flags():
     for flag in ALL_FLAGS:
-        if flag == CAP_RESERVED:
-            assert flag not in CAPABILITY_NAMES
-        else:
-            assert flag in CAPABILITY_NAMES
+        assert flag in CAPABILITY_NAMES
 
 
-def test_reserved_is_highest_bit():
-    assert CAP_RESERVED == 0x80
+def test_camera_is_highest_bit():
+    assert CAP_CAMERA == 0x80
     for flag in ALL_FLAGS:
-        if flag != CAP_RESERVED:
-            assert flag < CAP_RESERVED
+        if flag != CAP_CAMERA:
+            assert flag < CAP_CAMERA
 
 
 def test_flag_values_ascending():
-    non_reserved = [f for f in ALL_FLAGS if f != CAP_RESERVED]
-    for i in range(len(non_reserved) - 1):
-        assert non_reserved[i] < non_reserved[i + 1]
+    for i in range(len(ALL_FLAGS) - 1):
+        assert ALL_FLAGS[i] < ALL_FLAGS[i + 1]
