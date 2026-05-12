@@ -30,7 +30,9 @@ esp_err_t battery_init(void)
         .bitwidth = ADC_BITWIDTH_12,
     };
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, BATT_ADC_CHANNEL, &chan_cfg));
+#ifdef CONFIG_ROBOT_DUAL_BATTERY
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, BATT_PACK2_ADC_CHANNEL, &chan_cfg));
+#endif
 
     adc_cali_curve_fitting_config_t cali_cfg = {
         .unit_id = ADC_UNIT_1,
@@ -116,6 +118,7 @@ void battery_task(void *params)
 
 // --- Multi-pack extension ---
 
+#ifdef CONFIG_ROBOT_DUAL_BATTERY
 static float s_pack2_voltage = 0.0f;
 
 static float battery_pack2_read_voltage_raw(void)
@@ -126,14 +129,17 @@ static float battery_pack2_read_voltage_raw(void)
     adc_cali_raw_to_voltage(cali_handle, raw, &mv);
     return ((float)mv / 1000.0f) * BATT_VOLTAGE_DIVIDER;
 }
+#endif
 
 bool battery_pack_is_present(uint8_t pack_idx)
 {
     if (pack_idx == 0) return initialized;
+#ifdef CONFIG_ROBOT_DUAL_BATTERY
     if (pack_idx == 1) {
         float v_raw = battery_pack2_read_voltage_raw();
         return (v_raw * 1000.0f) > BATT_PACK_PRESENT_THRESHOLD_MV;
     }
+#endif
     return false;
 }
 
@@ -145,11 +151,13 @@ float battery_pack_get_voltage(uint8_t pack_idx)
         portEXIT_CRITICAL(&batt_spinlock);
         return v;
     }
+#ifdef CONFIG_ROBOT_DUAL_BATTERY
     if (pack_idx == 1) {
         if (!battery_pack_is_present(1)) return 0.0f;
         s_pack2_voltage = battery_pack2_read_voltage_raw();
         return s_pack2_voltage;
     }
+#endif
     return 0.0f;
 }
 
