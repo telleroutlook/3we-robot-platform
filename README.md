@@ -90,6 +90,8 @@ for _ in range(1000):
 threewe benchmark run --task pointnav --episodes 100 --backend gazebo
 ```
 
+See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and submission instructions.
+
 ---
 
 ## Architecture

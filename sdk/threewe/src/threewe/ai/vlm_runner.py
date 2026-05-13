@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import base64
 import io
+import os
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -19,6 +21,8 @@ from threewe.types import ExecutionResult
 
 if TYPE_CHECKING:
     from threewe.robot import Robot
+
+StepCallback = Callable[[int, str, dict], None]
 
 
 class VLMRunner:
@@ -38,6 +42,25 @@ class VLMRunner:
         self._max_steps = max_steps
         self._temperature = temperature
         self._client = None
+
+    @classmethod
+    def from_env(cls, max_steps: int = 20, temperature: float = 0.0) -> VLMRunner:
+        """Create a VLMRunner from environment variables.
+
+        Reads:
+            THREEWE_VLM_MODEL: Model name (default: gpt-4o)
+            OPENAI_API_KEY: API key for OpenAI or compatible endpoint
+            THREEWE_VLM_BASE_URL: Custom API endpoint (for Qwen-VL, local models)
+            THREEWE_VLM_MAX_STEPS: Max steps per instruction (default: 20)
+            THREEWE_VLM_TEMPERATURE: Sampling temperature (default: 0.0)
+        """
+        return cls(
+            model=os.environ.get("THREEWE_VLM_MODEL", "gpt-4o"),
+            api_key=os.environ.get("OPENAI_API_KEY"),
+            base_url=os.environ.get("THREEWE_VLM_BASE_URL"),
+            max_steps=int(os.environ.get("THREEWE_VLM_MAX_STEPS", str(max_steps))),
+            temperature=float(os.environ.get("THREEWE_VLM_TEMPERATURE", str(temperature))),
+        )
 
     def _get_client(self):
         if self._client is not None:
@@ -76,6 +99,25 @@ class VLMRunner:
         pil_image.save(buffer, format="JPEG", quality=85)
         return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
+    def _build_system_prompt(self, instruction: str) -> str:
+        base_prompt = (
+            "You are a robot navigation assistant. "
+            "Given an image from the robot's camera "
+            "and an instruction, output a single JSON action: "
+            '{"action": "move_forward"|"rotate_left"|'
+            '"rotate_right"|"stop"|"done", '
+            '"distance": <meters>, "angle": <radians>, '
+            '"reason": "<brief>"}. '
+            "Only output valid JSON, nothing else."
+        )
+        has_cjk = any("一" <= ch <= "鿿" for ch in instruction)
+        if has_cjk:
+            base_prompt += (
+                " The instruction is in Chinese. "
+                "Respond with reason in Chinese but keep action keys in English."
+            )
+        return base_prompt
+
     def plan(self, image: np.ndarray, instruction: str) -> str:
         """Get a single-step action plan from the VLM given an image and instruction."""
         client = self._get_client()
@@ -87,16 +129,7 @@ class VLMRunner:
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        "You are a robot navigation assistant. "
-                        "Given an image from the robot's camera "
-                        "and an instruction, output a single JSON action: "
-                        '{"action": "move_forward"|"rotate_left"|'
-                        '"rotate_right"|"stop"|"done", '
-                        '"distance": <meters>, "angle": <radians>, '
-                        '"reason": "<brief>"}. '
-                        "Only output valid JSON, nothing else."
-                    ),
+                    "content": self._build_system_prompt(instruction),
                 },
                 {
                     "role": "user",
@@ -122,18 +155,29 @@ async def execute_vlm_instruction(
     api_key: str | None = None,
     base_url: str | None = None,
     max_steps: int = 20,
+    on_step: StepCallback | None = None,
 ) -> ExecutionResult:
     """Execute a natural language instruction using a VLM in a perception-action loop.
 
     The VLM observes camera images and generates navigation actions
     until the instruction is fulfilled or max_steps is reached.
+
+    Args:
+        robot: Connected Robot instance.
+        instruction: Natural language task description.
+        model: VLM model name.
+        api_key: Optional API key override.
+        base_url: Optional API base URL override.
+        max_steps: Maximum perception-action cycles.
+        on_step: Optional callback invoked after each step with
+            (step_number, raw_response, parsed_action).
     """
     import json
 
     runner = VLMRunner(model=model, api_key=api_key, base_url=base_url, max_steps=max_steps)
     images_collected: list = []
 
-    for _step in range(max_steps):
+    for step in range(max_steps):
         image = robot.get_image()
         images_collected.append(image)
 
@@ -141,7 +185,12 @@ async def execute_vlm_instruction(
             response_text = runner.plan(image, instruction)
             action = json.loads(response_text)
         except (json.JSONDecodeError, Exception):
+            if on_step:
+                on_step(step, response_text if "response_text" in dir() else "", {})
             continue
+
+        if on_step:
+            on_step(step, response_text, action)
 
         cmd = action.get("action", "stop")
 

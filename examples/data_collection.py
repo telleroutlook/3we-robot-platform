@@ -37,7 +37,7 @@ async def collect_random_walk_episode(
         }
     )
 
-    for step in range(num_steps):
+    for _step in range(num_steps):
         vx = np.random.uniform(0.0, 0.3)
         vy = np.random.uniform(-0.1, 0.1)
         omega = np.random.uniform(-0.5, 0.5)

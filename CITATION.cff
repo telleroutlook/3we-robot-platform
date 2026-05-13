@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: Apache-2.0
+cff-version: 1.2.0
+title: "3we: An Open Platform for Sim-to-Real Embodied AI Research"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - name: "3we Contributors"
+license: Apache-2.0
+repository-code: "https://github.com/3we-org/3we-robot-platform"
+url: "https://github.com/3we-org/3we-robot-platform"
+keywords:
+  - robotics
+  - embodied-ai
+  - sim2real
+  - ros2
+  - navigation
+  - gymnasium
+  - vlm
+  - vla
+abstract: >-
+  3we is an AI-First open-source robot platform for Embodied AI research.
+  The same Python code runs identically in Gazebo simulation, NVIDIA Isaac Sim,
+  and on real hardware (Raspberry Pi 5 + Hailo-8L + ESP32-S3) with zero code
+  changes. The platform provides a 5-line Python API, Gymnasium-compatible
+  environments, VLM/VLA integration, trajectory recording, and standardized
+  benchmarks — all on open hardware costing under $500 to reproduce.

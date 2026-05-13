@@ -31,9 +31,8 @@ async def run_demo(backend: str):
         print(f"[3] LiDAR: {scan.ranges.shape[0]} points, max={scan.range_max}m")
 
         imu = robot.get_imu()
-        print(
-            f"[4] IMU accel: [{imu.acceleration[0]:.2f}, {imu.acceleration[1]:.2f}, {imu.acceleration[2]:.2f}]"
-        )
+        ax, ay, az = imu.acceleration[0], imu.acceleration[1], imu.acceleration[2]
+        print(f"[4] IMU accel: [{ax:.2f}, {ay:.2f}, {az:.2f}]")
 
         battery = robot.get_battery_state()
         print(f"[5] Battery: {battery.voltage:.1f}V ({battery.percentage * 100:.0f}%)")
@@ -51,9 +50,8 @@ async def run_demo(backend: str):
         # 4. Navigate to point
         print("[8] Navigating to (1.0, 1.0)...")
         result = await robot.move_to(x=1.0, y=1.0)
-        print(
-            f"    Result: {result.reason}, final=({result.final_pose.x:.2f}, {result.final_pose.y:.2f})"
-        )
+        fx, fy = result.final_pose.x, result.final_pose.y
+        print(f"    Result: {result.reason}, final=({fx:.2f}, {fy:.2f})")
 
     print("\n" + "=" * 40)
     print("Demo complete. Same code, any backend.")
