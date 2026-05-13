@@ -25,6 +25,7 @@ class VLARunner:
         self._device = device
         self._model: Any = None
         self._config: dict = {}
+        self._text_encoder: Any = None
 
     @classmethod
     def from_pretrained(cls, model_id: str, device: str = "cpu") -> VLARunner:
@@ -47,12 +48,14 @@ class VLARunner:
 
     @classmethod
     def from_local(cls, path: str, device: str = "cpu") -> VLARunner:
-        """Load a local VLA model (ONNX or PyTorch checkpoint).
+        """Load a local VLA model (ONNX, PyTorch, or Hailo HEF).
 
         Args:
             path: Path to model directory or file
-            device: Target device
+            device: Target device ("cpu", "cuda", "mps", "hailo")
         """
+        if device == "hailo":
+            return cls._load_hailo(path)
         return cls._load_from_dir(path, device)
 
     @classmethod
@@ -77,6 +80,16 @@ class VLARunner:
             f"No model file found in {model_dir}. "
             "Expected model.onnx, model.pt, or pytorch_model.bin"
         )
+
+    @classmethod
+    def _load_hailo(cls, path: str) -> VLARunner:
+        """Load a HEF model for Hailo-8L inference."""
+        from threewe.ai.hailo import HailoRunner
+
+        runner = cls(path, "hailo")
+        runner._model = HailoRunner.from_hef(path)
+        runner._config["runtime"] = "hailo"
+        return runner
 
     def _load_onnx(self, path: Path) -> None:
         try:
@@ -126,8 +139,18 @@ class VLARunner:
             return self._predict_onnx(obs, instruction)
         elif runtime == "pytorch":
             return self._predict_pytorch(obs, instruction)
+        elif runtime == "hailo":
+            return self._predict_hailo(obs, instruction)
         else:
             raise RuntimeError(f"Unknown runtime: {runtime}")
+
+    def _encode_instruction(self, instruction: str) -> np.ndarray:
+        """Encode a language instruction into a fixed-size embedding."""
+        if self._text_encoder is None:
+            from threewe.ai.text_encoder import TextEncoder
+
+            self._text_encoder = TextEncoder(method="tfidf", dim=64)
+        return self._text_encoder.encode(instruction)
 
     def _predict_onnx(self, obs: dict[str, np.ndarray], instruction: str) -> np.ndarray:
         feed = {}
@@ -137,6 +160,11 @@ class VLARunner:
                     feed[key] = value[np.newaxis].astype(np.float32) / 255.0
                 else:
                     feed[key] = value[np.newaxis].astype(np.float32)
+
+        if instruction:
+            feed["instruction_embedding"] = self._encode_instruction(instruction)[
+                np.newaxis
+            ].astype(np.float32)
 
         outputs = self._model.run(None, feed)
         return outputs[0][0].astype(np.float32)
@@ -168,3 +196,22 @@ class VLARunner:
     def action_dim(self) -> int:
         """Expected output action dimension."""
         return self._config.get("action_dim", 3)
+
+    def _predict_hailo(self, obs: dict[str, np.ndarray], instruction: str) -> np.ndarray:
+        """Run inference on Hailo-8L NPU."""
+        feed = {}
+        for key, value in obs.items():
+            if isinstance(value, np.ndarray):
+                if value.ndim == 3:
+                    feed[key] = (value.astype(np.float32) / 255.0)[np.newaxis]
+                else:
+                    feed[key] = value[np.newaxis].astype(np.float32)
+
+        if instruction:
+            feed["instruction_embedding"] = self._encode_instruction(instruction)[
+                np.newaxis
+            ].astype(np.float32)
+
+        results = self._model.infer(feed)
+        first_output = next(iter(results.values()))
+        return first_output[0].astype(np.float32)

@@ -145,19 +145,50 @@ class Robot:
         self._ensure_connected()
         return self._backend.get_map()
 
-    def get_observation(self) -> dict[str, np.ndarray]:
-        """Get complete observation dict suitable for RL policy input."""
+    _DEFAULT_MODALITIES: tuple[str, ...] = ("image", "lidar", "pose", "velocity")
+
+    def get_observation(self, modalities: list[str] | None = None) -> dict[str, np.ndarray]:
+        """Get standardized observation dict for VLA/RL model ingestion.
+
+        Args:
+            modalities: Which sensor modalities to include. Defaults to
+                ("image", "lidar", "pose", "velocity"). Supported:
+                "image", "depth", "lidar", "pose", "velocity", "imu", "map".
+        """
         self._ensure_connected()
-        pose = self.get_pose()
-        vel = self.get_velocity()
-        image = self.get_camera_image()
-        scan = self.get_lidar_scan()
-        return {
-            "image": image,
-            "lidar": scan.ranges,
-            "pose": np.array([pose.x, pose.y, pose.theta], dtype=np.float32),
-            "velocity": np.array([vel.vx, vel.vy, vel.omega], dtype=np.float32),
-        }
+        keys = modalities if modalities is not None else list(self._DEFAULT_MODALITIES)
+        obs: dict[str, np.ndarray] = {}
+
+        for key in keys:
+            if key == "image":
+                obs["image"] = self.get_camera_image()
+            elif key == "depth":
+                rgbd = self.get_rgbd_image()
+                obs["depth"] = rgbd.depth
+            elif key == "lidar":
+                scan = self.get_lidar_scan()
+                obs["lidar"] = scan.ranges
+            elif key == "pose":
+                pose = self.get_pose()
+                obs["pose"] = np.array([pose.x, pose.y, pose.theta], dtype=np.float32)
+            elif key == "velocity":
+                vel = self.get_velocity()
+                obs["velocity"] = np.array([vel.vx, vel.vy, vel.omega], dtype=np.float32)
+            elif key == "imu":
+                imu = self.get_imu()
+                obs["imu"] = np.concatenate(
+                    [imu.acceleration, imu.angular_velocity, imu.orientation]
+                )
+            elif key == "map":
+                grid = self.get_map()
+                obs["map"] = grid.data.astype(np.float32)
+            else:
+                raise ValueError(
+                    f"Unknown modality '{key}'. Supported: "
+                    "image, depth, lidar, pose, velocity, imu, map"
+                )
+
+        return obs
 
     # ─── Action ───
 

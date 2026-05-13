@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "threewe"
-version = "0.2.0a1"
+version = "0.2.0a2"
 description = "AI-First Python API for the 3we robot platform — Sim2Real with zero code changes"
 readme = "README.md"
 license = "Apache-2.0"

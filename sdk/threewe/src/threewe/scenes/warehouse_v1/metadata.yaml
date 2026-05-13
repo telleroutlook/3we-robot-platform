@@ -1,0 +1,6 @@
+name: warehouse_v1
+area: "40x30m"
+difficulty: medium
+description: "Large warehouse with shelving units, forklifts, and loading docks. Wide aisles but long travel distances."
+dynamic_obstacles: false
+tags: [indoor, large, structured]

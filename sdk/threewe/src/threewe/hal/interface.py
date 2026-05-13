@@ -96,7 +96,8 @@ _BUILTIN_PROFILES: dict[str, HardwareProfileData] = {
 def load_hardware_profile(name: str) -> HardwareProfileData:
     """Load a hardware profile by name.
 
-    Supports built-in profiles and custom YAML files.
+    Supports built-in profiles, external profiles from ~/.threewe/profiles/,
+    and custom YAML files.
 
     Args:
         name: Profile name (e.g., "3we_standard_v2", "agilex_scout")
@@ -116,6 +117,12 @@ def load_hardware_profile(name: str) -> HardwareProfileData:
     yaml_path = configs_dir / f"{name}.yaml"
     if yaml_path.exists():
         return _load_from_yaml(yaml_path)
+
+    from threewe.hal.discovery import discover_external_profiles
+
+    external = discover_external_profiles()
+    if name in external:
+        return external[name]
 
     available = ", ".join(sorted(_BUILTIN_PROFILES.keys()))
     raise ValueError(f"Unknown hardware profile '{name}'. Available: {available}")

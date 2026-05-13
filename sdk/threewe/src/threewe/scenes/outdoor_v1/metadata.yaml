@@ -1,0 +1,6 @@
+name: outdoor_v1
+area: "50x50m"
+difficulty: medium
+description: "Outdoor park environment with pathways, benches, trees, and open grass areas. Uneven terrain and GPS drift."
+dynamic_obstacles: false
+tags: [outdoor, large, open]

@@ -1,0 +1,6 @@
+name: dynamic_v1
+area: "15x15m"
+difficulty: hard
+description: "Indoor space with moving obstacles (people, carts). Tests reactive planning and dynamic avoidance."
+dynamic_obstacles: true
+tags: [indoor, medium, dynamic]

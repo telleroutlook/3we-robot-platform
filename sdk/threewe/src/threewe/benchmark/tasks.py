@@ -34,7 +34,15 @@ class PointNavTask:
 
     name: str = "pointnav"
     metrics: tuple[str, ...] = ("spl", "success_rate", "avg_duration")
-    valid_scenes: tuple[str, ...] = ("office_v2", "apartment_v1", "corridor_v1")
+    valid_scenes: tuple[str, ...] = (
+        "office_v2",
+        "apartment_v1",
+        "corridor_v1",
+        "warehouse_v1",
+        "cluttered_v1",
+        "outdoor_v1",
+        "dynamic_v1",
+    )
     success_threshold: float = 0.5
 
     def is_success(self, episode: EpisodeResult) -> bool:
@@ -51,7 +59,13 @@ class ObjectNavTask:
 
     name: str = "objectnav"
     metrics: tuple[str, ...] = ("spl", "success_rate", "avg_duration")
-    valid_scenes: tuple[str, ...] = ("office_v2", "apartment_v1")
+    valid_scenes: tuple[str, ...] = (
+        "office_v2",
+        "apartment_v1",
+        "warehouse_v1",
+        "cluttered_v1",
+        "dynamic_v1",
+    )
     object_categories: tuple[str, ...] = (
         "chair",
         "desk",
@@ -79,7 +93,13 @@ class ExplorationTask:
 
     name: str = "exploration"
     metrics: tuple[str, ...] = ("coverage", "avg_duration", "success_rate")
-    valid_scenes: tuple[str, ...] = ("office_v2", "apartment_v1", "corridor_v1")
+    valid_scenes: tuple[str, ...] = (
+        "office_v2",
+        "apartment_v1",
+        "corridor_v1",
+        "warehouse_v1",
+        "outdoor_v1",
+    )
     coverage_threshold: float = 0.8
 
     def is_success(self, episode: EpisodeResult) -> bool:

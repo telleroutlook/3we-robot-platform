@@ -1,0 +1,6 @@
+name: cluttered_v1
+area: "12x10m"
+difficulty: hard
+description: "Densely cluttered room with furniture, boxes, and narrow passages. Tests precise obstacle avoidance."
+dynamic_obstacles: false
+tags: [indoor, small, cluttered]

@@ -19,6 +19,7 @@ from threewe.exceptions import (
     SafetyError,
     TimeoutError,
 )
+from threewe.experiment import ExperimentProtocol
 from threewe.robot import Robot
 from threewe.types import (
     BatteryState,
@@ -34,7 +35,7 @@ from threewe.types import (
     Velocity,
 )
 
-__version__ = "0.2.0a1"
+__version__ = "0.2.0a2"
 
 __all__ = [
     "Robot",
@@ -43,6 +44,7 @@ __all__ = [
     "ConnectionError",
     "EmergencyStopError",
     "ExecutionResult",
+    "ExperimentProtocol",
     "ExploreResult",
     "HardwareError",
     "IMUData",

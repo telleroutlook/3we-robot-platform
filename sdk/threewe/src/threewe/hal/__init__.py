@@ -6,6 +6,7 @@ The HAL enables the same threewe SDK to control different robot hardware
 wheel geometry, sensor layout, and kinematic limits.
 """
 
+from threewe.hal.discovery import list_all_profiles
 from threewe.hal.interface import HardwareProfile, load_hardware_profile
 
-__all__ = ["HardwareProfile", "load_hardware_profile"]
+__all__ = ["HardwareProfile", "list_all_profiles", "load_hardware_profile"]

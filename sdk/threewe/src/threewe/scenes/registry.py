@@ -12,7 +12,15 @@ if TYPE_CHECKING:
 
 _SCENES_DIR = Path(__file__).parent
 
-_BUILTIN_SCENES = ("office_v2", "apartment_v1", "corridor_v1")
+_BUILTIN_SCENES = (
+    "office_v2",
+    "apartment_v1",
+    "corridor_v1",
+    "warehouse_v1",
+    "cluttered_v1",
+    "outdoor_v1",
+    "dynamic_v1",
+)
 
 
 @dataclass(frozen=True)
@@ -34,11 +42,30 @@ class SceneMetadata:
     description: str
     start_poses: tuple[Pose2D, ...]
     goal_poses: tuple[Pose2D, ...]
+    dynamic_obstacles: bool = False
+    tags: tuple[str, ...] = ()
 
 
-def list_scenes() -> list[str]:
-    """Return names of all available built-in scenes."""
-    return list(_BUILTIN_SCENES)
+def list_scenes(tag: str | None = None) -> list[str]:
+    """Return names of all available built-in scenes.
+
+    Args:
+        tag: If provided, filter scenes that have this tag in their metadata.
+            Requires loading each scene's metadata.yaml so is slightly slower.
+    """
+    if tag is None:
+        return list(_BUILTIN_SCENES)
+
+    yaml = _import_yaml()
+    matched: list[str] = []
+    for scene_name in _BUILTIN_SCENES:
+        meta_file = _SCENES_DIR / scene_name / "metadata.yaml"
+        if meta_file.exists():
+            meta = yaml.safe_load(meta_file.read_text())
+            scene_tags = meta.get("tags", [])
+            if tag in scene_tags:
+                matched.append(scene_name)
+    return matched
 
 
 def load_scene(name_or_path: str) -> SceneMetadata:
@@ -91,6 +118,8 @@ def load_scene(name_or_path: str) -> SceneMetadata:
         description=meta["description"],
         start_poses=start_poses,
         goal_poses=goal_poses,
+        dynamic_obstacles=meta.get("dynamic_obstacles", False),
+        tags=tuple(meta.get("tags", [])),
     )
 
 

@@ -129,6 +129,22 @@ class BenchmarkRunner:
 
         return self._build_report("exploration", episodes)
 
+    async def run_objectnav(
+        self,
+        num_episodes: int = 100,
+        seed: int = 42,
+    ) -> BenchmarkReport:
+        """Run object-goal navigation benchmark using scene poses."""
+        from threewe.benchmark.objectnav_runner import run_objectnav_benchmark
+
+        episodes = await run_objectnav_benchmark(
+            backend=self._backend,
+            scene=self._scene,
+            num_episodes=num_episodes,
+            seed=seed,
+        )
+        return self._build_report("objectnav", episodes)
+
     def _build_report(self, task: str, episodes: list[EpisodeResult]) -> BenchmarkReport:
         successes = [ep.success for ep in episodes]
         path_lengths = [ep.path_length for ep in episodes]
@@ -161,6 +177,8 @@ def run_benchmark_cli(task: str, episodes: int, backend: str, scene: str) -> Non
         report = asyncio.run(runner.run_pointnav(num_episodes=episodes))
     elif task == "exploration":
         report = asyncio.run(runner.run_exploration(num_episodes=episodes))
+    elif task == "objectnav":
+        report = asyncio.run(runner.run_objectnav(num_episodes=episodes))
     else:
         print(f"Unknown task: {task}")
         return

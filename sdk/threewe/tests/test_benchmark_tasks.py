@@ -83,7 +83,7 @@ class TestBaselines:
         baselines = list_baselines()
         assert "nav2_pointnav_office" in baselines
         assert "frontier_exploration_corridor" in baselines
-        assert len(baselines) == 5
+        assert len(baselines) == 12
 
     def test_baseline_structure(self):
         baseline = BASELINES["nav2_pointnav_office"]
