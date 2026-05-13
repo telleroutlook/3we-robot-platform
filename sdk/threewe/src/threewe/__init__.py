@@ -12,12 +12,12 @@ Quick start:
 """
 
 from threewe.exceptions import (
-    ConnectionError,
+    RobotConnectionError,
     EmergencyStopError,
     HardwareError,
     NavigationError,
     SafetyError,
-    TimeoutError,
+    RobotTimeoutError,
 )
 from threewe.experiment import ExperimentProtocol
 from threewe.robot import Robot
@@ -41,7 +41,7 @@ __all__ = [
     "Robot",
     "BatteryState",
     "CameraIntrinsics",
-    "ConnectionError",
+    "RobotConnectionError",
     "EmergencyStopError",
     "ExecutionResult",
     "ExperimentProtocol",
@@ -55,6 +55,6 @@ __all__ = [
     "Pose2D",
     "RGBDImage",
     "SafetyError",
-    "TimeoutError",
+    "RobotTimeoutError",
     "Velocity",
 ]

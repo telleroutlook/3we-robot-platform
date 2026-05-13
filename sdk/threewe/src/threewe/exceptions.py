@@ -9,7 +9,7 @@ class ThreeweError(Exception):
     """Base exception for all threewe errors."""
 
 
-class ConnectionError(ThreeweError):
+class RobotConnectionError(ThreeweError):
     """Cannot connect to the robot or simulator."""
 
 
@@ -25,7 +25,7 @@ class EmergencyStopError(ThreeweError):
     """Emergency stop triggered."""
 
 
-class TimeoutError(ThreeweError):
+class RobotTimeoutError(ThreeweError):
     """Operation timed out."""
 
 

@@ -56,6 +56,7 @@ class ROS2Node:
         self._latest_imu: IMUData | None = None
         self._latest_battery: BatteryState = BatteryState()
         self._latest_map: OccupancyGrid | None = None
+        self._state_lock = threading.Lock()
 
         self._cmd_vel_pub = None
         self._nav_action_client = None
@@ -91,6 +92,7 @@ class ROS2Node:
         from geometry_msgs.msg import Twist
         from nav_msgs.msg import OccupancyGrid as OccupancyGridMsg
         from nav_msgs.msg import Odometry
+        from sensor_msgs.msg import BatteryState as BatteryStateMsg
         from sensor_msgs.msg import Image, Imu
         from sensor_msgs.msg import LaserScan as LaserScanMsg
 
@@ -102,6 +104,9 @@ class ROS2Node:
         self._node.create_subscription(Odometry, "/odom", self._odom_callback, sensor_qos)
         self._node.create_subscription(Imu, "/imu/data", self._imu_callback, sensor_qos)
         self._node.create_subscription(OccupancyGridMsg, "/map", self._map_callback, reliable_qos)
+        self._node.create_subscription(
+            BatteryStateMsg, "/battery_state", self._battery_callback, sensor_qos
+        )
 
         self._cmd_vel_pub = self._node.create_publisher(Twist, "/cmd_vel", reliable_qos)
 
@@ -139,26 +144,32 @@ class ROS2Node:
     def _image_callback(self, msg) -> None:
         h, w = msg.height, msg.width
         if msg.encoding == "bgr8":
-            self._latest_image = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
+            image = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
         elif msg.encoding == "rgb8":
             img = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
-            self._latest_image = img[:, :, ::-1].copy()
+            image = img[:, :, ::-1].copy()
         else:
-            self._latest_image = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
+            image = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
+        with self._state_lock:
+            self._latest_image = image
 
     def _depth_callback(self, msg) -> None:
         h, w = msg.height, msg.width
         if msg.encoding == "32FC1":
-            self._latest_depth = np.frombuffer(msg.data, dtype=np.float32).reshape(h, w)
+            depth = np.frombuffer(msg.data, dtype=np.float32).reshape(h, w)
         elif msg.encoding == "16UC1":
             raw = np.frombuffer(msg.data, dtype=np.uint16).reshape(h, w)
-            self._latest_depth = raw.astype(np.float32) / 1000.0
+            depth = raw.astype(np.float32) / 1000.0
+        else:
+            return
+        with self._state_lock:
+            self._latest_depth = depth
 
     def _scan_callback(self, msg) -> None:
         ranges = np.array(msg.ranges, dtype=np.float32)
         n = len(ranges)
         angles = np.linspace(msg.angle_min, msg.angle_max, n, dtype=np.float32)
-        self._latest_scan = LaserScan(
+        scan = LaserScan(
             ranges=ranges,
             angles=angles,
             angle_min=msg.angle_min,
@@ -166,28 +177,43 @@ class ROS2Node:
             range_max=msg.range_max,
             timestamp=msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9,
         )
+        with self._state_lock:
+            self._latest_scan = scan
 
     def _odom_callback(self, msg) -> None:
         pos = msg.pose.pose.position
         ori = msg.pose.pose.orientation
         theta = _euler_from_quaternion(ori.x, ori.y, ori.z, ori.w)
-        self._latest_pose = Pose2D(x=pos.x, y=pos.y, theta=theta)
-
+        pose = Pose2D(x=pos.x, y=pos.y, theta=theta)
         twist = msg.twist.twist
-        self._latest_velocity = Velocity(
-            vx=twist.linear.x, vy=twist.linear.y, omega=twist.angular.z
-        )
+        velocity = Velocity(vx=twist.linear.x, vy=twist.linear.y, omega=twist.angular.z)
+        with self._state_lock:
+            self._latest_pose = pose
+            self._latest_velocity = velocity
 
     def _imu_callback(self, msg) -> None:
         acc = msg.linear_acceleration
         gyro = msg.angular_velocity
         ori = msg.orientation
-        self._latest_imu = IMUData(
+        imu = IMUData(
             acceleration=np.array([acc.x, acc.y, acc.z], dtype=np.float32),
             angular_velocity=np.array([gyro.x, gyro.y, gyro.z], dtype=np.float32),
             orientation=np.array([ori.x, ori.y, ori.z, ori.w], dtype=np.float32),
             timestamp=msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9,
         )
+        with self._state_lock:
+            self._latest_imu = imu
+
+    def _battery_callback(self, msg) -> None:
+        from sensor_msgs.msg import BatteryState as BatteryStateMsg
+
+        battery = BatteryState(
+            voltage=msg.voltage,
+            percentage=msg.percentage,
+            is_charging=msg.power_supply_status == BatteryStateMsg.POWER_SUPPLY_STATUS_CHARGING,
+        )
+        with self._state_lock:
+            self._latest_battery = battery
 
     def _map_callback(self, msg) -> None:
         w, h = msg.info.width, msg.info.height
@@ -195,26 +221,31 @@ class ROS2Node:
         origin_pos = msg.info.origin.position
         origin_ori = msg.info.origin.orientation
         theta = _euler_from_quaternion(origin_ori.x, origin_ori.y, origin_ori.z, origin_ori.w)
-        self._latest_map = OccupancyGrid(
+        grid = OccupancyGrid(
             data=data,
             resolution=msg.info.resolution,
             origin=Pose2D(x=origin_pos.x, y=origin_pos.y, theta=theta),
         )
+        with self._state_lock:
+            self._latest_map = grid
 
     def get_camera_image(self) -> np.ndarray:
-        if self._latest_image is not None:
-            return self._latest_image
+        with self._state_lock:
+            image = self._latest_image
+        if image is not None:
+            return image
         h, w = self._config.api.image_size[1], self._config.api.image_size[0]
         return np.zeros((h, w, 3), dtype=np.uint8)
 
     def get_rgbd_image(self) -> RGBDImage:
-        rgb = self.get_camera_image()
-        h, w = rgb.shape[0], rgb.shape[1]
-        depth = (
-            self._latest_depth
-            if self._latest_depth is not None
-            else np.zeros((h, w), dtype=np.float32)
+        with self._state_lock:
+            image = self._latest_image
+            depth = self._latest_depth
+        rgb = image if image is not None else np.zeros(
+            (self._config.api.image_size[1], self._config.api.image_size[0], 3), dtype=np.uint8
         )
+        h, w = rgb.shape[0], rgb.shape[1]
+        depth = depth if depth is not None else np.zeros((h, w), dtype=np.float32)
         return RGBDImage(
             rgb=rgb,
             depth=depth,
@@ -223,8 +254,10 @@ class ROS2Node:
         )
 
     def get_lidar_scan(self) -> LaserScan:
-        if self._latest_scan is not None:
-            return self._latest_scan
+        with self._state_lock:
+            scan = self._latest_scan
+        if scan is not None:
+            return scan
         n = self._config.api.lidar_points
         return LaserScan(
             ranges=np.zeros(n, dtype=np.float32),
@@ -235,14 +268,18 @@ class ROS2Node:
         )
 
     def get_pose(self) -> Pose2D:
-        return self._latest_pose
+        with self._state_lock:
+            return self._latest_pose
 
     def get_velocity(self) -> Velocity:
-        return self._latest_velocity
+        with self._state_lock:
+            return self._latest_velocity
 
     def get_imu(self) -> IMUData:
-        if self._latest_imu is not None:
-            return self._latest_imu
+        with self._state_lock:
+            imu = self._latest_imu
+        if imu is not None:
+            return imu
         return IMUData(
             acceleration=np.array([0.0, 0.0, 9.81], dtype=np.float32),
             angular_velocity=np.zeros(3, dtype=np.float32),
@@ -250,11 +287,14 @@ class ROS2Node:
         )
 
     def get_battery_state(self) -> BatteryState:
-        return self._latest_battery
+        with self._state_lock:
+            return self._latest_battery
 
     def get_map(self) -> OccupancyGrid:
-        if self._latest_map is not None:
-            return self._latest_map
+        with self._state_lock:
+            grid = self._latest_map
+        if grid is not None:
+            return grid
         return OccupancyGrid(data=np.full((100, 100), -1, dtype=np.int8))
 
     def set_velocity(self, vx: float, vy: float, omega: float) -> None:
@@ -433,7 +473,11 @@ class ROS2Node:
         )
 
     async def explore(self, timeout: float = 60.0) -> ExploreResult:
-        """Autonomous exploration — requires Nav2 exploration plugins or frontier-based approach."""
+        """Autonomous exploration stub — samples map coverage over a 1-second window only.
+
+        Does not issue any navigation commands. Implement frontier-based exploration
+        via Nav2 explore_lite for real behavior.
+        """
         import asyncio
 
         start_time = time.time()

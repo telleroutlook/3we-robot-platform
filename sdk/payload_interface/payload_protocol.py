@@ -124,7 +124,12 @@ class PayloadInterface:
     def send_command(
         self, cmd_id: int, data: bytes = b"", timeout_ms: int = 100
     ) -> Optional[bytes]:
-        """Send a command frame and wait for response."""
+        """Send a command frame and wait for response.
+
+        Returns the response payload bytes, or None if the command failed
+        (I2C error, malformed response, CRC mismatch, or oversized payload).
+        Callers must check for None before using the result.
+        """
         payload = bytes([cmd_id]) + data
         length = len(payload)
         if length > 29:

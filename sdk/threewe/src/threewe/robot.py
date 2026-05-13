@@ -17,7 +17,7 @@ import numpy as np
 
 from threewe.backends import BackendBase
 from threewe.config import RobotConfig, load_config
-from threewe.exceptions import ConnectionError
+from threewe.exceptions import RobotConnectionError
 
 if TYPE_CHECKING:
     from threewe.types import (
@@ -258,7 +258,7 @@ class Robot:
 
     def _ensure_connected(self) -> None:
         if not self._backend.is_connected:
-            raise ConnectionError("Robot is not connected. Call robot.connect() first.")
+            raise RobotConnectionError("Robot is not connected. Call robot.connect() first.")
 
     def _clamp_and_send(self, vx: float, vy: float, omega: float) -> None:
         limits = self._config.limits

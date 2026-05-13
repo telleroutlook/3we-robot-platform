@@ -5,7 +5,7 @@ import pytest
 
 from threewe import Robot
 from threewe.config import RobotConfig
-from threewe.exceptions import ConnectionError
+from threewe.exceptions import RobotConnectionError
 
 
 class TestRobotInit:
@@ -38,12 +38,12 @@ class TestRobotInit:
 class TestRobotNotConnected:
     def test_get_pose_raises_when_not_connected(self):
         robot = Robot(backend="gazebo", auto_connect=False)
-        with pytest.raises(ConnectionError, match="not connected"):
+        with pytest.raises(RobotConnectionError, match="not connected"):
             robot.get_pose()
 
     def test_set_velocity_raises_when_not_connected(self):
         robot = Robot(backend="gazebo", auto_connect=False)
-        with pytest.raises(ConnectionError, match="not connected"):
+        with pytest.raises(RobotConnectionError, match="not connected"):
             robot.set_velocity(0.1, 0.0, 0.0)
 
 
