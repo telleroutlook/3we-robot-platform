@@ -43,6 +43,7 @@ hub = [
 ]
 dev = [
     "pytest>=7.0",
+    "pytest-cov>=4.0",
     "pytest-asyncio>=0.21",
     "ruff>=0.4",
 ]
@@ -50,6 +51,9 @@ all = ["threewe[sim,ai,data,hub,dev]"]
 
 [project.scripts]
 threewe = "threewe.cli:main"
+
+[project.entry-points."gymnasium.envs.__root__"]
+threewe = "threewe.gym"
 
 [project.urls]
 Homepage = "https://github.com/3we-org/3we-robot-platform"
