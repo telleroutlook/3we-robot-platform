@@ -87,7 +87,8 @@ hardware/       → Hardware design files
   production/   → Manufacturing outputs (Gerbers, drill, positions)
   manufacturing/ → Manufacturing documentation
   validation/   → Hardware validation tests
-sdk/            → Payload developer toolkit
+sdk/            → Python SDK + Payload toolkit
+  threewe/      → AI-First Python package (Robot, Gym, Benchmark)
   payload_interface/ → Library for payload communication
   examples/     → Reference payload implementations
   tools/        → CLI tools (eeprom_validator, provision_keys)
@@ -157,7 +158,7 @@ cd sdk/web_control && npx playwright test
 cd sdk/web_control && npx eslint src/ && npx prettier --check 'src/**/*.ts'
 
 # 6. Python SDK — tests (pytest)
-cd sdk && python3 -m pytest tests/ -v
+cd sdk/threewe && PYTHONPATH=src:$PYTHONPATH python3 -m pytest tests/ -v
 
 # 7. Python SDK — format and lint
 ruff format --check sdk/ && ruff check sdk/
@@ -183,7 +184,8 @@ If any step fails, fix before committing.
 | Firmware unit tests | `firmware/tests/` (Unity framework, Makefile) |
 | Web unit tests | `sdk/web_control/src/**/*.test.ts` (Vitest, `vitest.config.ts`) |
 | Web E2E tests | `sdk/web_control/tests/` (Playwright, `playwright.config.ts`) |
-| Python SDK tests | `sdk/tests/` (pytest, config in `sdk/pyproject.toml`) |
+| Python SDK tests (threewe) | `sdk/threewe/tests/` (pytest, config in `sdk/threewe/pyproject.toml`) |
+| Python SDK tests (payload) | `sdk/tests/` (pytest, config in `sdk/pyproject.toml`) |
 | Integration tests | `tests/integration/` (pytest, `tests/integration/pytest.ini`) |
 | ESLint config | `sdk/web_control/eslint.config.js` |
 | Prettier config | `sdk/web_control/.prettierrc` |

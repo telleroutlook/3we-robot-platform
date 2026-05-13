@@ -24,7 +24,7 @@ async with Robot(backend="gazebo") as robot:      # or "real" / "isaac_sim"
 |---------|---------|-----------|-----------|
 | AI-First Python API | 5 lines | 60+ lines (ROS2) | Sim only |
 | Sim2Real same code | Gazebo / Isaac / Real | No | No |
-| Open hardware ($300) | Full BOM + PCB | $1200+ | N/A |
+| Open hardware (<$500) | Full BOM + PCB | $1200+ | N/A |
 | Edge AI (Hailo-8L) | 13 TOPS on Pi 5 | No | N/A |
 | Gymnasium compatible | `make("3we/Navigation-v1")` | No | Yes |
 | VLM/VLA native | `execute_instruction()` | No | Limited |
@@ -140,7 +140,7 @@ threewe hal list
 | IMU | BNO055 | 9-axis fusion |
 | Drive | Mecanum wheels x4 | Omnidirectional |
 | Camera | 1080P 170 deg fisheye | Visual input |
-| **Total** | **~$300 USD** | All standard parts |
+| **Total** | **<$500 USD** | All standard parts |
 
 Full BOM, PCB files, and assembly guide: [hardware/](https://github.com/3we-org/3we-robot-platform/tree/main/hardware)
 
@@ -150,8 +150,8 @@ Full BOM, PCB files, and assembly guide: [hardware/](https://github.com/3we-org/
 
 - [Getting Started (AI Researchers)](https://github.com/3we-org/3we-robot-platform/blob/main/docs/getting_started_ai.md)
 - [Getting Started (Hardware)](https://github.com/3we-org/3we-robot-platform/blob/main/docs/getting_started_basic.md)
-- [API Reference](https://github.com/3we-org/3we-robot-platform/blob/main/docs/ai_first_api.md)
-- [Sim2Real Architecture](https://github.com/3we-org/3we-robot-platform/blob/main/docs/sim2real.md)
+- [API Reference](https://github.com/3we-org/3we-robot-platform/blob/main/docs/api_reference.md)
+- [Sim2Real Validation](https://github.com/3we-org/3we-robot-platform/blob/main/docs/architecture-diagrams.md)
 - [Assembly Guide](https://github.com/3we-org/3we-robot-platform/blob/main/docs/assembly_guide.md)
 
 ---

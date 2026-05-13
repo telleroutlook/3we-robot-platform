@@ -69,7 +69,7 @@ async def main():
 asyncio.run(main())
 ```
 
-> **Backends**: Use `backend="mock"` to try the API instantly, `"gazebo"` for physics simulation (requires ROS2), or `"real"` for physical hardware.
+> **Backends**: Use `backend="mock"` to try the API instantly, `"gazebo"` for physics simulation (requires ROS2), `"isaac_sim"` for GPU-accelerated parallel simulation, or `"real"` for physical hardware.
 
 ### See It in Action
 
@@ -146,8 +146,8 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 │                     threewe Python API                           │
 │  Robot · Types · Config · AI (VLM/VLA) · Gym · Data · Benchmark │
 ├──────────────────┬──────────────────┬───────────────────────────┤
-│  GazeboBackend   │   RealBackend    │   IsaacSimBackend (P2)    │
-│  (Gazebo Harmonic│   (ROS2 Topics)  │   (Future)               │
+│  GazeboBackend   │   RealBackend    │   IsaacSimBackend         │
+│  (Gazebo Harmonic│   (ROS2 Topics)  │   (GPU-accelerated)      │
 │   + ros_gz_bridge│                  │                           │
 ├──────────────────┴──────────────────┴───────────────────────────┤
 │                     ROS2 Jazzy + Nav2                            │
@@ -274,7 +274,7 @@ Step-by-step tutorials in [`notebooks/`](notebooks/):
 - [x] **Phase 1**: `threewe` Python API + Sim2Real backends
 - [x] **Phase 1**: Gymnasium environments + VLM/VLA integration
 - [x] **Phase 1**: Benchmark framework + Example scripts
-- [ ] **Phase 2**: Isaac Sim backend
+- [x] **Phase 1**: Isaac Sim backend
 - [ ] **Phase 2**: Hardware Abstraction Layer for 3rd-party robots
 - [ ] **Phase 2**: Foundation model fine-tuning pipelines
 - [ ] **Phase 3**: 3we Hub (model/dataset sharing)
