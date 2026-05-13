@@ -2,20 +2,21 @@
 
 ## Project Overview
 
-This is an open-source universal modular mobile platform. The architecture spans:
+This is an AI-First open-source robot platform for Embodied AI research. The same Python code runs identically in simulation and on real hardware (Sim2Real with zero code changes). The architecture spans:
 
-1. **Firmware** (ESP32-S3) — Motor control, sensor fusion, communication
-2. **ROS2 Packages** — Navigation, SLAM, bringup, interfaces
-3. **Hardware** — PCB design, mechanical structure, BOM
-4. **SDK** — Payload interface library, examples, web basic tools
-5. **Docs** — Assembly guides, API references, tutorials
+1. **Python SDK** (`threewe`) — AI-First API: Robot class, VLM/VLA integration, Gymnasium envs, trajectory recording, benchmarks
+2. **Firmware** (ESP32-S3) — Motor control, sensor fusion, communication
+3. **ROS2 Packages** — Navigation, SLAM, simulation backends (Gazebo, Isaac Sim)
+4. **Hardware** — Open PCB design (CERN-OHL-P), mechanical structure, BOM (<$500 to reproduce)
+5. **Docs** — AI getting started, assembly guides, API references
 
 The project follows an Open Core model: hardware, firmware, ROS2 stack, and SDK are fully open-source. Proprietary components (AI models, cloud services, advanced web panel) live in separate repositories.
 
 ## Architecture Principles
 
+- **Sim2Real consistency**: The Python API must behave identically across simulation and real hardware — zero code changes to switch backends
+- **AI-First**: The primary interface is the `threewe` Python package; researchers should never need to touch ROS2 or firmware directly
 - **Modularity**: Each subsystem (locomotion, perception, communication, payload) is independently replaceable
-- **Payload-first**: The platform exists to serve payloads — the standardized payload bus connector is the primary integration point
 - **Safety by design**: Emergency stop and safety interlock are hardware-level, never software-only
 - **Offline-capable**: Core functionality must work without network connectivity
 

@@ -2,281 +2,243 @@
 
 # 3WE Robot Platform
 
-**通用模块化移动平台**
+**AI-First 开源具身智能基础设施**
 
 [![License](https://img.shields.io/badge/代码-Apache_2.0-blue.svg)](LICENSE)
 [![License](https://img.shields.io/badge/硬件-CERN--OHL--P_v2-green.svg)](LICENSE-HARDWARE)
-[![License](https://img.shields.io/badge/文档-CC_BY--SA_4.0-orange.svg)](LICENSE-DOCS)
-[![ROS2](https://img.shields.io/badge/ROS2-Humble%20|%20Jazzy-blueviolet.svg)](https://ros.org/)
-[![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.x-red.svg)](https://github.com/espressif/esp-idf)
+[![PyPI](https://img.shields.io/badge/pip_install-threewe-orange.svg)](sdk/threewe/)
+[![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blueviolet.svg)](https://ros.org/)
 
-[![ESP32-S3](https://img.shields.io/badge/ESP32--S3-000000?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/en/products/socs/esp32-s3)
-[![ROS2](https://img.shields.io/badge/ROS2-22314E?style=for-the-badge&logo=ros&logoColor=white)](https://ros.org/)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![KiCad](https://img.shields.io/badge/KiCad-314CB0?style=for-the-badge&logo=kicad&logoColor=white)](https://www.kicad.org/)
-[![CI](https://img.shields.io/github/actions/workflow/status/3we/robot-platform/full-validation.yml?style=for-the-badge&label=CI)](../../actions)
-
-一个开源的全向移动机器人平台，<br/>
-专为**模块化**、**可扩展性**和**快速载荷集成**而设计。
-
-<img src="docs/images/robot-platform-hero.png" alt="机器人平台" width="600"/>
-
-[快速开始](#-快速开始) &bull;
-[文档](docs/) &bull;
-[参与贡献](CONTRIBUTING.md) &bull;
-[硬件设计](hardware/)
-
-**[English](README.md) | [中文](README_zh.md)**
+**开源版"Embodied AI 的 PyTorch"** —— 一个完整的机器人平台，
+同样 5 行 Python 在仿真和真机上零代码修改运行。
 
 </div>
 
 ---
 
-> [!NOTE]
-> 本项目正在积极开发中，硬件设计和固件正在验证阶段。
+## 5 行代码驱动机器人
 
-<br/>
+```python
+from threewe import Robot
 
-## ✦ 核心能力
-
-<table>
-<tr>
-<td width="50%">
-
-**运动与控制**
-- 全向麦克纳姆轮驱动
-- 闭环 PID 编码器反馈
-- 50 Hz 控制回路，延迟 < 20 ms
-- 可配置速度限制（最大 1.2 m/s）
-
-</td>
-<td width="50%">
-
-**智能与导航**
-- 边缘 AI 推理（Hailo-8/8L）
-- Nav2 自主导航
-- slam_toolbox 实时建图
-- ROS2 原生集成
-
-</td>
-</tr>
-<tr>
-<td>
-
-**安全与加密**
-- ISO 13850 硬件急停按钮
-- 双通道安全继电器（带自检）
-- DTLS 1.2 加密通信
-- ECDSA P-256 签名 OTA 升级
-
-</td>
-<td>
-
-**模块化与可扩展**
-- PBC-34 热插拔载荷总线
-- EEPROM 自动识别
-- 电源时序控制与功率预算管理
-- 多协议：Wi-Fi / BLE / 4G / 5G / LoRa
-
-</td>
-</tr>
-</table>
-
-<br/>
-
-## ✦ 为什么选择本项目
-
-| 痛点 | 我们的解决方案 |
-|:-----|:---------------|
-| 从零搭建机器人平台需要数月时间 | 完整开源技术栈：硬件 → 固件 → ROS2 → SDK，开箱即用可定制 |
-| 多数平台硬件设计闭源 | 完全开放 PCB（KiCad）+ 机械图纸，采用 CERN-OHL-P 许可 |
-| 没有标准化的载荷接口 | PBC-34 热插拔总线 + EEPROM 自动识别 —— 插入传感器即刻工作 |
-| 教育平台无法扩展到工业场景 | 3 个 SKU 从教室（Basic）到工厂（Industrial）—— 同一代码库 |
-| 安全性往往是事后补救 | DTLS 1.2 加密通信 + 签名 OTA + 硬件急停，从第一天就内置 |
-
-### 适合谁？
-
-- **学生与教育者** —— 用生产级代码学习真正的嵌入式系统、ROS2 和机电一体化，而非玩具示例
-- **科研人员** —— 跳过 6 个月的平台搭建期；在经过验证的传感器融合底盘上专注你的算法
-- **产品开发者** —— 从原型到产品用同一平台；切换 SKU 配置无需重写代码
-- **工业集成商** —— IP65 防护、CAN 总线、5G、硬件安全继电器 —— 自信部署到真实场景
-
-<br/>
-
-## ✦ 产品线
-
-| | **Basic** | **Standard** | **Industrial** |
-|:--|:--:|:--:|:--:|
-| **定位** | 教育 | 科研 / 开发 | 工业部署 |
-| **底盘** | 300×250 mm | 400×320 mm | 500×400 mm |
-| **轮径** | 48 mm 麦轮 | 65 mm 麦轮 | 97 mm 麦轮 |
-| **载荷** | 1 kg | 5 kg | 15 kg |
-| **AI 算力** | — | Hailo-8L (13 TOPS) | Hailo-8 (26 TOPS) |
-| **通信** | Wi-Fi + BLE | Wi-Fi + BLE | + 5G + LoRa |
-| **CAN 总线** | — | — | MCP2515 + TJA1050 |
-| **防护等级** | IP20 | IP20 | IP54 |
-
-Standard 可选附件：Hailo-8 升级、4G 模组、LD06 激光雷达、后置摄像头。
-
-<br/>
-
-## ✦ 系统架构
-
-```
-┌───────────────────────────────────────────────────────────┐
-│                        载荷层                               │
-│              用户设备通过 PBC-34 连接器接入                   │
-├───────────────────────────────────────────────────────────┤
-│                        应用层                               │
-│          ROS2  ·  Nav2  ·  SLAM  ·  自定义节点              │
-├───────────────────────────────────────────────────────────┤
-│                        计算层                               │
-│          Raspberry Pi 5  +  AI 加速器 (Hailo)              │
-├───────────────────────────────────────────────────────────┤
-│                        固件层                               │
-│     ESP32-S3  ·  电机  ·  传感器  ·  安全  ·  通信          │
-├───────────────────────────────────────────────────────────┤
-│                        硬件层                               │
-│    麦克纳姆轮  ·  DRV8833  ·  电池  ·  急停按钮             │
-└───────────────────────────────────────────────────────────┘
+async with Robot(backend="gazebo") as robot:
+    image = robot.get_image()
+    await robot.move_to(x=2.0, y=1.0)
+    pose = robot.get_pose()
 ```
 
-<br/>
+将 `backend="gazebo"` 切换为 `backend="real"` —— 零代码修改，同一 API。
 
-## ✦ 仓库结构
+---
 
-```
-robot-platform/
-│
-├── firmware/                    # ESP32-S3 固件 (ESP-IDF + micro-ROS)
-│   ├── esp32/main/             #   应用源码
-│   └── config/                 #   引脚定义、机器人参数
-│
-├── ros2_ws/                    # ROS2 工作空间
-│   ├── robot_bringup/          #   启动文件、Nav2/SLAM 配置
-│   ├── robot_collection/       #   自主捡球演示（状态机）
-│   ├── robot_competition/      #   竞赛节点 (RoboCup)
-│   ├── robot_description/      #   URDF 模型 (Xacro)
-│   ├── robot_diagnostics/      #   健康监控、指标导出
-│   ├── robot_docking/          #   自主对接控制器
-│   ├── robot_interfaces/       #   自定义消息/服务/动作定义
-│   ├── robot_perception/       #   摄像头 + AI 推理 (Hailo)
-│   └── robot_simulation/       #   Gazebo 仿真
-│
-├── hardware/                   # 硬件设计
-│   ├── pcb/                    #   PCB 规格、PBC-34 引脚表
-│   ├── structure/              #   结构设计图纸
-│   ├── bom/                    #   物料清单（3 个 SKU + 可选附件）
-│   ├── charging_dock/          #   充电坞硬件（PCB、BOM、文档）
-│   ├── production/             #   生产输出文件（Gerber、钻孔）
-│   ├── manufacturing/          #   制造工艺文档
-│   └── validation/             #   硬件验证测试
-│
-├── sdk/                        # 载荷开发工具包
-│   ├── payload_interface/      #   Python 通信库
-│   ├── tools/                  #   EEPROM 验证工具
-│   ├── examples/               #   参考实现
-│   ├── web_control/            #   TypeScript Web 组件
-│   └── web_basic/              #   浏览器遥控界面
-│
-└── docs/                       # 文档
-    ├── assembly_guide.md       #   硬件组装指南
-    ├── firmware_guide.md        #   编译与烧录指南
-    ├── pbc34_payload_guide.md  #   载荷开发完整参考
-    ├── compliance_checklist.md #   法规合规检查清单
-    └── performance_benchmarks.md
+## 为什么选择 3we？
 
-monitoring/                     # Prometheus + Grafana 可观测性
-scripts/                        # 自动化脚本（验证、发版、环境配置）
-tests/                          # 集成测试与硬件验证测试
-```
+| 如果你是... | 3we 提供... | 入口 |
+|:---|:---|:---|
+| **AI/ML 研究者** | Gymnasium 环境、VLM/VLA 集成、轨迹录制 —— 专注模型，无需学 ROS2 | [快速开始 (AI)](docs/getting_started_ai.md) |
+| **机器人学生** | 从 PCB 到 Python 的完整栈，硬件 <$500，生产级代码而非玩具示例 | [快速开始 (基础)](docs/getting_started_basic.md) |
+| **RL 研究者** | `gymnasium.make("3we/Navigation-v1")` —— 标准 RL 接口，真正的 Sim2Real 迁移 | [快速开始 (AI)](docs/getting_started_ai.md) |
+| **硬件爱好者** | 开放 BOM、组装指南、CERN-OHL-P 开源 PCB + 结构件 | [组装指南](docs/assembly_guide.md) |
 
-<br/>
+---
 
-## ✦ 快速开始
-
-### 前置要求
-
-| 工具 | 版本 | 用途 |
-|------|------|------|
-| [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/get-started/) | v5.x | 固件编译工具链 |
-| [ROS2](https://docs.ros.org/en/humble/Installation.html) | Humble / Jazzy | 机器人中间件 |
-| Python | 3.10+ | SDK 与工具 |
-| Node.js | 18+ | Web 控制界面、跨层验证 |
-| GCC | 12+ | 固件单元测试（主机构建） |
-| [KiCad](https://www.kicad.org/) | 8+ | 硬件修改（可选） |
-
-### 1. 编译并烧录固件
+## 快速开始
 
 ```bash
-cd firmware/esp32
-idf.py set-target esp32s3
-idf.py build
-idf.py flash monitor
+pip install threewe[sim]
 ```
 
-### 2. 编译 ROS2 工作空间
+```python
+import asyncio
+from threewe import Robot
+
+async def main():
+    async with Robot(backend="gazebo") as robot:
+        # 导航
+        result = await robot.move_to(x=2.0, y=1.0)
+        print(f"到达: {result.success}")
+
+        # VLM 视觉导航（需要: pip install threewe[ai]）
+        result = await robot.execute_instruction("走到红色门旁边")
+
+        # 传感器数据
+        scan = robot.get_lidar_scan()
+        imu = robot.get_imu()
+
+asyncio.run(main())
+```
+
+### 强化学习训练
+
+```python
+import gymnasium
+import threewe.gym  # 自动注册环境
+
+env = gymnasium.make("3we/Navigation-v1")
+obs, info = env.reset()
+
+for _ in range(1000):
+    action = env.action_space.sample()
+    obs, reward, terminated, truncated, info = env.step(action)
+    if terminated or truncated:
+        obs, info = env.reset()
+```
+
+### 基准测试
 
 ```bash
-cd ros2_ws
-colcon build --symlink-install
-source install/setup.bash
+threewe benchmark run --task pointnav --episodes 100 --backend gazebo
 ```
 
-### 3. 启动机器人
+---
+
+## 系统架构
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      你的 Python 代码                             │
+│  robot.move_to() · robot.get_image() · robot.execute_instruction│
+├─────────────────────────────────────────────────────────────────┤
+│                     threewe Python API                           │
+│  Robot · Types · Config · AI (VLM/VLA) · Gym · Data · Benchmark │
+├──────────────────┬──────────────────┬───────────────────────────┤
+│  GazeboBackend   │   RealBackend    │   IsaacSimBackend (P2)    │
+│  (Gazebo Harmonic│   (ROS2 Topics)  │   (Future)               │
+│   + ros_gz_bridge│                  │                           │
+├──────────────────┴──────────────────┴───────────────────────────┤
+│                     ROS2 Jazzy + Nav2                            │
+│   /cmd_vel · /scan · /odom · /camera · NavigateToPose Action    │
+├─────────────────────────────────────────────────────────────────┤
+│                     固件层 (ESP32-S3)                             │
+│   电机 PID · 编码器 · IMU · 安全继电器 · micro-ROS              │
+├─────────────────────────────────────────────────────────────────┤
+│                     硬件层                                        │
+│   麦克纳姆轮 · DRV8833 · LD06 LiDAR · BNO055 · 电池 · 急停     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 平台对比
+
+| 特性 | **3we** | TurtleBot 4 | LeRobot | Isaac Lab |
+|:--------|:---:|:---:|:---:|:---:|
+| Python API（无需 ROS2 知识） | **是** | 否 | N/A | 部分 |
+| Sim2Real（零代码修改） | **是** | 否 | 否 | 是 |
+| 开放硬件（PCB + BOM） | **完全** | 部分 | N/A | N/A |
+| Gymnasium 接口 | **是** | 否 | 部分 | 是 |
+| VLM/VLA 集成 | **内置** | 否 | 是 | 否 |
+| 硬件成本 | **<$500** | ~$1200 | ~$2000+ | N/A |
+| 载荷热插拔总线 | **PBC-34** | USB | N/A | N/A |
+| 硬件安全（急停） | **ISO 13850** | 仅软件 | N/A | N/A |
+| 加密通信 | **DTLS 1.2** | 无 | N/A | N/A |
+
+---
+
+## 硬件规格
+
+| 参数 | Standard v2 |
+|:-----|:---|
+| 驱动 | 四麦克纳姆轮（65mm），全向移动 |
+| MCU | ESP32-S3（双核 240MHz） |
+| SBC | Raspberry Pi 5（8GB） |
+| AI 加速 | Hailo-8L（13 TOPS） |
+| LiDAR | LD06（360°，12m 测距） |
+| IMU | BNO055（九轴融合） |
+| 最大速度 | 0.5 m/s 线速度，1.0 rad/s 角速度 |
+| 电池 | 7.4V 锂电池，约 2h 续航 |
+| 安全 | ISO 13850 急停 + 双通道继电器 |
+| 通信 | Wi-Fi + BLE（+ 4G/5G 可选） |
+| 复现成本 | <$500 |
+
+---
+
+## 仓库结构
+
+```
+3we-robot-platform/
+├── sdk/threewe/          # AI-First Python 包 (pip install threewe)
+│   ├── src/threewe/      #   Robot, Types, Backends, Gym, AI, Data, Benchmark
+│   └── tests/            #   76+ 单元测试
+├── examples/             # 开箱即用的示例脚本
+├── firmware/             # ESP32-S3 固件 (ESP-IDF + micro-ROS)
+├── ros2_ws/              # ROS2 包 (Nav2, SLAM, Gazebo, Perception)
+├── hardware/             # 开源硬件 (KiCad PCB, BOM, 结构件)
+├── sdk/payload_interface/# 载荷通信库
+├── sdk/web_control/      # TypeScript Web 组件控制面板
+├── monitoring/           # Prometheus + Grafana 可观测性
+└── docs/                 # 教程、API 参考、指南
+```
+
+---
+
+## 安装选项
 
 ```bash
-ros2 launch robot_bringup robot.launch.py
+# 核心（类型、Robot 类、配置）
+pip install threewe
+
+# 含仿真支持（增加 gymnasium）
+pip install threewe[sim]
+
+# 含 AI 集成（增加 openai, Pillow）
+pip install threewe[ai]
+
+# 含数据录制（增加 h5py）
+pip install threewe[data]
+
+# 全部
+pip install threewe[all]
 ```
 
-### 4. 构建 Web 控制界面（可选）
-
+**真机**后端还需要 ROS2 Jazzy：
 ```bash
-cd sdk/web_control
-npm install
-npm run build
+# Ubuntu 24.04
+sudo apt install ros-jazzy-desktop
 ```
 
-<br/>
+---
 
-## ✦ 技术栈
+## 示例
 
-| 层级 | 技术选型 | 角色 |
-|:-----|:---------|:-----|
-| 微控制器 | ESP32-S3 | 双核 240 MHz，Wi-Fi + BLE |
-| 单板机 | Raspberry Pi 5 (8 GB) | ROS2、导航、视觉 |
-| AI 加速 | Hailo-8L / Hailo-8 | 13–26 TOPS 边缘推理 |
-| 实时系统 | FreeRTOS (ESP-IDF) | 电机与传感器实时控制 |
-| 中间件 | micro-ROS ↔ ROS2 | MCU–SBC 桥接 |
-| 导航 | Nav2 + slam_toolbox | SLAM 与路径规划 |
-| 电机驱动 | DRV8833 x2 | 4 路直流电机 H 桥 |
-| 安全加密 | DTLS 1.2 + ECDSA P-256 OTA | 加密控制、签名升级 |
-| 安全系统 | ISO 13850 急停 | 硬件互锁 |
+| 脚本 | 说明 |
+|:-------|:-----------|
+| [`hello_world.py`](examples/hello_world.py) | 连接、采集图像、导航 |
+| [`vlm_navigation.py`](examples/vlm_navigation.py) | GPT-4o 视觉导航 |
+| [`rl_obstacle_avoidance.py`](examples/rl_obstacle_avoidance.py) | PPO 仿真训练 |
+| [`slam_exploration.py`](examples/slam_exploration.py) | 自主 SLAM 探索 |
+| [`sim2real_demo.py`](examples/sim2real_demo.py) | 同一代码，不同后端 |
+| [`data_collection.py`](examples/data_collection.py) | 录制模仿学习轨迹 |
 
-<br/>
+### Jupyter 教程
 
-## ✦ 与竞品对比
+[`notebooks/`](notebooks/) 中的交互式教程：
 
-| 特性 | **本项目** | TurtleBot 4 | Linorobot2 | ROSbot XL | Yahboom X3 |
-|:-----|:---:|:---:|:---:|:---:|:---:|
-| **开放硬件** | 完全开放 (CERN-OHL-P) | 部分 | 部分 | 闭源 | 闭源 |
-| **麦轮驱动** | 四轮全向 | 差速 | 可配置 | 麦轮 | 麦轮 |
-| **载荷系统** | PBC-34 热插拔总线 | USB/串口 | 无 | GPIO 排针 | 无 |
-| **加密通信** | DTLS 1.2 | 无 | 无 | 无 | 无 |
-| **多 SKU** | 3 个变体（同一代码库） | 单一 | 单一 | 2 个变体 | 单一 |
-| **Web 控制** | 内置（TypeScript） | 需 RViz | 无 | ROSbot UI | 仅 App |
-| **硬件安全继电器** | ISO 13850 + 自检 | 仅软件 | 无 | 仅软件 | 无 |
+| Notebook | 主题 |
+|:---------|:------|
+| [01_hello_world](notebooks/01_hello_world.ipynb) | 连接、传感器、基础导航 |
+| [02_slam_exploration](notebooks/02_slam_exploration.ipynb) | 自主建图 |
+| [03_point_navigation](notebooks/03_point_navigation.ipynb) | 航点与路径跟踪 |
+| [04_rl_training](notebooks/04_rl_training.ipynb) | Gymnasium + PPO 训练 |
+| [05_data_collection](notebooks/05_data_collection.ipynb) | 轨迹录制，导出到 LeRobot |
 
-本平台占据独特定位：**完全开放硬件 + 生产级安全**，填补了教育套件与闭源工业机器人之间的空白。没有其他开源平台能在单一架构中同时提供标准化载荷总线、加密通信和多 SKU 可扩展性。
+---
 
-> 详细多维度对比请参见 **[docs/competitive_analysis.md](docs/competitive_analysis.md)**。
+## 路线图
 
-<br/>
+- [x] **Phase 1**: ESP32 固件 + ROS2 栈 + 硬件设计
+- [x] **Phase 1**: `threewe` Python API + Sim2Real 后端
+- [x] **Phase 1**: Gymnasium 环境 + VLM/VLA 集成
+- [x] **Phase 1**: 基准测试框架 + 示例脚本
+- [ ] **Phase 2**: Isaac Sim 后端
+- [ ] **Phase 2**: 硬件抽象层（支持第三方机器人）
+- [ ] **Phase 2**: 基础模型微调流水线
+- [ ] **Phase 3**: 3we Hub（模型/数据集共享）
+- [ ] **Phase 3**: 多机器人协同管理
 
-## ✦ 许可证
+---
 
-本项目采用 **Open Core** 多许可证结构：
+## 许可证
 
 | 组件 | 许可证 | 文件 |
 |:-----|:-------|:-----|
@@ -284,56 +246,27 @@ npm run build
 | 硬件设计 | CERN-OHL-P v2 | [`LICENSE-HARDWARE`](LICENSE-HARDWARE) |
 | 文档 | CC BY-SA 4.0 | [`LICENSE-DOCS`](LICENSE-DOCS) |
 
-第三方依赖声明：[`NOTICE`](NOTICE)
+---
 
-<br/>
+## 参与贡献
 
-## ✦ 参与贡献
+欢迎贡献！请查阅 **[CONTRIBUTING.md](CONTRIBUTING.md)** 了解开发环境搭建、分支策略和 PR 流程。
 
-欢迎参与贡献！请查阅 **[CONTRIBUTING.md](CONTRIBUTING.md)** 了解：
+---
 
-- 开发环境搭建
-- 分支策略与规范化提交
-- Pull Request 流程
-- 安全关键贡献规则
-
-<br/>
-
-## ✦ 安全须知
+## 安全须知
 
 > [!WARNING]
-> 本平台包含**运动机械部件**和**锂电池**，操作前请注意安全。
+> 本平台包含**运动机械部件**和**锂电池**。
 
 - 每次操作前务必确认急停按钮功能正常
 - 请勿旁路或修改安全继电器电路
 - 遵循文档中的电池处理指南
-- 运行时远离轮组
-
-<br/>
-
-## ✦ 社区与支持
-
-| 渠道 | 用途 |
-|------|------|
-| [GitHub Issues](../../issues) | Bug 报告、功能请求 |
-| [GitHub Discussions](../../discussions) | 问题讨论、创意交流 |
-
-<br/>
-
-## ✦ 致谢
-
-本项目基于以下优秀开源项目构建：
-
-| 项目 | 维护者 |
-|------|--------|
-| [ESP-IDF](https://github.com/espressif/esp-idf) | Espressif Systems |
-| [micro-ROS](https://micro.ros.org/) | eProsima |
-| [ROS 2](https://ros.org/) | Open Robotics |
-| [Nav2](https://nav2.org/) | Steve Macenski 等 |
-| [KiCad](https://www.kicad.org/) | KiCad 社区 |
 
 ---
 
 <div align="center">
-<sub>为机器人社区用心打造。</sub>
+
+**[English](README.md) | [中文](README_zh.md)**
+
 </div>
