@@ -57,6 +57,7 @@ class OtaManagerNode(Node):
         self.declare_parameter("rollback_enabled", True)
         self.declare_parameter("check_interval_sec", 3600.0)
         self.declare_parameter("public_key_path", "/opt/robot/keys/ota_public.pem")
+        self.declare_parameter("robot_service_name", "robot.service")
 
         self._update_check_url = self.get_parameter("update_check_url").value
         self._model_dir = Path(self.get_parameter("model_dir").value)
@@ -65,6 +66,7 @@ class OtaManagerNode(Node):
         self._rollback_enabled = self.get_parameter("rollback_enabled").value
         self._check_interval = self.get_parameter("check_interval_sec").value
         self._public_key_path = Path(self.get_parameter("public_key_path").value)
+        self._robot_service_name = self.get_parameter("robot_service_name").value
 
         self._current_versions: dict[str, str] = {}
         self._update_in_progress = False
@@ -240,14 +242,28 @@ class OtaManagerNode(Node):
             self._update_in_progress = False
 
     def _download_file(self, url: str) -> str | None:
-        """Download a file from URL to temporary directory."""
+        """Download a file from a URL to the temporary directory."""
+        import urllib.parse
         import urllib.request
 
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme != "https":
+            self.get_logger().error(f"Refusing non-https URL: {url}")
+            return None
+
+        filename = os.path.basename(parsed.path)
+        if not filename:
+            self.get_logger().error(f"Cannot determine filename from URL: {url}")
+            return None
+
         self._download_dir.mkdir(parents=True, exist_ok=True)
-        local_path = self._download_dir / os.path.basename(url)
+        local_path = self._download_dir / filename
 
         try:
-            urllib.request.urlretrieve(url, str(local_path))
+            req = urllib.request.Request(url, headers={"User-Agent": "robot-ota/1.0"})
+            with urllib.request.urlopen(req, timeout=60) as resp, open(local_path, "wb") as f:
+                while chunk := resp.read(65536):
+                    f.write(chunk)
             self.get_logger().info(f"Downloaded: {local_path}")
             return str(local_path)
         except Exception as e:
@@ -378,7 +394,7 @@ class OtaManagerNode(Node):
                 return False
 
             subprocess.run(
-                ["systemctl", "--user", "restart", "robot.service"],
+                ["systemctl", "--user", "restart", self._robot_service_name],
                 capture_output=True,
                 timeout=30,
             )

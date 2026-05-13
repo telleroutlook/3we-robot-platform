@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 """Top-level launch file for robot-platform."""
 
+import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchContext, LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
@@ -41,11 +44,10 @@ def _launch_setup(context: LaunchContext):
 
     pkg_bringup = FindPackageShare("robot_bringup")
 
-    xacro_path_str = (
-        subprocess.check_output(
-            ["ros2", "pkg", "prefix", "robot_description"], text=True
-        ).strip()
-        + "/share/robot_description/urdf/robot.urdf.xacro"
+    xacro_path_str = os.path.join(
+        get_package_share_directory("robot_description"),
+        "urdf",
+        "robot.urdf.xacro",
     )
 
     xacro_args = ["xacro", xacro_path_str]
@@ -105,7 +107,11 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "sku",
                 default_value="standard",
-                description="Robot SKU variant (basic|standard|pro|industrial)",
+                description=(
+                    "Robot SKU variant: basic | standard | pro | industrial. "
+                    "'pro' is an alias for 'standard' (same geometry, reserved for future use)."
+                ),
+                choices=["basic", "standard", "pro", "industrial"],
             ),
             DeclareLaunchArgument(
                 "use_nav",

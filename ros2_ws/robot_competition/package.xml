@@ -3,7 +3,7 @@
 <package format="3">
   <name>robot_competition</name>
   <version>0.1.0</version>
-  <description>RoboCup Logistics League competition nodes for the 3WE robot platform</description>
+  <description>[WIP-PLACEHOLDER] RoboCup Logistics League competition nodes — all nodes are stub implementations that raise NotImplementedError. Not ready for deployment.</description>
   <maintainer email="dev@3we.org">3WE Robot Team</maintainer>
   <license>Apache-2.0</license>
 
