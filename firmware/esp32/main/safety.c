@@ -313,7 +313,7 @@ void safety_task(void *params)
             portEXIT_CRITICAL(&safety_spinlock);
             motor_stop_all();
         } else {
-            relay_fault_count = 0;
+            relay_fault_count = 0;  /* both channels healthy and state consistent — clear transient faults */
             portEXIT_CRITICAL(&safety_spinlock);
         }
 

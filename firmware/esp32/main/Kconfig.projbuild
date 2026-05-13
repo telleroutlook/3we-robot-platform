@@ -194,6 +194,16 @@ menu "Robot Platform Configuration"
         config TELEMETRY_UDP_PORT
             int "Telemetry UDP port"
             default 9999
+
+        config ROBOT_ALLOW_PLAINTEXT_CTRL
+            bool "Allow plaintext UDP motor control (DEV ONLY — disables DTLS enforcement)"
+            default n
+            depends on ROBOT_DEV_MODE
+            help
+                WARNING: Enabling this allows unauthenticated UDP motor commands without DTLS
+                encryption. This directly violates Safety Rule #5 and must NEVER be enabled
+                in production firmware. Only use for local bench testing with no wireless
+                exposure. This option is hidden unless ROBOT_DEV_MODE is enabled.
     endmenu
 
     menu "Safety"

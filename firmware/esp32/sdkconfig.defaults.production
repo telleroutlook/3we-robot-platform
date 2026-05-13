@@ -44,3 +44,6 @@ CONFIG_SECURE_DISABLE_ROM_DL_MODE=y
 
 # --- Structured logging (logfmt output for fleet monitoring) ---
 CONFIG_STRUCTURED_LOGGING=y
+
+# --- Safety Rule #5: plaintext control commands are forbidden in production ---
+CONFIG_ROBOT_ALLOW_PLAINTEXT_CTRL=n
