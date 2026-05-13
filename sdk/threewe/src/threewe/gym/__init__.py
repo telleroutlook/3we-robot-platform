@@ -4,13 +4,15 @@
 Register environments so they can be created with:
     env = gymnasium.make("3we/Navigation-v1")
     env = gymnasium.make("3we/Exploration-v1")
+    env = gymnasium.make("3we/ObjectNav-v1")
+    env = gymnasium.make("3we/VLN-v1")
 """
 
 from __future__ import annotations
 
-from threewe.gym.envs import ExplorationEnv, NavigationEnv
+from threewe.gym.envs import ExplorationEnv, NavigationEnv, ObjectNavEnv, VLNEnv
 
-__all__ = ["NavigationEnv", "ExplorationEnv"]
+__all__ = ["NavigationEnv", "ExplorationEnv", "ObjectNavEnv", "VLNEnv"]
 
 try:
     import gymnasium
@@ -22,6 +24,14 @@ try:
     gymnasium.register(
         id="3we/Exploration-v1",
         entry_point="threewe.gym.envs:ExplorationEnv",
+    )
+    gymnasium.register(
+        id="3we/ObjectNav-v1",
+        entry_point="threewe.gym.envs:ObjectNavEnv",
+    )
+    gymnasium.register(
+        id="3we/VLN-v1",
+        entry_point="threewe.gym.envs:VLNEnv",
     )
 except ImportError:
     pass

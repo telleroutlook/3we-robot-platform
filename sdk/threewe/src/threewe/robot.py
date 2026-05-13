@@ -100,6 +100,8 @@ class Robot:
         self._ensure_connected()
         return self._backend.get_camera_image()
 
+    get_image = get_camera_image
+
     def get_rgbd_image(self) -> RGBDImage:
         """Get RGB-D image with depth in meters."""
         self._ensure_connected()
@@ -182,6 +184,11 @@ class Robot:
         """Autonomously explore unknown areas until map is complete or timeout."""
         self._ensure_connected()
         return await self._backend.explore(timeout)
+
+    async def follow_path(self, waypoints: list[Pose2D]) -> MoveResult:
+        """Follow a sequence of waypoints in order."""
+        self._ensure_connected()
+        return await self._backend.follow_path(waypoints)
 
     # ─── AI Integration ───
 

@@ -136,3 +136,117 @@ class TestGymRegistration:
         obs, _ = env.reset()
         assert "coverage_map" in obs
         env.close()
+
+    def test_objectnav_env_registered(self):
+        env = gymnasium.make("3we/ObjectNav-v1")
+        obs, _ = env.reset()
+        assert "object_goal" in obs
+        env.close()
+
+    def test_vln_env_registered(self):
+        env = gymnasium.make("3we/VLN-v1")
+        obs, _ = env.reset()
+        assert "instruction_embedding" in obs
+        env.close()
+
+
+class TestObjectNavEnv:
+    def setup_method(self):
+        from threewe.gym.envs import ObjectNavEnv
+
+        self.env = ObjectNavEnv(max_steps=50, arena_size=3.0, num_objects=5)
+
+    def teardown_method(self):
+        self.env.close()
+
+    def test_reset_returns_obs_and_info(self):
+        obs, info = self.env.reset(seed=42)
+        assert isinstance(obs, dict)
+        assert "target_object" in info
+
+    def test_obs_space_keys(self):
+        obs, _ = self.env.reset(seed=42)
+        assert "image" in obs
+        assert "lidar" in obs
+        assert "pose" in obs
+        assert "velocity" in obs
+        assert "object_goal" in obs
+
+    def test_object_goal_is_onehot(self):
+        obs, _ = self.env.reset(seed=42)
+        goal = obs["object_goal"]
+        assert goal.shape == (10,)
+        assert float(np.sum(goal)) == 1.0
+
+    def test_step_returns_correct_tuple(self):
+        self.env.reset(seed=42)
+        action = np.array([0.5, 0.0, 0.0], dtype=np.float32)
+        result = self.env.step(action)
+        assert len(result) == 5
+        obs, reward, terminated, truncated, info = result
+        assert isinstance(reward, float)
+        assert "target_object" in info
+
+    def test_obs_in_observation_space(self):
+        obs, _ = self.env.reset(seed=42)
+        assert self.env.observation_space.contains(obs)
+
+    def test_truncation_at_max_steps(self):
+        self.env.reset(seed=42)
+        action = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        for _ in range(50):
+            obs, reward, terminated, truncated, info = self.env.step(action)
+            if terminated or truncated:
+                break
+        assert truncated is True
+
+
+class TestVLNEnv:
+    def setup_method(self):
+        from threewe.gym.envs import VLNEnv
+
+        self.env = VLNEnv(max_steps=50, arena_size=3.0, num_waypoints=3)
+
+    def teardown_method(self):
+        self.env.close()
+
+    def test_reset_returns_obs_and_info(self):
+        obs, info = self.env.reset(seed=42)
+        assert isinstance(obs, dict)
+        assert "waypoints_remaining" in info
+        assert info["waypoints_remaining"] == 3
+
+    def test_obs_space_keys(self):
+        obs, _ = self.env.reset(seed=42)
+        assert "image" in obs
+        assert "lidar" in obs
+        assert "pose" in obs
+        assert "velocity" in obs
+        assert "instruction_embedding" in obs
+
+    def test_instruction_embedding_shape(self):
+        obs, _ = self.env.reset(seed=42)
+        assert obs["instruction_embedding"].shape == (64,)
+
+    def test_step_returns_correct_tuple(self):
+        self.env.reset(seed=42)
+        action = np.array([0.5, 0.0, 0.0], dtype=np.float32)
+        result = self.env.step(action)
+        assert len(result) == 5
+        obs, reward, terminated, truncated, info = result
+        assert isinstance(reward, float)
+        assert "waypoints_remaining" in info
+
+    def test_obs_in_observation_space(self):
+        obs, _ = self.env.reset(seed=42)
+        assert self.env.observation_space.contains(obs)
+
+    def test_waypoint_progress(self):
+        self.env.reset(seed=42)
+        wp = self.env._waypoints[0]
+        self.env._pose[0] = wp[0]
+        self.env._pose[1] = wp[1]
+        self.env._prev_distance = 0.0
+        action = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        _, _, _, _, info = self.env.step(action)
+        assert info["waypoints_remaining"] <= 2

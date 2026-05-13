@@ -404,6 +404,34 @@ class ROS2Node:
             reason="reached",
         )
 
+    async def follow_path(self, waypoints: list) -> MoveResult:
+        """Follow a sequence of waypoints by calling move_to for each."""
+        if not waypoints:
+            return MoveResult(success=True, final_pose=self._latest_pose, reason="reached")
+
+        total_distance = 0.0
+        start_time = time.time()
+
+        for wp in waypoints:
+            result = await self.move_to(wp.x, wp.y, wp.theta)
+            total_distance += result.distance or 0.0
+            if not result.success:
+                return MoveResult(
+                    success=False,
+                    final_pose=self._latest_pose,
+                    duration=time.time() - start_time,
+                    distance=total_distance,
+                    reason=result.reason,
+                )
+
+        return MoveResult(
+            success=True,
+            final_pose=self._latest_pose,
+            duration=time.time() - start_time,
+            distance=total_distance,
+            reason="reached",
+        )
+
     async def explore(self, timeout: float = 60.0) -> ExploreResult:
         """Autonomous exploration — requires Nav2 exploration plugins or frontier-based approach."""
         import asyncio

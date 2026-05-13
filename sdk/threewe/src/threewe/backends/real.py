@@ -159,6 +159,16 @@ class RealBackend(BackendBase):
             reason="reached",
         )
 
+    async def follow_path(self, waypoints: list) -> MoveResult:
+        if self._ros2_node is not None:
+            return await self._ros2_node.follow_path(waypoints)
+        final = waypoints[-1] if waypoints else Pose2D()
+        return MoveResult(
+            success=True,
+            final_pose=Pose2D(x=final.x, y=final.y, theta=final.theta),
+            reason="reached",
+        )
+
     async def explore(self, timeout: float = 60.0) -> ExploreResult:
         if self._ros2_node is not None:
             return await self._ros2_node.explore(timeout)

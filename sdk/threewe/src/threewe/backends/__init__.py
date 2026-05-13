@@ -107,3 +107,7 @@ class BackendBase(ABC):
     @abstractmethod
     async def explore(self, timeout: float = 60.0) -> ExploreResult:
         """Autonomously explore unknown areas."""
+
+    @abstractmethod
+    async def follow_path(self, waypoints: list) -> MoveResult:
+        """Follow a sequence of Pose2D waypoints in order."""
