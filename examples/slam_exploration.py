@@ -3,15 +3,26 @@
 
 Usage:
     python examples/slam_exploration.py
+    python examples/slam_exploration.py --backend gazebo
 """
 
+import argparse
 import asyncio
 
 from threewe import Robot
 
 
 async def main():
-    async with Robot(backend="gazebo") as robot:
+    parser = argparse.ArgumentParser(description="SLAM exploration demo")
+    parser.add_argument(
+        "--backend",
+        default="mock",
+        choices=["mock", "gazebo", "real", "isaac_sim"],
+        help="Robot backend (default: mock; use gazebo/isaac_sim for simulation)",
+    )
+    args = parser.parse_args()
+
+    async with Robot(backend=args.backend) as robot:
         print("Starting autonomous exploration...")
 
         # Explore for 60 seconds

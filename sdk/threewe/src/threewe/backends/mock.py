@@ -7,8 +7,8 @@ Provides a lightweight simulation that requires only numpy. Useful for:
 - CI environments
 - Quick prototyping
 
-The mock simulates a simple box-shaped room (20m x 15m) and tracks robot
-state through basic kinematic integration.
+The mock simulates 2D environments with configurable obstacle layouts,
+Gaussian sensor noise, and collision detection.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from threewe.backends import BackendBase
+from threewe.backends.mock_scenes import Obstacle, get_scene
 from threewe.types import (
     BatteryState,
     CameraIntrinsics,
@@ -36,20 +37,22 @@ from threewe.types import (
 if TYPE_CHECKING:
     from threewe.config import RobotConfig
 
-_ROOM_WIDTH = 20.0
-_ROOM_HEIGHT = 15.0
+_ROBOT_RADIUS = 0.15
+_LIDAR_NOISE_STD = 0.008
+_MOVE_STEP = 0.05
 
 
 class MockBackend(BackendBase):
     """Zero-dependency kinematic simulation backend.
 
-    Simulates a robot in a box-shaped room using simple 2D kinematics.
-    All state is deterministic — same inputs produce same outputs.
+    Simulates a robot in a 2D environment with obstacles using simple
+    kinematics. Includes Gaussian sensor noise and collision detection.
     """
 
     def __init__(self, config: RobotConfig, scene: str = "office_v2") -> None:
         self._config = config
-        self._scene = scene
+        self._scene_name = scene
+        self._scene = get_scene(scene)
         self._connected = False
 
         self._x = 1.0
@@ -59,6 +62,7 @@ class MockBackend(BackendBase):
         self._vy = 0.0
         self._omega = 0.0
         self._last_tick = time.monotonic()
+        self._rng = np.random.default_rng(42)
 
     def connect(self) -> None:
         self._connected = True
@@ -82,22 +86,102 @@ class MockBackend(BackendBase):
 
         cos_t = math.cos(self._theta)
         sin_t = math.sin(self._theta)
-        self._x += (self._vx * cos_t - self._vy * sin_t) * dt
-        self._y += (self._vx * sin_t + self._vy * cos_t) * dt
-        self._theta += self._omega * dt
+        new_x = self._x + (self._vx * cos_t - self._vy * sin_t) * dt
+        new_y = self._y + (self._vx * sin_t + self._vy * cos_t) * dt
 
+        if not self._collides(new_x, new_y):
+            self._x = new_x
+            self._y = new_y
+
+        self._theta += self._omega * dt
         self._theta = math.atan2(math.sin(self._theta), math.cos(self._theta))
 
-        self._x = max(0.0, min(_ROOM_WIDTH, self._x))
-        self._y = max(0.0, min(_ROOM_HEIGHT, self._y))
+    def _collides(self, x: float, y: float) -> bool:
+        """Check if position collides with walls or obstacles."""
+        r = _ROBOT_RADIUS
+        if x - r < 0 or x + r > self._scene.width:
+            return True
+        if y - r < 0 or y + r > self._scene.height:
+            return True
+
+        for obs in self._scene.obstacles:
+            if self._circle_rect_collision(x, y, r, obs):
+                return True
+        return False
+
+    @staticmethod
+    def _circle_rect_collision(cx: float, cy: float, r: float, obs: Obstacle) -> bool:
+        nearest_x = max(obs.x_min, min(cx, obs.x_max))
+        nearest_y = max(obs.y_min, min(cy, obs.y_max))
+        dx = cx - nearest_x
+        dy = cy - nearest_y
+        return (dx * dx + dy * dy) < (r * r)
+
+    def _raycast(self, angle: float) -> float:
+        """Cast a ray from robot position and return distance to first hit."""
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+        min_dist = self._scene.width + self._scene.height
+
+        # Walls
+        if cos_a > 1e-6:
+            min_dist = min(min_dist, (self._scene.width - self._x) / cos_a)
+        elif cos_a < -1e-6:
+            min_dist = min(min_dist, -self._x / cos_a)
+        if sin_a > 1e-6:
+            min_dist = min(min_dist, (self._scene.height - self._y) / sin_a)
+        elif sin_a < -1e-6:
+            min_dist = min(min_dist, -self._y / sin_a)
+
+        # Obstacles — slab method for AABB ray intersection
+        for obs in self._scene.obstacles:
+            d = self._ray_aabb_dist(cos_a, sin_a, obs)
+            if d is not None and d < min_dist:
+                min_dist = d
+
+        return max(0.12, min(min_dist, 12.0))
+
+    def _ray_aabb_dist(self, cos_a: float, sin_a: float, obs: Obstacle) -> float | None:
+        """Ray-AABB intersection distance using slab method."""
+        if abs(cos_a) < 1e-9:
+            if self._x < obs.x_min or self._x > obs.x_max:
+                return None
+            t_min_x = -1e30
+            t_max_x = 1e30
+        else:
+            inv_dx = 1.0 / cos_a
+            t1 = (obs.x_min - self._x) * inv_dx
+            t2 = (obs.x_max - self._x) * inv_dx
+            t_min_x = min(t1, t2)
+            t_max_x = max(t1, t2)
+
+        if abs(sin_a) < 1e-9:
+            if self._y < obs.y_min or self._y > obs.y_max:
+                return None
+            t_min_y = -1e30
+            t_max_y = 1e30
+        else:
+            inv_dy = 1.0 / sin_a
+            t1 = (obs.y_min - self._y) * inv_dy
+            t2 = (obs.y_max - self._y) * inv_dy
+            t_min_y = min(t1, t2)
+            t_max_y = max(t1, t2)
+
+        t_enter = max(t_min_x, t_min_y)
+        t_exit = min(t_max_x, t_max_y)
+
+        if t_enter > t_exit or t_exit < 0:
+            return None
+        t = t_enter if t_enter > 0 else t_exit
+        return t if t > 0 else None
 
     def get_camera_image(self) -> np.ndarray:
         self._tick()
         h, w = self._config.api.image_size[1], self._config.api.image_size[0]
         img = np.zeros((h, w, 3), dtype=np.uint8)
 
-        x_norm = self._x / _ROOM_WIDTH
-        y_norm = self._y / _ROOM_HEIGHT
+        x_norm = self._x / self._scene.width
+        y_norm = self._y / self._scene.height
         img[:, :, 0] = int(x_norm * 200) + 40
         img[:, :, 1] = int(y_norm * 200) + 40
         img[:, :, 2] = 100
@@ -110,7 +194,8 @@ class MockBackend(BackendBase):
     def get_rgbd_image(self) -> RGBDImage:
         rgb = self.get_camera_image()
         h, w = rgb.shape[:2]
-        depth = np.full((h, w), 3.0, dtype=np.float32)
+        front_dist = self._raycast(self._theta)
+        depth = np.full((h, w), front_dist, dtype=np.float32)
         intrinsics = CameraIntrinsics(fx=500.0, fy=500.0, cx=w / 2.0, cy=h / 2.0, width=w, height=h)
         return RGBDImage(rgb=rgb, depth=depth, intrinsics=intrinsics, timestamp=time.time())
 
@@ -122,23 +207,10 @@ class MockBackend(BackendBase):
 
         for i, angle in enumerate(angles):
             ray_angle = self._theta + float(angle)
-            cos_a = math.cos(ray_angle)
-            sin_a = math.sin(ray_angle)
+            ranges[i] = self._raycast(ray_angle)
 
-            dists: list[float] = []
-            if cos_a > 1e-6:
-                dists.append((_ROOM_WIDTH - self._x) / cos_a)
-            elif cos_a < -1e-6:
-                dists.append(-self._x / cos_a)
-            if sin_a > 1e-6:
-                dists.append((_ROOM_HEIGHT - self._y) / sin_a)
-            elif sin_a < -1e-6:
-                dists.append(-self._y / sin_a)
-
-            positive = [d for d in dists if d > 0]
-            ranges[i] = min(positive) if positive else 12.0
-
-        ranges = np.clip(ranges, 0.0, 12.0)
+        noise = self._rng.normal(0.0, _LIDAR_NOISE_STD, size=n).astype(np.float32)
+        ranges = np.clip(ranges + noise, 0.12, 12.0)
 
         return LaserScan(
             ranges=ranges,
@@ -172,14 +244,21 @@ class MockBackend(BackendBase):
 
     def get_map(self) -> OccupancyGrid:
         res = 0.1
-        w_cells = int(_ROOM_WIDTH / res)
-        h_cells = int(_ROOM_HEIGHT / res)
+        w_cells = int(self._scene.width / res)
+        h_cells = int(self._scene.height / res)
         grid = np.zeros((h_cells, w_cells), dtype=np.int8)
 
         grid[0, :] = 100
         grid[-1, :] = 100
         grid[:, 0] = 100
         grid[:, -1] = 100
+
+        for obs in self._scene.obstacles:
+            x0 = max(0, int(obs.x_min / res))
+            x1 = min(w_cells, int(obs.x_max / res))
+            y0 = max(0, int(obs.y_min / res))
+            y1 = min(h_cells, int(obs.y_max / res))
+            grid[y0:y1, x0:x1] = 100
 
         return OccupancyGrid(
             data=grid,
@@ -201,48 +280,87 @@ class MockBackend(BackendBase):
     async def move_to(
         self, x: float, y: float, theta: float | None = None, timeout: float = 60.0
     ) -> MoveResult:
-        target_x = max(0.0, min(_ROOM_WIDTH, x))
-        target_y = max(0.0, min(_ROOM_HEIGHT, y))
+        target_x = max(_ROBOT_RADIUS, min(self._scene.width - _ROBOT_RADIUS, x))
+        target_y = max(_ROBOT_RADIUS, min(self._scene.height - _ROBOT_RADIUS, y))
         target_theta = theta if theta is not None else self._theta
 
-        distance = math.sqrt((target_x - self._x) ** 2 + (target_y - self._y) ** 2)
+        start_x, start_y = self._x, self._y
+        total_distance = math.sqrt((target_x - self._x) ** 2 + (target_y - self._y) ** 2)
         speed = self._config.limits.max_linear_velocity
-        duration = distance / speed if speed > 0 else 0.0
 
-        self._x = target_x
-        self._y = target_y
+        if total_distance < 0.01:
+            self._theta = target_theta
+            return MoveResult(
+                success=True,
+                final_pose=Pose2D(x=self._x, y=self._y, theta=self._theta),
+                duration=0.0,
+                distance=0.0,
+                reason="reached",
+            )
+
+        dx = (target_x - self._x) / total_distance
+        dy = (target_y - self._y) / total_distance
+        moved = 0.0
+        blocked = False
+
+        while moved < total_distance:
+            step = min(_MOVE_STEP, total_distance - moved)
+            new_x = self._x + dx * step
+            new_y = self._y + dy * step
+            if self._collides(new_x, new_y):
+                blocked = True
+                break
+            self._x = new_x
+            self._y = new_y
+            moved += step
+
         self._theta = target_theta
         self._vx = 0.0
         self._vy = 0.0
         self._omega = 0.0
 
-        return MoveResult(
-            success=True,
-            final_pose=Pose2D(x=self._x, y=self._y, theta=self._theta),
-            duration=duration,
-            distance=distance,
-            reason="reached",
-        )
-
-    async def move_forward(self, distance: float) -> MoveResult:
-        dx = distance * math.cos(self._theta)
-        dy = distance * math.sin(self._theta)
-        new_x = max(0.0, min(_ROOM_WIDTH, self._x + dx))
-        new_y = max(0.0, min(_ROOM_HEIGHT, self._y + dy))
-
-        actual_dist = math.sqrt((new_x - self._x) ** 2 + (new_y - self._y) ** 2)
-        self._x = new_x
-        self._y = new_y
-
-        speed = self._config.limits.max_linear_velocity
+        actual_dist = math.sqrt((self._x - start_x) ** 2 + (self._y - start_y) ** 2)
         duration = actual_dist / speed if speed > 0 else 0.0
 
         return MoveResult(
-            success=True,
+            success=not blocked,
             final_pose=Pose2D(x=self._x, y=self._y, theta=self._theta),
             duration=duration,
             distance=actual_dist,
-            reason="reached",
+            reason="reached" if not blocked else "collision",
+        )
+
+    async def move_forward(self, distance: float) -> MoveResult:
+        cos_t = math.cos(self._theta)
+        sin_t = math.sin(self._theta)
+        start_x, start_y = self._x, self._y
+        speed = self._config.limits.max_linear_velocity
+
+        moved = 0.0
+        blocked = False
+        sign = 1.0 if distance >= 0 else -1.0
+        abs_dist = abs(distance)
+
+        while moved < abs_dist:
+            step = min(_MOVE_STEP, abs_dist - moved)
+            new_x = self._x + cos_t * step * sign
+            new_y = self._y + sin_t * step * sign
+            if self._collides(new_x, new_y):
+                blocked = True
+                break
+            self._x = new_x
+            self._y = new_y
+            moved += step
+
+        actual_dist = math.sqrt((self._x - start_x) ** 2 + (self._y - start_y) ** 2)
+        duration = actual_dist / speed if speed > 0 else 0.0
+
+        return MoveResult(
+            success=not blocked,
+            final_pose=Pose2D(x=self._x, y=self._y, theta=self._theta),
+            duration=duration,
+            distance=actual_dist,
+            reason="reached" if not blocked else "collision",
         )
 
     async def rotate(self, angle: float) -> MoveResult:
@@ -262,30 +380,30 @@ class MockBackend(BackendBase):
 
     async def follow_path(self, waypoints: list) -> MoveResult:
         total_distance = 0.0
+        blocked = False
+
         for wp in waypoints:
-            dx = wp.x - self._x
-            dy = wp.y - self._y
-            total_distance += math.sqrt(dx * dx + dy * dy)
-            self._x = max(0.0, min(_ROOM_WIDTH, wp.x))
-            self._y = max(0.0, min(_ROOM_HEIGHT, wp.y))
-            if hasattr(wp, "theta") and wp.theta != 0.0:
-                self._theta = wp.theta
+            result = await self.move_to(wp.x, wp.y, getattr(wp, "theta", None))
+            total_distance += result.distance
+            if not result.success:
+                blocked = True
+                break
 
         speed = self._config.limits.max_linear_velocity
         duration = total_distance / speed if speed > 0 else 0.0
 
         return MoveResult(
-            success=True,
+            success=not blocked,
             final_pose=Pose2D(x=self._x, y=self._y, theta=self._theta),
             duration=duration,
             distance=total_distance,
-            reason="reached",
+            reason="reached" if not blocked else "collision",
         )
 
     async def explore(self, timeout: float = 60.0) -> ExploreResult:
         return ExploreResult(
             coverage=1.0,
             duration=min(timeout, 10.0),
-            cells_explored=int(_ROOM_WIDTH * _ROOM_HEIGHT / (0.1 * 0.1)),
+            cells_explored=int(self._scene.width * self._scene.height / (0.1 * 0.1)),
             timed_out=False,
         )

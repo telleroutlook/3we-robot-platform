@@ -99,9 +99,9 @@ def main():
     parser = argparse.ArgumentParser(description="VLM visual navigation demo")
     parser.add_argument(
         "--backend",
-        default="gazebo",
-        choices=["gazebo", "real", "isaac_sim"],
-        help="Robot backend (default: gazebo)",
+        default="mock",
+        choices=["mock", "gazebo", "real", "isaac_sim"],
+        help="Robot backend (default: mock; use gazebo/isaac_sim for simulation)",
     )
     parser.add_argument(
         "--instruction",

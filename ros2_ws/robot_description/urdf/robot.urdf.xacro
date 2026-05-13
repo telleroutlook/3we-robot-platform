@@ -188,4 +188,54 @@
     <origin xyz="0 0 ${chassis_height + 0.005}" rpy="0 0 0"/>
   </joint>
 
+  <!-- Camera (fisheye 1080p, mounted on front upper chassis) -->
+  <link name="camera_link">
+    <visual>
+      <geometry>
+        <box size="0.025 0.025 0.025"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.025 0.025 0.025"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.02"/>
+      <inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/>
+    </inertial>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="${chassis_length/2 - 0.01} 0 ${chassis_height + 0.015}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- 2D LiDAR (LD06, mounted on top center) -->
+  <link name="lidar_link">
+    <visual>
+      <geometry>
+        <cylinder radius="0.035" length="0.020"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.035" length="0.020"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.000002" ixy="0" ixz="0" iyy="0.000002" iyz="0" izz="0.000003"/>
+    </inertial>
+  </link>
+
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="0 0 ${chassis_height + 0.012}" rpy="0 0 0"/>
+  </joint>
+
 </robot>

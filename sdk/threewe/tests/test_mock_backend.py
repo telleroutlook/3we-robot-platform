@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from threewe.backends.mock import MockBackend
-from threewe.config import RobotConfig
+from threewe.config import RobotConfig, load_config
 from threewe.types import (
     BatteryState,
     ExploreResult,
@@ -152,8 +152,10 @@ class TestAction:
     @pytest.mark.asyncio
     async def test_move_to_clamped(self, backend: MockBackend) -> None:
         result = await backend.move_to(100.0, 100.0)
-        assert result.final_pose.x == pytest.approx(20.0)
-        assert result.final_pose.y == pytest.approx(15.0)
+        assert result.final_pose.x <= 20.0
+        assert result.final_pose.y <= 15.0
+        assert result.distance > 0
+        assert result.reason in ("reached", "collision")
 
     @pytest.mark.asyncio
     async def test_move_forward(self, backend: MockBackend) -> None:
@@ -213,8 +215,9 @@ class TestKinematics:
         """LiDAR ranges should be consistent with position in the box room."""
         scan = backend.get_lidar_scan()
         forward_idx = 0
-        # At x=1.0 facing forward, wall is at x=20.0 → distance=19m, but clamped to range_max=12
-        assert scan.ranges[forward_idx] == pytest.approx(12.0)
+        # At x=1.0 facing forward, wall is at x=20.0 → distance=19m, clamped to range_max=12
+        # With Gaussian noise (σ=0.008) the value will be very close to 12.0
+        assert scan.ranges[forward_idx] == pytest.approx(12.0, abs=0.05)
 
         # Check backward ray (index ~N/2) — wall is at x=0 → distance=1.0
         n = len(scan.ranges)
@@ -226,3 +229,76 @@ class TestKinematics:
         imu = backend.get_imu()
         assert imu.orientation[2] == pytest.approx(math.sin(0.0 / 2))
         assert imu.orientation[3] == pytest.approx(math.cos(0.0 / 2))
+
+
+class TestCollisionAndNoise:
+    """Tests for enhanced Mock backend features: obstacles, noise, collision."""
+
+    @pytest.fixture
+    def backend(self) -> MockBackend:
+        config = load_config("standard_v2")
+        b = MockBackend(config=config, scene="obstacles")
+        b.connect()
+        return b
+
+    @pytest.mark.asyncio
+    async def test_collision_stops_movement(self, backend: MockBackend) -> None:
+        """Robot should stop when it hits an obstacle."""
+        # obstacles scene has Obstacle(2.0, 2.0, 3.0, 3.0)
+        # Robot starts at (1.0, 1.0) facing right (theta=0)
+        # Moving forward toward the obstacle should be blocked
+        await backend.rotate(math.pi / 4)  # face toward (2,2)
+        result = await backend.move_forward(5.0)
+        assert result.reason == "collision"
+        assert result.success is False
+        assert result.distance > 0
+        assert result.distance < 5.0
+
+    @pytest.mark.asyncio
+    async def test_move_to_blocked_by_obstacle(self, backend: MockBackend) -> None:
+        """move_to through an obstacle should report collision."""
+        # obstacles scene: Obstacle(2.0, 2.0, 3.0, 3.0) blocks (1,1)->(4,2.5)
+        result = await backend.move_to(4.0, 2.5)
+        assert result.reason == "collision"
+        assert result.success is False
+
+    def test_lidar_detects_obstacles(self, backend: MockBackend) -> None:
+        """LiDAR should see obstacles as shorter ranges."""
+        scan = backend.get_lidar_scan()
+        # At (1,1) facing right, Obstacle(2.0, 2.0, 3.0, 3.0) is at ~45 degrees
+        # Some rays should report distances shorter than wall distance
+        min_range = float(scan.ranges.min())
+        max_range = float(scan.ranges.max())
+        assert min_range < max_range
+        assert min_range < 5.0  # obstacles are closer than 5m
+
+    def test_lidar_has_noise(self) -> None:
+        """Two consecutive LiDAR scans should differ due to noise."""
+        config = load_config("standard_v2")
+        b = MockBackend(config=config, scene="empty")
+        b.connect()
+        scan1 = b.get_lidar_scan()
+        scan2 = b.get_lidar_scan()
+        # With deterministic seed, consecutive calls advance RNG state
+        # so values should differ slightly
+        assert not np.array_equal(scan1.ranges, scan2.ranges)
+
+    def test_map_shows_obstacles(self, backend: MockBackend) -> None:
+        """Occupancy grid should have obstacle cells marked as occupied."""
+        grid = backend.get_map()
+        occupied_count = int(np.sum(grid.data == 100))
+        # Walls + obstacles → more than just perimeter
+        perimeter_cells = 2 * (int(10.0 / 0.1) + int(10.0 / 0.1))
+        assert occupied_count > perimeter_cells
+
+    @pytest.mark.asyncio
+    async def test_empty_scene_no_collision(self) -> None:
+        """Empty scene should allow free movement."""
+        config = load_config("standard_v2")
+        b = MockBackend(config=config, scene="empty")
+        b.connect()
+        result = await b.move_to(10.0, 7.0)
+        assert result.success is True
+        assert result.reason == "reached"
+        assert result.final_pose.x == pytest.approx(10.0, abs=0.1)
+        assert result.final_pose.y == pytest.approx(7.0, abs=0.1)

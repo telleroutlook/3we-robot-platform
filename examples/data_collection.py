@@ -54,7 +54,9 @@ async def collect_random_walk_episode(
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Collect robot trajectories for IL")
-    parser.add_argument("--backend", default="gazebo", choices=["gazebo", "real", "isaac_sim"])
+    parser.add_argument(
+        "--backend", default="mock", choices=["mock", "gazebo", "real", "isaac_sim"]
+    )
     parser.add_argument("--episodes", type=int, default=3, help="Number of episodes to record")
     parser.add_argument("--steps", type=int, default=30, help="Steps per episode")
     parser.add_argument("--output", default="data/trajectories.h5", help="HDF5 output path")

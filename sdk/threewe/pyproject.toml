@@ -11,7 +11,7 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 authors = [{ name = "3we Contributors" }]
-keywords = ["robotics", "embodied-ai", "sim2real", "ros2", "navigation"]
+keywords = ["robotics", "embodied-ai", "sim2real", "ros2", "navigation", "simulation", "deep-learning", "gymnasium"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -59,6 +59,8 @@ threewe = "threewe.gym"
 Homepage = "https://github.com/3we-org/3we-robot-platform"
 Documentation = "https://github.com/3we-org/3we-robot-platform/tree/main/docs"
 Repository = "https://github.com/3we-org/3we-robot-platform"
+Issues = "https://github.com/3we-org/3we-robot-platform/issues"
+Changelog = "https://github.com/3we-org/3we-robot-platform/blob/main/sdk/threewe/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/threewe"]
