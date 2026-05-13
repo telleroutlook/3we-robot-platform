@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Notebook Validation
+
+on:
+  pull_request:
+    paths:
+      - "notebooks/**"
+      - "sdk/threewe/src/**"
+  push:
+    branches: [main]
+    paths:
+      - "notebooks/**"
+      - "sdk/threewe/src/**"
+
+jobs:
+  validate-notebooks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install nbformat -q
+          pip install -e sdk/threewe[sim] -q
+
+      - name: Validate notebook format
+        run: |
+          python -c "
+          import nbformat
+          from pathlib import Path
+          errors = []
+          for nb_path in sorted(Path('notebooks').glob('*.ipynb')):
+              try:
+                  with open(nb_path) as f:
+                      nb = nbformat.read(f, as_version=4)
+                  nbformat.validate(nb)
+                  print(f'  OK: {nb_path.name} ({len(nb.cells)} cells)')
+              except Exception as e:
+                  errors.append(f'{nb_path.name}: {e}')
+                  print(f'FAIL: {nb_path.name}: {e}')
+          if errors:
+              raise SystemExit(f'{len(errors)} notebook(s) failed validation')
+          print('All notebooks valid.')
+          "
+
+      - name: Smoke test imports
+        run: |
+          python -c "
+          from threewe import Robot, Pose2D, MoveResult, LaserScan
+          from threewe.gym import RobotNavEnv
+          from threewe.data import TrajectoryRecorder
+          print('All imports OK')
+          "
+
+      - name: Check notebook code cells parse
+        run: |
+          python -c "
+          import ast, nbformat
+          from pathlib import Path
+          errors = []
+          for nb_path in sorted(Path('notebooks').glob('*.ipynb')):
+              with open(nb_path) as f:
+                  nb = nbformat.read(f, as_version=4)
+              for i, cell in enumerate(nb.cells):
+                  if cell.cell_type != 'code':
+                      continue
+                  source = cell.source
+                  if source.startswith('!') or source.startswith('%'):
+                      continue
+                  source = source.replace('await ', '')
+                  try:
+                      ast.parse(source)
+                  except SyntaxError as e:
+                      errors.append(f'{nb_path.name} cell {i}: {e}')
+          if errors:
+              for e in errors:
+                  print(f'FAIL: {e}')
+              raise SystemExit(f'{len(errors)} cell(s) have syntax errors')
+          print('All code cells parse successfully')
+          "

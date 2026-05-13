@@ -35,7 +35,7 @@ from threewe.types import (
     Velocity,
 )
 
-__version__ = "0.2.0a2"
+__version__ = "0.2.0"
 
 __all__ = [
     "Robot",

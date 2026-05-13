@@ -33,12 +33,12 @@ Switch `backend="gazebo"` to `backend="real"` — zero code changes, same API.
 
 ## Why 3we?
 
-| If you are... | 3we gives you... |
-|:---|:---|
-| **AI/ML Researcher** | Gymnasium envs, VLM/VLA integration, trajectory recording — focus on your model, not ROS2 |
-| **Robotics Student** | Full stack from PCB to Python, <$500 hardware, production-grade code instead of toy examples |
-| **RL Practitioner** | `gymnasium.make("3we/Navigation-v1")` — standard RL interface with real Sim2Real transfer |
-| **Product Developer** | Prototype to product on one platform; same codebase scales from classroom to factory |
+| If you are... | 3we gives you... | Start here |
+|:---|:---|:---|
+| **AI/ML Researcher** | Gymnasium envs, VLM/VLA integration, trajectory recording — focus on your model, not ROS2 | [Getting Started (AI)](docs/getting_started_ai.md) |
+| **Robotics Student** | Full stack from PCB to Python, <$500 hardware, production-grade code instead of toy examples | [Getting Started (Basic)](docs/getting_started_basic.md) |
+| **RL Practitioner** | `gymnasium.make("3we/Navigation-v1")` — standard RL interface with real Sim2Real transfer | [Getting Started (AI)](docs/getting_started_ai.md) |
+| **Hardware Builder** | Open BOM, assembly guide, CERN-OHL-P licensed PCB + structure | [Assembly Guide](docs/assembly_guide.md) |
 
 ---
 

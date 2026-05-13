@@ -1,6 +1,29 @@
 # Assembly Guide
 
-Step-by-step hardware assembly instructions for the robot-platform.
+> SPDX-License-Identifier: CERN-OHL-P-2.0
+
+Step-by-step hardware assembly instructions for the 3we robot platform.
+
+| | Basic SKU | Standard SKU |
+|:--|:----------|:-------------|
+| **Time** | 2-3 hours | 4-5 hours |
+| **Difficulty** | Intermediate (soldering required) | Intermediate-Advanced |
+| **Cost** | ~¥680 / $95 | ~¥2,200 / $300 |
+| **Prerequisites** | Basic soldering, multimeter use | + Linux CLI, micro-SD flashing |
+
+**Video walkthrough**: [Assembly Video (coming soon)](https://github.com/3we-org/3we-robot-platform/issues)
+
+---
+
+## Safety Warnings
+
+1. **LiPo batteries** can cause fire if short-circuited or punctured. Never leave charging unattended.
+2. **Soldering iron** temperatures exceed 300°C. Use a silicone mat and keep the tip clean.
+3. **E-stop wiring** is safety-critical. Double-check before first power-on (Step 7).
+4. **Motors under load** can draw 2A+ per channel. Do not exceed DRV8833 ratings (1.5A continuous per channel).
+5. Disconnect the battery XT30 connector before any wiring changes.
+
+---
 
 ## Tools Required
 
@@ -162,3 +185,14 @@ Before powering on for the first time:
 | Robot curves when going straight | Wheel type swapped | Verify roller direction (Step 3) |
 | Ultrasonic reads max | Wiring reversed or sensor blocked | Check Echo/Trig pins, clear obstacles |
 | IMU drift | Bad mounting or calibration | Re-mount flat, run calibration routine |
+
+---
+
+## After Assembly
+
+Once powered on and confirmed working:
+
+1. **Flash firmware** — See [Firmware Guide](firmware_guide.md) for ESP-IDF build and flash
+2. **Basic SKU**: Use [Web Control](../sdk/web_control/) or [Web Basic](../sdk/web_basic/) for WiFi teleop
+3. **Standard SKU**: Install ROS2 on Pi 5, then follow [Getting Started (AI)](getting_started_ai.md)
+4. **Full BOM details**: See [hardware/bom/README.md](../hardware/bom/README.md) for pricing and sourcing
