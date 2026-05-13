@@ -18,6 +18,9 @@ on:
     - cron: '23 3 * * 1'  # Weekly Monday regression
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-and-lint:
     name: Build & Launch Validation
@@ -210,15 +213,21 @@ jobs:
       - name: Check pass rate
         if: always()
         run: |
-          if [ -f /tmp/sim_results.json ]; then
-            PASS_RATE=$(jq '.pass_rate' /tmp/sim_results.json)
-            echo "Pass rate: $PASS_RATE"
+          if [ -f /tmp/patrol_results.xml ]; then
+            TESTS=$(python3 -c "import xml.etree.ElementTree as ET; r=ET.parse('/tmp/patrol_results.xml').getroot(); print(r.attrib.get('tests','0'))")
+            FAILURES=$(python3 -c "import xml.etree.ElementTree as ET; r=ET.parse('/tmp/patrol_results.xml').getroot(); print(r.attrib.get('failures','0'))")
+            if [ "$TESTS" -eq 0 ]; then
+              echo "FAIL: No tests were recorded in JUnit XML"
+              exit 1
+            fi
+            PASS_RATE=$(echo "scale=4; ($TESTS - $FAILURES) / $TESTS" | bc -l)
+            echo "Pass rate: $PASS_RATE ($TESTS tests, $FAILURES failures)"
             if (( $(echo "$PASS_RATE < 0.95" | bc -l) )); then
               echo "FAIL: Nav2 patrol pass rate $PASS_RATE < 95%"
               exit 1
             fi
           else
-            echo "WARNING: sim_results.json not generated"
+            echo "WARNING: patrol_results.xml not generated"
             echo "Simulation infrastructure may not be available in this environment"
             exit 1
           fi
@@ -229,6 +238,4 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: simulation-results
-          path: |
-            /tmp/sim_results.json
-            /tmp/patrol_results.xml
+          path: /tmp/patrol_results.xml

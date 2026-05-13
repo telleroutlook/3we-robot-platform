@@ -12,6 +12,9 @@ on:
       - "notebooks/**"
       - "sdk/threewe/src/**"
 
+permissions:
+  contents: read
+
 jobs:
   validate-notebooks:
     runs-on: ubuntu-latest
