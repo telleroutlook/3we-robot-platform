@@ -6,13 +6,15 @@ Register environments so they can be created with:
     env = gymnasium.make("3we/Exploration-v1")
     env = gymnasium.make("3we/ObjectNav-v1")
     env = gymnasium.make("3we/VLN-v1")
+    env = gymnasium.make("3we/MultiAgent-v1")
 """
 
 from __future__ import annotations
 
 from threewe.gym.envs import ExplorationEnv, NavigationEnv, ObjectNavEnv, VLNEnv
+from threewe.gym.multiagent import MultiAgentEnv
 
-__all__ = ["NavigationEnv", "ExplorationEnv", "ObjectNavEnv", "VLNEnv"]
+__all__ = ["NavigationEnv", "ExplorationEnv", "ObjectNavEnv", "VLNEnv", "MultiAgentEnv"]
 
 try:
     import gymnasium

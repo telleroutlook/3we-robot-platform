@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "threewe"
-version = "0.1.0a1"
+version = "0.2.0a1"
 description = "AI-First Python API for the 3we robot platform — Sim2Real with zero code changes"
 readme = "README.md"
 license = "Apache-2.0"
@@ -38,12 +38,15 @@ ai = [
 data = [
     "h5py>=3.9",
 ]
+hub = [
+    "huggingface-hub>=0.20",
+]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
     "ruff>=0.4",
 ]
-all = ["threewe[sim,ai,data,dev]"]
+all = ["threewe[sim,ai,data,hub,dev]"]
 
 [project.scripts]
 threewe = "threewe.cli:main"

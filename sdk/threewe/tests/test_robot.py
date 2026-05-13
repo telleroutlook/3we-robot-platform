@@ -26,9 +26,9 @@ class TestRobotInit:
         with pytest.raises(ValueError, match="Unknown backend"):
             Robot(backend="nonexistent", auto_connect=False)
 
-    def test_isaac_sim_not_implemented(self):
-        with pytest.raises(NotImplementedError, match="Phase 2"):
-            Robot(backend="isaac_sim", auto_connect=False)
+    def test_isaac_sim_backend_creates(self):
+        robot = Robot(backend="isaac_sim", auto_connect=False)
+        assert robot.backend_name == "isaac_sim"
 
     def test_not_connected_by_default_when_auto_connect_false(self):
         robot = Robot(backend="gazebo", auto_connect=False)

@@ -8,9 +8,20 @@ Provides reproducible evaluation tasks with standard metrics:
 
 Usage:
     threewe benchmark run --task pointnav --episodes 100 --backend gazebo
+    threewe benchmark compare --result result.json --baseline nav2_pointnav_office
 """
 
+from threewe.benchmark.baselines import compare_to_baseline, list_baselines
 from threewe.benchmark.metrics import compute_spl, compute_success_rate
 from threewe.benchmark.runner import BenchmarkRunner
+from threewe.benchmark.tasks import get_task, list_tasks
 
-__all__ = ["BenchmarkRunner", "compute_spl", "compute_success_rate"]
+__all__ = [
+    "BenchmarkRunner",
+    "compare_to_baseline",
+    "compute_spl",
+    "compute_success_rate",
+    "get_task",
+    "list_baselines",
+    "list_tasks",
+]

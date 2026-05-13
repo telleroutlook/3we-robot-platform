@@ -246,9 +246,9 @@ class Robot:
 
             return RealBackend(config=self._config)
         elif backend == "isaac_sim":
-            raise NotImplementedError(
-                "Isaac Sim backend is planned for Phase 2. Use 'gazebo' or 'real' for now."
-            )
+            from threewe.backends.isaac_sim import IsaacSimBackend, IsaacSimConfig
+
+            return IsaacSimBackend(config=IsaacSimConfig(scene=self._scene))
         else:
             raise ValueError(
                 f"Unknown backend '{backend}'. Choose from: 'gazebo', 'real', 'isaac_sim'"

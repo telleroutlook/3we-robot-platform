@@ -64,27 +64,27 @@ class BenchmarkRunner:
     async def run_pointnav(
         self,
         num_episodes: int = 100,
-        arena_size: float = 5.0,
         seed: int = 42,
     ) -> BenchmarkReport:
-        """Run point-to-point navigation benchmark."""
+        """Run point-to-point navigation benchmark using scene poses."""
         import numpy as np
 
         from threewe import Robot
+        from threewe.scenes import load_scene
 
         rng = np.random.default_rng(seed)
+        scene = load_scene(self._scene)
         episodes: list[EpisodeResult] = []
 
         async with Robot(backend=self._backend, auto_connect=True) as robot:
             for ep in range(num_episodes):
-                goal_x = float(rng.uniform(-arena_size * 0.8, arena_size * 0.8))
-                goal_y = float(rng.uniform(-arena_size * 0.8, arena_size * 0.8))
+                goal = scene.goal_poses[rng.integers(0, len(scene.goal_poses))]
 
                 start_pose = robot.get_pose()
-                optimal = math.sqrt((goal_x - start_pose.x) ** 2 + (goal_y - start_pose.y) ** 2)
+                optimal = math.sqrt((goal.x - start_pose.x) ** 2 + (goal.y - start_pose.y) ** 2)
 
                 start_time = time.time()
-                result = await robot.move_to(x=goal_x, y=goal_y, timeout=30.0)
+                result = await robot.move_to(x=goal.x, y=goal.y, timeout=30.0)
                 duration = time.time() - start_time
 
                 episodes.append(

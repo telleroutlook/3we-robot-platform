@@ -33,6 +33,12 @@ def main() -> None:
     run_parser.add_argument("--backend", default="gazebo")
     run_parser.add_argument("--scene", default="office_v2")
 
+    compare_parser = benchmark_sub.add_parser("compare", help="Compare results to baseline")
+    compare_parser.add_argument("--result", required=True, help="Path to result JSON file")
+    compare_parser.add_argument(
+        "--baseline", required=True, help="Baseline name to compare against"
+    )
+
     args = parser.parse_args()
 
     if args.command == "launch":
@@ -113,17 +119,57 @@ def _cmd_launch(args: argparse.Namespace) -> None:
 
 def _cmd_benchmark(args: argparse.Namespace) -> None:
     if not hasattr(args, "bench_cmd") or args.bench_cmd is None:
-        print("Usage: threewe benchmark run --task <task>")
+        print("Usage: threewe benchmark {run,compare}")
         sys.exit(1)
 
-    from threewe.benchmark.runner import run_benchmark_cli
+    if args.bench_cmd == "run":
+        from threewe.benchmark.runner import run_benchmark_cli
 
-    run_benchmark_cli(
-        task=args.task,
-        episodes=args.episodes,
-        backend=args.backend,
-        scene=args.scene,
-    )
+        run_benchmark_cli(
+            task=args.task,
+            episodes=args.episodes,
+            backend=args.backend,
+            scene=args.scene,
+        )
+    elif args.bench_cmd == "compare":
+        _cmd_benchmark_compare(args)
+
+
+def _cmd_benchmark_compare(args: argparse.Namespace) -> None:
+    """Compare a result JSON against a baseline."""
+    import json
+    from pathlib import Path
+
+    from threewe.benchmark.baselines import compare_to_baseline, list_baselines
+
+    result_path = Path(args.result)
+    if not result_path.exists():
+        print(f"Error: Result file not found: {result_path}", file=sys.stderr)
+        sys.exit(1)
+
+    data = json.loads(result_path.read_text())
+
+    try:
+        comparison = compare_to_baseline(
+            baseline_name=args.baseline,
+            success_rate=data.get("success_rate", 0.0),
+            spl=data.get("spl", 0.0),
+            avg_duration=data.get("avg_duration", 0.0),
+            coverage=data.get("coverage", 0.0),
+        )
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        print(f"Available baselines: {list_baselines()}")
+        sys.exit(1)
+
+    print(f"\nComparison against: {comparison.baseline_name}")
+    print("=" * 50)
+    print(f"  Success Rate: {comparison.success_rate_delta:+.3f}")
+    print(f"  SPL:          {comparison.spl_delta:+.3f}")
+    print(f"  Duration:     {comparison.duration_delta:+.2f}s")
+    if comparison.coverage_delta != 0:
+        print(f"  Coverage:     {comparison.coverage_delta:+.3f}")
+    print(f"\n  Overall: {'IMPROVED' if comparison.improved else 'REGRESSED'}")
 
 
 if __name__ == "__main__":

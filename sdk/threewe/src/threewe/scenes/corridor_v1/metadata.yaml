@@ -1,0 +1,4 @@
+name: corridor_v1
+area: "50m linear"
+difficulty: simple
+description: "Long L-shaped corridor with alcoves and intersections. Tests long-range navigation and path planning."
