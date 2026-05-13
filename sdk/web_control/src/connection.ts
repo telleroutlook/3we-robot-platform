@@ -54,10 +54,18 @@ export class RosbridgeConnection extends EventTarget {
       return;
     }
     if (url.startsWith('ws://') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        '[RosbridgeConnection] Unencrypted ws:// connection to a non-localhost host. Use wss:// for robot control over a network.'
+      this.setState('error');
+      this.dispatchEvent(
+        new CustomEvent('connection-error', {
+          detail: {
+            message:
+              'Insecure ws:// connection refused. Use wss:// for non-localhost robot control.',
+          },
+          bubbles: true,
+          composed: true,
+        })
       );
+      return;
     }
     this.intentionalClose = false;
     this.url = url;
