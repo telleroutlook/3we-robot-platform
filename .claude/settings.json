@@ -40,7 +40,20 @@
     ]
   },
   "hooks": {
-    "PreToolUse": [],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "cmd=$(jq -r '.tool_input.command // empty'); case \"$cmd\" in git\\ commit*) bash scripts/pre-commit-validate.sh ;; *) exit 0 ;; esac",
+            "timeout": 300,
+            "statusMessage": "Pre-commit validation..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
