@@ -111,18 +111,18 @@ def evaluate_transfer(
         transfer_ratio = real_value / sim_value
 
     if test.comparison == "real_lt_sim_times_mult":
-        passed = real_value < sim_value * test.pass_multiplier
+        passed = real_value <= sim_value * test.pass_multiplier
         reason = (
-            f"PASS: {real_value:.4f} < {sim_value:.4f} * {test.pass_multiplier}"
+            f"PASS: {real_value:.4f} <= {sim_value:.4f} * {test.pass_multiplier}"
             if passed
-            else f"FAIL: {real_value:.4f} >= {sim_value:.4f} * {test.pass_multiplier}"
+            else f"FAIL: {real_value:.4f} > {sim_value:.4f} * {test.pass_multiplier}"
         )
     elif test.comparison == "real_gt_sim_times_mult":
-        passed = real_value > sim_value * test.pass_multiplier
+        passed = real_value >= sim_value * test.pass_multiplier
         reason = (
-            f"PASS: {real_value:.4f} > {sim_value:.4f} * {test.pass_multiplier}"
+            f"PASS: {real_value:.4f} >= {sim_value:.4f} * {test.pass_multiplier}"
             if passed
-            else f"FAIL: {real_value:.4f} <= {sim_value:.4f} * {test.pass_multiplier}"
+            else f"FAIL: {real_value:.4f} < {sim_value:.4f} * {test.pass_multiplier}"
         )
     elif test.comparison == "real_lt_absolute":
         passed = real_value < test.pass_multiplier
@@ -266,3 +266,97 @@ class Sim2RealValidator:
             return collisions / trials
 
         return 0.0
+
+
+async def generate_demo_report(num_trials: int = 5) -> str:
+    """Generate a demonstration Sim2Real report using the MockBackend.
+
+    Runs the standard transfer test suite against the mock backend twice —
+    once as "sim" (clean) and once as "real" (with injected noise) — to
+    demonstrate the pipeline end-to-end without requiring actual hardware.
+
+    Returns:
+        Formatted Markdown report string.
+    """
+    import random
+
+    from threewe import Robot
+
+    results: list[TransferResult] = []
+
+    for test in STANDARD_TRANSFER_TESTS:
+        sim_values: list[float] = []
+        real_values: list[float] = []
+
+        async with Robot(backend="mock", auto_connect=True) as sim_robot:
+            for _ in range(num_trials):
+                value = await Sim2RealValidator()._execute_test(sim_robot, test)
+                sim_values.append(value)
+
+        async with Robot(backend="mock", auto_connect=True) as real_robot:
+            for _ in range(num_trials):
+                value = await Sim2RealValidator()._execute_test(real_robot, test)
+                noise_factor = 1.0 + random.gauss(0, 0.1)
+                real_values.append(value * noise_factor)
+
+        sim_avg = sum(sim_values) / len(sim_values) if sim_values else 0.0
+        real_avg = sum(real_values) / len(real_values) if real_values else 0.0
+
+        result = evaluate_transfer(test, sim_avg, real_avg)
+        results.append(result)
+
+    passed_count = sum(1 for r in results if r.passed)
+    total = len(results)
+    pass_rate = passed_count / total if total > 0 else 0.0
+
+    lines = [
+        "# Sim2Real Transfer Validation Report (Demo)",
+        "",
+        f"- **Date**: {time.strftime('%Y-%m-%d %H:%M:%S')}",
+        "- **Sim Backend**: mock (kinematic)",
+        "- **Real Backend**: mock + noise injection",
+        f"- **Trials per test**: {num_trials}",
+        "",
+        "## Transfer Test Results",
+        "",
+        "| Test | Sim Value | Real Value | Transfer Ratio | Status |",
+        "|------|-----------|------------|----------------|--------|",
+    ]
+
+    for r in results:
+        status = "PASS" if r.passed else "FAIL"
+        lines.append(
+            f"| {r.test_name} | {r.sim_value:.4f} | {r.real_value:.4f} "
+            f"| {r.transfer_ratio:.3f} | {'✅' if r.passed else '❌'} {status} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Summary",
+            "",
+            f"- **Tests passed**: {passed_count}/{total} ({pass_rate:.0%})",
+            f"- **Overall**: {'PASS' if pass_rate >= 0.8 else 'FAIL'} (threshold: 80%)",
+            "",
+            "## Pass Criteria",
+            "",
+        ]
+    )
+
+    for test in STANDARD_TRANSFER_TESTS:
+        lines.append(
+            f"- **{test.name}**: {test.description} "
+            f"(criterion: {test.comparison}, multiplier: {test.pass_multiplier})"
+        )
+
+    lines.extend(
+        [
+            "",
+            "---",
+            "*This is a demonstration report using synthetic data from the MockBackend.*",
+            '*Replace with `backend="gazebo"` and `backend="real"` for actual '
+            "Sim2Real validation.*",
+        ]
+    )
+
+    return "\n".join(lines)

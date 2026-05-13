@@ -280,7 +280,11 @@ class Robot:
             from threewe.backends.isaac_sim import IsaacSimBackend, IsaacSimConfig
 
             return IsaacSimBackend(config=IsaacSimConfig(scene=self._scene))
+        elif backend == "mock":
+            from threewe.backends.mock import MockBackend
+
+            return MockBackend(config=self._config, scene=self._scene)
         else:
             raise ValueError(
-                f"Unknown backend '{backend}'. Choose from: 'gazebo', 'real', 'isaac_sim'"
+                f"Unknown backend '{backend}'. Choose from: 'gazebo', 'real', 'isaac_sim', 'mock'"
             )

@@ -3,15 +3,18 @@
 
 Usage:
     python examples/hello_world.py
+    python examples/hello_world.py --backend gazebo   # requires ROS2
 """
 
 import asyncio
+import sys
 
 from threewe import Robot
 
 
 async def main():
-    async with Robot(backend="gazebo") as robot:
+    backend = sys.argv[sys.argv.index("--backend") + 1] if "--backend" in sys.argv else "mock"
+    async with Robot(backend=backend) as robot:
         # Get current pose
         pose = robot.get_pose()
         print(f"Current pose: x={pose.x:.2f}, y={pose.y:.2f}, theta={pose.theta:.2f}")

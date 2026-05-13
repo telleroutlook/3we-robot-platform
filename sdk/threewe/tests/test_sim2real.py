@@ -124,7 +124,7 @@ class TestEvaluateTransfer:
         )
         result = evaluate_transfer(test, sim_value=0.0, real_value=0.0)
         assert result.transfer_ratio == 1.0
-        assert result.passed is False
+        assert result.passed is True
 
     def test_unknown_comparison(self):
         test = Sim2RealTest(

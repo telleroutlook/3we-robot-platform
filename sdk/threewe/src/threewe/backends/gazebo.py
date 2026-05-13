@@ -47,7 +47,8 @@ class GazeboBackend(BackendBase):
         except ImportError as e:
             raise ImportError(
                 "ROS2 (rclpy) is required for the Gazebo backend. "
-                "Install ROS2 Jazzy: https://docs.ros.org/en/jazzy/Installation.html"
+                "Install ROS2 Jazzy: https://docs.ros.org/en/jazzy/Installation.html\n"
+                "Or use Robot(backend='mock') for a zero-dependency kinematic simulation."
             ) from e
 
         from threewe.backends._ros2_node import ROS2Node

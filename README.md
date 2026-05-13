@@ -53,7 +53,8 @@ import asyncio
 from threewe import Robot
 
 async def main():
-    async with Robot(backend="gazebo") as robot:
+    # "mock" backend works immediately — no ROS2 or Gazebo required
+    async with Robot(backend="mock") as robot:
         # Navigate
         result = await robot.move_to(x=2.0, y=1.0)
         print(f"Reached: {result.success}")
@@ -67,6 +68,8 @@ async def main():
 
 asyncio.run(main())
 ```
+
+> **Backends**: Use `backend="mock"` to try the API instantly, `"gazebo"` for physics simulation (requires ROS2), or `"real"` for physical hardware.
 
 ### RL Training
 
