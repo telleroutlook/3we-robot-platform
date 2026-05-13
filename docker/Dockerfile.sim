@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: Apache-2.0
+# Simulation Dockerfile — Gazebo Harmonic + threewe SDK
+FROM ros:jazzy
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ROS_DISTRO=jazzy
+
+# Install Gazebo Harmonic and ROS2 nav2 stack
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-${ROS_DISTRO}-ros-gz \
+    ros-${ROS_DISTRO}-navigation2 \
+    ros-${ROS_DISTRO}-nav2-bringup \
+    ros-${ROS_DISTRO}-slam-toolbox \
+    python3-pip \
+    python3-venv \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create workspace
+WORKDIR /opt/threewe
+
+# Copy SDK and install
+COPY sdk/threewe/ /opt/threewe/sdk/threewe/
+RUN python3 -m pip install --break-system-packages -e "sdk/threewe/[sim]"
+
+# Copy ROS2 workspace
+COPY ros2_ws/ /opt/threewe/ros2_ws/
+RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
+    cd ros2_ws && \
+    colcon build --symlink-install"
+
+# Copy examples
+COPY examples/ /opt/threewe/examples/
+
+# Entry point sources ROS2 overlay
+COPY docker/sim_entrypoint.sh /opt/threewe/entrypoint.sh
+RUN chmod +x /opt/threewe/entrypoint.sh
+
+ENTRYPOINT ["/opt/threewe/entrypoint.sh"]
+CMD ["bash"]

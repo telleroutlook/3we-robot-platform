@@ -51,6 +51,7 @@ class Robot:
         backend: str = "gazebo",
         config: str | RobotConfig = "standard_v2",
         *,
+        hardware: str = "3we_standard_v2",
         scene: str = "office_v2",
         auto_connect: bool = True,
     ) -> None:
@@ -59,6 +60,9 @@ class Robot:
         else:
             self._config = config
 
+        from threewe.hal import load_hardware_profile
+
+        self._hardware = load_hardware_profile(hardware)
         self._backend_name = backend
         self._scene = scene
         self._backend: BackendBase = self._create_backend(backend)
@@ -75,6 +79,10 @@ class Robot:
     @property
     def config(self) -> RobotConfig:
         return self._config
+
+    @property
+    def hardware(self):
+        return self._hardware
 
     @property
     def backend_name(self) -> str:

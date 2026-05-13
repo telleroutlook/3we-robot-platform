@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: Apache-2.0
+# Docker Compose — One-click simulation environment for threewe SDK
+# Usage: docker compose -f docker-compose.sim.yml up -d
+
+services:
+  sim:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.sim
+    container_name: threewe-sim
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - ROS_DOMAIN_ID=42
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./examples:/opt/threewe/examples:ro
+    networks:
+      - threewe-net
+    command: >
+      bash -c "ros2 launch robot_simulation simulation.launch.py"
+    restart: unless-stopped
+
+  jupyter:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.sim
+    container_name: threewe-jupyter
+    environment:
+      - ROS_DOMAIN_ID=42
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./examples:/opt/threewe/examples:rw
+      - jupyter-data:/root/.jupyter
+    networks:
+      - threewe-net
+    command: >
+      bash -c "pip install --break-system-packages jupyterlab &&
+               jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
+               --allow-root --NotebookApp.token='' --NotebookApp.password=''"
+    depends_on:
+      - sim
+
+networks:
+  threewe-net:
+    driver: bridge
+
+volumes:
+  jupyter-data:
