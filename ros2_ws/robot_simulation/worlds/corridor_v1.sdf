@@ -1,0 +1,562 @@
+<?xml version="1.0" ?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- L-shaped corridor for navigation testing.
+     ~50m total length: 30m north leg + 20m east leg, 3m wide with alcoves. -->
+<sdf version="1.9">
+  <world name="corridor">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.7 0.7 0.7 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- Ground plane (large enough for L-shape) -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>25 35</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>25 35</size></plane></geometry>
+          <material>
+            <ambient>0.7 0.7 0.68 1</ambient>
+            <diffuse>0.7 0.7 0.68 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════
+         North leg: 30m long (y=0 to y=30), 3m wide (x=0 to x=3)
+         ═══════════════════════════════════════════════════════ -->
+
+    <!-- West wall of north leg (full length) -->
+    <model name="north_leg_wall_west">
+      <static>true</static>
+      <pose>0 15 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.15 30 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.15 30 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- East wall of north leg (y=3 to y=30, stops at corner) -->
+    <model name="north_leg_wall_east">
+      <static>true</static>
+      <pose>3 16.5 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.15 27 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.15 27 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- North cap wall (closes the north end) -->
+    <model name="north_cap_wall">
+      <static>true</static>
+      <pose>1.5 30 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>3 0.15 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>3 0.15 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- South cap wall (closes south end of north leg) -->
+    <model name="south_cap_wall">
+      <static>true</static>
+      <pose>1.5 0 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>3 0.15 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>3 0.15 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════
+         East leg: 20m long (x=3 to x=23), 3m wide (y=0 to y=3)
+         Corner connects at (x=3, y=0-3)
+         ═══════════════════════════════════════════════════════ -->
+
+    <!-- South wall of east leg -->
+    <model name="east_leg_wall_south">
+      <static>true</static>
+      <pose>13 0 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>20 0.15 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>20 0.15 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- North wall of east leg -->
+    <model name="east_leg_wall_north">
+      <static>true</static>
+      <pose>13 3 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>20 0.15 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>20 0.15 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- East cap wall (closes east end) -->
+    <model name="east_cap_wall">
+      <static>true</static>
+      <pose>23 1.5 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.15 3 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.15 3 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════
+         Alcoves (1.5m deep, 2m wide) along the north leg
+         ═══════════════════════════════════════════════════════ -->
+
+    <!-- Alcove 1: West side at y=5, opens west (into west wall) -->
+    <model name="alcove1_north_wall">
+      <static>true</static>
+      <pose>-0.75 6.5 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="alcove1_south_wall">
+      <static>true</static>
+      <pose>-0.75 4.5 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="alcove1_back_wall">
+      <static>true</static>
+      <pose>-1.5 5.5 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Alcove 2: East side at y=12 -->
+    <model name="alcove2_north_wall">
+      <static>true</static>
+      <pose>3.75 13 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="alcove2_south_wall">
+      <static>true</static>
+      <pose>3.75 11 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="alcove2_back_wall">
+      <static>true</static>
+      <pose>4.5 12 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Alcove 3: West side at y=19 -->
+    <model name="alcove3_north_wall">
+      <static>true</static>
+      <pose>-0.75 20 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="alcove3_south_wall">
+      <static>true</static>
+      <pose>-0.75 18 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="alcove3_back_wall">
+      <static>true</static>
+      <pose>-1.5 19 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Alcove 4: East side at y=25 -->
+    <model name="alcove4_north_wall">
+      <static>true</static>
+      <pose>3.75 26 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="alcove4_south_wall">
+      <static>true</static>
+      <pose>3.75 24 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.5 0.12 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="alcove4_back_wall">
+      <static>true</static>
+      <pose>4.5 25 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+          <material><ambient>0.85 0.83 0.8 1</ambient><diffuse>0.85 0.83 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════
+         Intersecting passages (side corridors off north leg)
+         ═══════════════════════════════════════════════════════ -->
+
+    <!-- Intersection 1: at y=8, opens east, 2m wide, 4m deep -->
+    <model name="intersection1_north_wall">
+      <static>true</static>
+      <pose>5 9 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>4 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>4 0.12 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="intersection1_south_wall">
+      <static>true</static>
+      <pose>5 7 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>4 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>4 0.12 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="intersection1_end_wall">
+      <static>true</static>
+      <pose>7 8 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Intersection 2: at y=22, opens west, 2m wide, 4m deep -->
+    <model name="intersection2_north_wall">
+      <static>true</static>
+      <pose>-2 23 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>4 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>4 0.12 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="intersection2_south_wall">
+      <static>true</static>
+      <pose>-2 21 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>4 0.12 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>4 0.12 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="intersection2_end_wall">
+      <static>true</static>
+      <pose>-4 22 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.12 2 3.0</size></box></geometry>
+          <material><ambient>0.88 0.86 0.82 1</ambient><diffuse>0.88 0.86 0.82 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════
+         Furniture in alcoves and corridor
+         ═══════════════════════════════════════════════════════ -->
+
+    <!-- Bench in alcove 1 -->
+    <model name="bench_1">
+      <static>true</static>
+      <pose>-1 5.5 0.225 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.2 0.4 0.45</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.2 0.4 0.45</size></box></geometry>
+          <material><ambient>0.55 0.4 0.25 1</ambient><diffuse>0.55 0.4 0.25 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Vending machine in alcove 2 -->
+    <model name="vending_machine">
+      <static>true</static>
+      <pose>4.2 12 0.9 0 0 -1.5708</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.8 0.6 1.8</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.8 0.6 1.8</size></box></geometry>
+          <material><ambient>0.3 0.3 0.5 1</ambient><diffuse>0.3 0.3 0.5 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Bench in alcove 3 -->
+    <model name="bench_2">
+      <static>true</static>
+      <pose>-1 19 0.225 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.2 0.4 0.45</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.2 0.4 0.45</size></box></geometry>
+          <material><ambient>0.55 0.4 0.25 1</ambient><diffuse>0.55 0.4 0.25 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Fire extinguisher (alcove 4) -->
+    <model name="fire_extinguisher">
+      <static>true</static>
+      <pose>4.2 25 0.3 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><cylinder><radius>0.1</radius><length>0.6</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.1</radius><length>0.6</length></cylinder></geometry>
+          <material><ambient>0.8 0.1 0.1 1</ambient><diffuse>0.8 0.1 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Trash bins along corridor -->
+    <model name="trash_bin_1">
+      <static>false</static>
+      <pose>0.4 10 0.2 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>2.0</mass>
+          <inertia><ixx>0.02</ixx><iyy>0.02</iyy><izz>0.01</izz></inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><cylinder><radius>0.15</radius><length>0.4</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.15</radius><length>0.4</length></cylinder></geometry>
+          <material><ambient>0.4 0.4 0.42 1</ambient><diffuse>0.4 0.4 0.42 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="trash_bin_2">
+      <static>false</static>
+      <pose>2.6 16 0.2 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>2.0</mass>
+          <inertia><ixx>0.02</ixx><iyy>0.02</iyy><izz>0.01</izz></inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><cylinder><radius>0.15</radius><length>0.4</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.15</radius><length>0.4</length></cylinder></geometry>
+          <material><ambient>0.4 0.4 0.42 1</ambient><diffuse>0.4 0.4 0.42 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Planter (east leg corridor) -->
+    <model name="planter_1">
+      <static>true</static>
+      <pose>10 2.6 0.3 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><cylinder><radius>0.25</radius><length>0.6</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.25</radius><length>0.6</length></cylinder></geometry>
+          <material><ambient>0.2 0.5 0.2 1</ambient><diffuse>0.2 0.5 0.2 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="planter_2">
+      <static>true</static>
+      <pose>17 0.4 0.3 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><cylinder><radius>0.25</radius><length>0.6</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.25</radius><length>0.6</length></cylinder></geometry>
+          <material><ambient>0.2 0.5 0.2 1</ambient><diffuse>0.2 0.5 0.2 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Charging dock (north end of corridor) -->
+    <include>
+      <uri>model://charging_dock</uri>
+      <name>charging_dock_1</name>
+      <pose>1.5 29.5 0 0 0 3.14159</pose>
+    </include>
+
+  </world>
+</sdf>

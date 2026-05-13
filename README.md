@@ -208,6 +208,19 @@ sudo apt install ros-jazzy-desktop
 | [`rl_obstacle_avoidance.py`](examples/rl_obstacle_avoidance.py) | PPO training in simulation |
 | [`slam_exploration.py`](examples/slam_exploration.py) | Autonomous SLAM exploration |
 | [`sim2real_demo.py`](examples/sim2real_demo.py) | Same code, different backends |
+| [`data_collection.py`](examples/data_collection.py) | Record trajectories for imitation learning |
+
+### Jupyter Notebooks
+
+Step-by-step tutorials in [`notebooks/`](notebooks/):
+
+| Notebook | Topic |
+|:---------|:------|
+| [01_hello_world](notebooks/01_hello_world.ipynb) | Connect, sensors, basic navigation |
+| [02_slam_exploration](notebooks/02_slam_exploration.ipynb) | Autonomous mapping |
+| [03_point_navigation](notebooks/03_point_navigation.ipynb) | Waypoints and path following |
+| [04_rl_training](notebooks/04_rl_training.ipynb) | Gymnasium + PPO training |
+| [05_data_collection](notebooks/05_data_collection.ipynb) | Record trajectories, export to LeRobot |
 
 ---
 

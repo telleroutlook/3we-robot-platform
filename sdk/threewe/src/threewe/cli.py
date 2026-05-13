@@ -87,6 +87,15 @@ def _find_ros2_ws() -> str | None:
     return None
 
 
+_SCENE_TO_WORLD: dict[str, str] = {
+    "office_v2": "office_v2.sdf",
+    "apartment_v1": "apartment_v1.sdf",
+    "corridor_v1": "corridor_v1.sdf",
+    "empty": "empty.sdf",
+    "obstacles": "obstacles.sdf",
+}
+
+
 def _cmd_launch(args: argparse.Namespace) -> None:
     if args.backend == "isaac_sim":
         print(f"Launching Isaac Sim with scene '{args.scene}' ({args.num_envs} envs)...")
@@ -116,8 +125,22 @@ def _cmd_launch(args: argparse.Namespace) -> None:
         print(f"Error: Launch file not found: {launch_file}", file=sys.stderr)
         sys.exit(1)
 
+    world_filename = _SCENE_TO_WORLD.get(args.scene)
+    if world_filename:
+        world_path = os.path.join(ros2_ws, "robot_simulation", "worlds", world_filename)
+    else:
+        world_path = args.scene
+
+    if not os.path.isfile(world_path) and not os.path.isabs(world_path):
+        available = ", ".join(sorted(_SCENE_TO_WORLD.keys()))
+        print(
+            f"Error: Unknown scene '{args.scene}'. Available: {available}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     cmd = ["ros2", "launch", "robot_simulation", "gazebo.launch.py"]
-    cmd.append(f"world:={args.scene}")
+    cmd.append(f"world:={world_path}")
 
     if args.headless:
         cmd.append("headless:=true")
