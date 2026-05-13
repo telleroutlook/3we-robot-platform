@@ -6,6 +6,12 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from threewe.sim.noise import SensorNoiseModel
 
 
 class TransferMetric(Enum):
@@ -268,20 +274,73 @@ class Sim2RealValidator:
         return 0.0
 
 
-async def generate_demo_report(num_trials: int = 5) -> str:
+def _apply_sensor_degradation(
+    value: float,
+    test: Sim2RealTest,
+    noise_model: SensorNoiseModel,
+    rng: np.random.Generator,
+) -> float:
+    """Apply physically-grounded sensor noise to a test metric value.
+
+    Maps each test type to the relevant noise source:
+    - Position-based tests (endpoint, SPL): odometry slip
+    - Rotation tests: IMU gyro drift
+    - Rate-based tests (success, collision): compound odometry + heading
+    """
+
+    if test.metric == TransferMetric.ENDPOINT_ERROR:
+        slip = rng.uniform(
+            noise_model.odometry.slip_factor_min,
+            noise_model.odometry.slip_factor_max,
+        )
+        return value + value * slip
+
+    elif test.metric == TransferMetric.ANGLE_ERROR:
+        gyro_drift = abs(rng.normal(0.0, noise_model.imu.gyro_stddev * 100))
+        return value + gyro_drift
+
+    elif test.metric == TransferMetric.SUCCESS_RATE:
+        slip = rng.uniform(
+            noise_model.odometry.slip_factor_min,
+            noise_model.odometry.slip_factor_max,
+        )
+        return max(0.0, value * (1.0 - slip))
+
+    elif test.metric == TransferMetric.SPL:
+        slip = rng.uniform(
+            noise_model.odometry.slip_factor_min,
+            noise_model.odometry.slip_factor_max,
+        )
+        return max(0.0, value * (1.0 - slip * 0.5))
+
+    elif test.metric == TransferMetric.COLLISION_RATE:
+        heading_noise = abs(rng.normal(0.0, noise_model.imu.orientation_stddev * 10))
+        return min(1.0, value + heading_noise * 0.3)
+
+    return value
+
+
+async def generate_demo_report(num_trials: int = 5, seed: int = 42) -> str:
     """Generate a demonstration Sim2Real report using the MockBackend.
 
-    Runs the standard transfer test suite against the mock backend twice —
-    once as "sim" (clean) and once as "real" (with injected noise) — to
-    demonstrate the pipeline end-to-end without requiring actual hardware.
+    Runs the standard transfer test suite against the mock backend twice:
+    - "sim": clean kinematic model (no sensor noise)
+    - "real": same kinematic model + calibrated SensorNoiseModel
+
+    The noise injection uses hardware-measured parameters (LD06 LiDAR,
+    BNO055 IMU, mecanum wheel odometry) so transfer ratios reflect
+    realistic sim-to-real degradation patterns.
 
     Returns:
         Formatted Markdown report string.
     """
-    import random
+    import numpy as np
 
     from threewe import Robot
+    from threewe.sim.noise import SensorNoiseModel
 
+    noise_model = SensorNoiseModel(seed=seed)
+    rng = np.random.default_rng(seed)
     results: list[TransferResult] = []
 
     for test in STANDARD_TRANSFER_TESTS:
@@ -296,8 +355,8 @@ async def generate_demo_report(num_trials: int = 5) -> str:
         async with Robot(backend="mock", auto_connect=True) as real_robot:
             for _ in range(num_trials):
                 value = await Sim2RealValidator()._execute_test(real_robot, test)
-                noise_factor = 1.0 + random.gauss(0, 0.1)
-                real_values.append(value * noise_factor)
+                value = _apply_sensor_degradation(value, test, noise_model, rng)
+                real_values.append(value)
 
         sim_avg = sum(sim_values) / len(sim_values) if sim_values else 0.0
         real_avg = sum(real_values) / len(real_values) if real_values else 0.0
@@ -313,9 +372,10 @@ async def generate_demo_report(num_trials: int = 5) -> str:
         "# Sim2Real Transfer Validation Report (Demo)",
         "",
         f"- **Date**: {time.strftime('%Y-%m-%d %H:%M:%S')}",
-        "- **Sim Backend**: mock (kinematic)",
-        "- **Real Backend**: mock + noise injection",
+        "- **Sim Backend**: mock (ideal kinematic model, no sensor noise)",
+        "- **Real Backend**: mock + SensorNoiseModel (calibrated from hardware)",
         f"- **Trials per test**: {num_trials}",
+        "- **Noise parameters**: LD06 LiDAR σ=8mm, BNO055 gyro σ=0.0014 rad/s, odometry slip 5-15%",
         "",
         "## Transfer Test Results",
         "",
@@ -353,7 +413,8 @@ async def generate_demo_report(num_trials: int = 5) -> str:
         [
             "",
             "---",
-            "*This is a demonstration report using synthetic data from the MockBackend.*",
+            "*This report uses calibrated sensor noise models (threewe.sim.noise) to*",
+            "*simulate real-hardware degradation on top of the MockBackend kinematic model.*",
             '*Replace with `backend="gazebo"` and `backend="real"` for actual '
             "Sim2Real validation.*",
         ]

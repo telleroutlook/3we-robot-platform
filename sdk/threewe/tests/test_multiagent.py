@@ -6,7 +6,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from threewe.gym.multiagent import MultiAgentEnv
+gymnasium = pytest.importorskip("gymnasium", reason="gymnasium required for multiagent tests")
+
+from threewe.gym.multiagent import MultiAgentEnv  # noqa: E402
 
 
 class TestMultiAgentEnvInit:

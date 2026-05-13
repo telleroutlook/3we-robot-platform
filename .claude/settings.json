@@ -1,0 +1,68 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd *)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git show*)",
+      "Bash(git stash*)",
+      "Bash(npx tsc*)",
+      "Bash(npx vitest*)",
+      "Bash(npx prettier*)",
+      "Bash(npx eslint*)",
+      "Bash(npx playwright*)",
+      "Bash(npx tsx*)",
+      "Bash(ruff *)",
+      "Bash(python3 -m pytest*)",
+      "Bash(make *)",
+      "Bash(which *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(jq *)",
+      "Bash(echo *)",
+      "Bash(python3 -c *)",
+      "Bash(playwright-cli *)",
+      "Bash(bash scripts/pre-commit-validate.sh*)",
+      "Read",
+      "Write",
+      "Edit"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "bash scripts/pre-commit-validate.sh",
+            "timeout": 300,
+            "statusMessage": "Pre-commit validation..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath // empty' | { read -r f; [ -z \"$f\" ] && exit 0; if echo \"$f\" | grep -qE '\\.(ts|tsx|js|jsx|json|css|html)$'; then cd sdk/web_control && npx prettier --write \"$f\" 2>/dev/null; elif echo \"$f\" | grep -qE '\\.py$'; then ruff format \"$f\" 2>/dev/null && ruff check --fix \"$f\" 2>/dev/null; fi; } || true",
+            "timeout": 15,
+            "statusMessage": "Formatting..."
+          }
+        ]
+      }
+    ]
+  }
+}

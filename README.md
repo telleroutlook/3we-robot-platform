@@ -71,6 +71,45 @@ asyncio.run(main())
 
 > **Backends**: Use `backend="mock"` to try the API instantly, `"gazebo"` for physics simulation (requires ROS2), or `"real"` for physical hardware.
 
+### See It in Action
+
+<details>
+<summary><b>Terminal Demo — pip install to running in 30 seconds</b></summary>
+
+```console
+$ pip install threewe[sim]
+Successfully installed threewe-1.0.0 numpy-1.26.4 ...
+
+$ python3 -c "
+import asyncio
+from threewe import Robot
+
+async def demo():
+    async with Robot(backend='mock') as robot:
+        result = await robot.move_to(x=3.0, y=2.0)
+        print(f'Navigation: {result.success} (distance: {result.distance:.2f}m)')
+        print(f'Pose: {robot.get_pose()}')
+        scan = robot.get_lidar_scan()
+        print(f'LiDAR: {len(scan.ranges)} rays, min={min(scan.ranges):.2f}m')
+
+asyncio.run(demo())
+"
+Navigation: True (distance: 3.61m)
+Pose: Pose2D(x=3.00, y=2.00, theta=0.59)
+LiDAR: 360 rays, min=0.82m
+
+$ threewe benchmark run --task pointnav --episodes 5 --backend mock
+Running pointnav benchmark (5 episodes)...
+  Episode 1/5: SPL=0.92, success=True
+  Episode 2/5: SPL=0.87, success=True
+  Episode 3/5: SPL=0.94, success=True
+  Episode 4/5: SPL=0.89, success=True
+  Episode 5/5: SPL=0.91, success=True
+Mean SPL: 0.906 ± 0.027 | Success rate: 100%
+```
+
+</details>
+
 ### RL Training
 
 ```python

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "threewe"
-version = "0.2.0"
+version = "1.0.0"
 description = "AI-First Python API for the 3we robot platform — Sim2Real with zero code changes"
 readme = "README.md"
 license = "Apache-2.0"
@@ -13,7 +13,7 @@ requires-python = ">=3.10"
 authors = [{ name = "3we Contributors" }]
 keywords = ["robotics", "embodied-ai", "sim2real", "ros2", "navigation", "simulation", "deep-learning", "gymnasium"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
