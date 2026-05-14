@@ -52,9 +52,13 @@ static const char *TAG = "thermal";
 static adc_cali_handle_t ntc_cali_handle;
 #endif
 
+// Escalate to THERMAL_WARNING if I2C fails this many consecutive cycles
+#define I2C_FAILURE_ESCALATION_COUNT 6
+
 static thermal_state_t state = THERMAL_OK;
 static thermal_callback_t user_callback = NULL;
 static thermal_reading_t last_reading;
+static uint8_t i2c_consecutive_failures;
 
 static esp_err_t ina219_write_reg(uint8_t reg, uint16_t value)
 {
@@ -192,24 +196,45 @@ void thermal_monitor_task(void *params)
     while (1) {
         memset(&reading, 0, sizeof(reading));
 
-        // Read bus voltage (bits 15-3 are voltage, LSB = 4mV)
+        uint8_t read_failures = 0;
+
         if (ina219_read_reg(INA219_REG_BUS_V, &raw) == ESP_OK) {
             reading.bus_voltage_v = ((raw >> 3) * 4) / 1000.0f;
+        } else {
+            read_failures++;
         }
 
-        // Read shunt voltage (LSB = 10µV)
         if (ina219_read_reg(INA219_REG_SHUNT_V, &raw) == ESP_OK) {
             reading.shunt_voltage_mv = (int16_t)raw * 0.01f;
+        } else {
+            read_failures++;
         }
 
-        // Read current (LSB depends on calibration)
         if (ina219_read_reg(INA219_REG_CURRENT, &raw) == ESP_OK) {
             reading.current_ma = (int16_t)raw * 0.1f;
+        } else {
+            read_failures++;
         }
 
-        // Read power
         if (ina219_read_reg(INA219_REG_POWER, &raw) == ESP_OK) {
             reading.power_mw = raw * 2.0f;
+        } else {
+            read_failures++;
+        }
+
+        if (read_failures > 0) {
+            if (i2c_consecutive_failures < UINT8_MAX) {
+                i2c_consecutive_failures++;
+            }
+            if (i2c_consecutive_failures >= I2C_FAILURE_ESCALATION_COUNT &&
+                state < THERMAL_WARNING) {
+                ESP_LOGW(TAG, "I2C sensor failure (%u consecutive) — escalating to THERMAL_WARNING",
+                         i2c_consecutive_failures);
+                state = THERMAL_WARNING;
+                if (user_callback) user_callback(state, &reading);
+            }
+        } else {
+            i2c_consecutive_failures = 0;
         }
 
 #ifdef CONFIG_THERMAL_NTC_ENABLED
@@ -220,7 +245,6 @@ void thermal_monitor_task(void *params)
             if (adc_oneshot_read(adc_handle, NTC_ADC_CHANNEL, &adc_raw) == ESP_OK) {
                 int voltage_mv = 0;
                 adc_cali_raw_to_voltage(ntc_cali_handle, adc_raw, &voltage_mv);
-                // Steinhart-Hart: convert voltage divider reading to temperature
                 float v = (float)voltage_mv / 1000.0f;
                 if (v > 0.01f && v < 3.29f) {
                     float resistance = NTC_SERIES_R * v / (3.3f - v);

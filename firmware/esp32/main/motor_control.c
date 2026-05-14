@@ -103,11 +103,6 @@ motor_output_t motor_mecanum_drive(const cmd_vel_t *cmd)
 {
     motor_output_t out;
 
-    if (safety_is_estopped()) {
-        memset(&out, 0, sizeof(out));
-        return out;
-    }
-
     float vx = cmd->vx;
     float vy = cmd->vy;
     float wz = cmd->omega;
@@ -120,7 +115,6 @@ motor_output_t motor_mecanum_drive(const cmd_vel_t *cmd)
         vx - vy + wz * k,  // Rear Right
     };
 
-    // Normalize to [-1, 1] if any wheel exceeds max velocity
     float max_val = 0.0f;
     for (int i = 0; i < MOTOR_COUNT; i++) {
         float absval = fabsf(raw[i]);
@@ -132,8 +126,21 @@ motor_output_t motor_mecanum_drive(const cmd_vel_t *cmd)
         scale = MAX_LINEAR_VEL / max_val;
     }
 
+    portENTER_CRITICAL(&motor_spinlock);
+
+    if (safety_is_estopped()) {
+        portEXIT_CRITICAL(&motor_spinlock);
+        memset(&out, 0, sizeof(out));
+        return out;
+    }
+
     for (int i = 0; i < MOTOR_COUNT; i++) {
         out.speeds[i] = (raw[i] * scale) / MAX_LINEAR_VEL;
+    }
+
+    portEXIT_CRITICAL(&motor_spinlock);
+
+    for (int i = 0; i < MOTOR_COUNT; i++) {
         motor_set_speed((motor_id_t)i, out.speeds[i]);
     }
 
