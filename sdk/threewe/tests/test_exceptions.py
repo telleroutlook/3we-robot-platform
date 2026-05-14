@@ -2,23 +2,23 @@
 """Tests for exception hierarchy."""
 
 from threewe.exceptions import (
-    ConnectionError,
     EmergencyStopError,
     HardwareError,
     NavigationError,
+    RobotConnectionError,
+    RobotTimeoutError,
     SafetyError,
     ThreeweError,
-    TimeoutError,
 )
 
 
 class TestExceptionHierarchy:
     def test_all_inherit_from_base(self):
-        assert issubclass(ConnectionError, ThreeweError)
+        assert issubclass(RobotConnectionError, ThreeweError)
         assert issubclass(NavigationError, ThreeweError)
         assert issubclass(HardwareError, ThreeweError)
         assert issubclass(EmergencyStopError, ThreeweError)
-        assert issubclass(TimeoutError, ThreeweError)
+        assert issubclass(RobotTimeoutError, ThreeweError)
         assert issubclass(SafetyError, ThreeweError)
 
     def test_can_catch_with_base(self):

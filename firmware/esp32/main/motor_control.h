@@ -28,7 +28,9 @@ esp_err_t motor_init(void);
 void motor_set_speed(motor_id_t id, float speed_pct);
 motor_output_t motor_mecanum_drive(const cmd_vel_t *cmd);
 void motor_stop_all(void);
-void motor_stop_all_isr(void);  // ISR-safe: callable from IRAM interrupt context
+void motor_stop_all_isr(void);  // ISR-safe: sets flag only, no LEDC calls
+bool motor_isr_stop_pending(void);
+void motor_clear_isr_stop(void);
 bool motor_is_stopped(void);
 
 #endif // MOTOR_CONTROL_H

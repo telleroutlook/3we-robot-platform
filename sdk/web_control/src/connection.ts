@@ -265,6 +265,7 @@ export class RosbridgeConnection extends EventTarget {
       if (!msg.id) return;
       const pending = this.pendingServices.get(msg.id);
       if (pending) {
+        clearTimeout(pending.timer);
         this.pendingServices.delete(msg.id);
         if (msg.result) {
           pending.resolve(msg.values);

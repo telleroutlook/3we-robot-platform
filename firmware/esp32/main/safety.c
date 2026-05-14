@@ -29,7 +29,9 @@ static safety_callback_t user_callback = NULL;
 static float speed_limit_mps = DEFAULT_SPEED_LIMIT;
 static volatile uint8_t relay_fault_count = 0;
 static volatile uint8_t relay_healthy_count = 0;
+static volatile uint8_t relay_mismatch_debounce = 0;
 #define RELAY_HEALTHY_THRESHOLD 10
+#define RELAY_MISMATCH_DEBOUNCE_THRESHOLD 3
 
 static void persist_relay_fault(void);
 
@@ -218,24 +220,42 @@ void safety_feed_watchdog(void)
 {
     int64_t now = esp_timer_get_time();
     portENTER_CRITICAL(&safety_spinlock);
-    int64_t elapsed = now - last_watchdog_feed;
-    if (state == SAFETY_NORMAL && elapsed >= (WATCHDOG_TIMEOUT_MS * 1000LL)) {
-        state = SAFETY_ESTOPPED;
-        portEXIT_CRITICAL(&safety_spinlock);
-        motor_stop_all();
-        notify_state_change(SAFETY_ESTOPPED);
-        ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
-        return;
-    }
     if (state == SAFETY_NORMAL) {
         last_watchdog_feed = now;
     }
     portEXIT_CRITICAL(&safety_spinlock);
 }
 
+TESTABLE_WEAK void safety_check_watchdog(void)
+{
+    portENTER_CRITICAL(&safety_spinlock);
+    safety_state_t current_state = state;
+    portEXIT_CRITICAL(&safety_spinlock);
+    if (current_state == SAFETY_NORMAL) {
+        portENTER_CRITICAL(&safety_spinlock);
+        int64_t last_feed = last_watchdog_feed;
+        portEXIT_CRITICAL(&safety_spinlock);
+        int64_t elapsed = esp_timer_get_time() - last_feed;
+        if (elapsed >= (WATCHDOG_TIMEOUT_MS * 1000LL)) {
+            portENTER_CRITICAL(&safety_spinlock);
+            state = SAFETY_ESTOPPED;
+            portEXIT_CRITICAL(&safety_spinlock);
+            motor_stop_all();
+            notify_state_change(SAFETY_ESTOPPED);
+            ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
+        }
+    }
+}
+
 void safety_task(void *params)
 {
     while (1) {
+        // Process deferred ISR motor stop (ISR only sets a flag for safety)
+        if (motor_isr_stop_pending()) {
+            motor_stop_all();
+            motor_clear_isr_stop();
+        }
+
         // Check hardware E-stop (debounced via ISR + periodic poll)
         portENTER_CRITICAL(&safety_spinlock);
         safety_state_t current_state = state;
@@ -258,26 +278,37 @@ void safety_task(void *params)
         int relay_fb2 = gpio_get_level(SAFETY_RELAY_FB2);
 
         // Dual-channel consistency check: both channels must agree
+        // Debounce to filter switching transients during relay state changes
         if (relay_fb != relay_fb2) {
             portENTER_CRITICAL(&safety_spinlock);
             relay_healthy_count = 0;
-            if (relay_fault_count < UINT8_MAX) relay_fault_count++;
-            uint8_t fault_count = relay_fault_count;
-            if (fault_count >= 3) {
-                state = SAFETY_RELAY_FAULT;
+            if (relay_mismatch_debounce < UINT8_MAX) relay_mismatch_debounce++;
+            if (relay_mismatch_debounce >= RELAY_MISMATCH_DEBOUNCE_THRESHOLD) {
+                relay_mismatch_debounce = 0;
+                if (relay_fault_count < UINT8_MAX) relay_fault_count++;
+                uint8_t fault_count = relay_fault_count;
+                if (fault_count >= 3) {
+                    state = SAFETY_RELAY_FAULT;
+                } else {
+                    state = SAFETY_ESTOPPED;
+                }
+                portEXIT_CRITICAL(&safety_spinlock);
+                motor_stop_all();
+                if (fault_count >= 3) {
+                    notify_state_change(SAFETY_RELAY_FAULT);
+                    persist_relay_fault();
+                    ESP_LOGE(TAG, "RELAY FAULT ESCALATED: channel inconsistency - service required");
+                } else {
+                    notify_state_change(SAFETY_ESTOPPED);
+                }
+                ESP_LOGE(TAG, "RELAY FAULT: dual-channel mismatch (CH1=%d, CH2=%d)", relay_fb, relay_fb2);
             } else {
-                state = SAFETY_ESTOPPED;
+                portEXIT_CRITICAL(&safety_spinlock);
             }
+        } else {
+            portENTER_CRITICAL(&safety_spinlock);
+            relay_mismatch_debounce = 0;
             portEXIT_CRITICAL(&safety_spinlock);
-            motor_stop_all();
-            if (fault_count >= 3) {
-                notify_state_change(SAFETY_RELAY_FAULT);
-                persist_relay_fault();
-                ESP_LOGE(TAG, "RELAY FAULT ESCALATED: channel inconsistency - service required");
-            } else {
-                notify_state_change(SAFETY_ESTOPPED);
-            }
-            ESP_LOGE(TAG, "RELAY FAULT: dual-channel mismatch (CH1=%d, CH2=%d)", relay_fb, relay_fb2);
         }
 
         portENTER_CRITICAL(&safety_spinlock);
@@ -327,24 +358,7 @@ void safety_task(void *params)
             portEXIT_CRITICAL(&safety_spinlock);
         }
 
-        // Watchdog: if control loop stalls, stop motors
-        portENTER_CRITICAL(&safety_spinlock);
-        current_state = state;
-        portEXIT_CRITICAL(&safety_spinlock);
-        if (current_state == SAFETY_NORMAL) {
-            portENTER_CRITICAL(&safety_spinlock);
-            int64_t last_feed = last_watchdog_feed;
-            portEXIT_CRITICAL(&safety_spinlock);
-            int64_t elapsed = esp_timer_get_time() - last_feed;
-            if (elapsed >= (WATCHDOG_TIMEOUT_MS * 1000LL)) {
-                portENTER_CRITICAL(&safety_spinlock);
-                state = SAFETY_ESTOPPED;
-                portEXIT_CRITICAL(&safety_spinlock);
-                motor_stop_all();
-                notify_state_change(SAFETY_ESTOPPED);
-                ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
-            }
-        }
+        safety_check_watchdog();
 
         vTaskDelay(pdMS_TO_TICKS(20));
     }

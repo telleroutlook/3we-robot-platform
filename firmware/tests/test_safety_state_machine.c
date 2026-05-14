@@ -229,9 +229,8 @@ void test_safety_watchdog_timeout(void)
     // Advance timer past timeout threshold
     mock_set_timer((int64_t)(WATCHDOG_TIMEOUT_MS + 1) * 1000);
 
-    // Watchdog is checked internally; trigger a check via feed or periodic
-    // The watchdog timeout should trigger estop on next state check
-    safety_feed_watchdog();
+    // Timeout is detected by safety_check_watchdog (called from safety_task)
+    safety_check_watchdog();
 
     TEST_ASSERT_EQUAL(SAFETY_ESTOPPED, safety_get_state());
 }

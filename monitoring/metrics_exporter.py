@@ -79,7 +79,7 @@ class MetricsExporter(Node):
         super().__init__("metrics_exporter")
 
         self.declare_parameter("port", 9101)
-        self.declare_parameter("bind_address", "0.0.0.0")
+        self.declare_parameter("bind_address", "127.0.0.1")
         port = self.get_parameter("port").get_parameter_value().integer_value
         bind_addr = (
             self.get_parameter("bind_address").get_parameter_value().string_value

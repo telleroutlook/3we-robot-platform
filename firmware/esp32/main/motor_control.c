@@ -30,6 +30,7 @@ static const motor_config_t motors[MOTOR_COUNT] = {
 };
 
 static volatile bool stopped = true;
+static volatile bool isr_stop_requested = false;
 
 esp_err_t motor_init(void)
 {
@@ -154,13 +155,20 @@ TESTABLE_WEAK void motor_stop_all(void)
 
 void IRAM_ATTR motor_stop_all_isr(void)
 {
-    for (int i = 0; i < MOTOR_COUNT; i++) {
-        ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[i].in1_ch, 0);
-        ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[i].in2_ch, 0);
-        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[i].in1_ch);
-        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[i].in2_ch);
-    }
+    // ISR-safe: only set flag. Hardware safety relay cuts power immediately;
+    // this flag triggers software-level PWM zeroing from the safety task.
+    isr_stop_requested = true;
     stopped = true;
+}
+
+bool motor_isr_stop_pending(void)
+{
+    return isr_stop_requested;
+}
+
+void motor_clear_isr_stop(void)
+{
+    isr_stop_requested = false;
 }
 
 bool motor_is_stopped(void)

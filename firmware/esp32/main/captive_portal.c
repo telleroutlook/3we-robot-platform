@@ -221,21 +221,27 @@ esp_err_t captive_portal_start(const captive_portal_config_t *config)
     char ap_ssid[32];
     snprintf(ap_ssid, sizeof(ap_ssid), "RobotPlatform_%02X%02X", mac[4], mac[5]);
 
+    // Derive WPA2 passphrase from MAC to protect credential exchange
+    char ap_pass[16];
+    snprintf(ap_pass, sizeof(ap_pass), "RP%02X%02X%02X%02X",
+             mac[2], mac[3], mac[4], mac[5]);
+
     wifi_config_t wifi_ap_cfg = {
         .ap = {
             .channel = channel,
             .max_connection = 4,
-            .authmode = WIFI_AUTH_OPEN,
+            .authmode = WIFI_AUTH_WPA2_PSK,
         },
     };
     strncpy((char *)wifi_ap_cfg.ap.ssid, ap_ssid, sizeof(wifi_ap_cfg.ap.ssid));
     wifi_ap_cfg.ap.ssid_len = (uint8_t)strlen(ap_ssid);
+    strncpy((char *)wifi_ap_cfg.ap.password, ap_pass, sizeof(wifi_ap_cfg.ap.password));
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_ap_cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "AP started: %s (channel %d)", ap_ssid, channel);
+    ESP_LOGI(TAG, "AP started: %s (channel %d, pass=%s)", ap_ssid, channel, ap_pass);
 
     // Start HTTP server
     httpd_config_t httpd_cfg = HTTPD_DEFAULT_CONFIG();

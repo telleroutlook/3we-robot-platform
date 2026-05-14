@@ -30,7 +30,7 @@ class BackendBase(ABC):
     """Abstract base for all robot backends.
 
     Consistency contract guarantees:
-    - Image: (H, W, 3) uint8 BGR
+    - Image: (H, W, 3) uint8 RGB
     - Depth: (H, W) float32, meters, invalid=0.0
     - LiDAR: (N,) float32, meters, uniform angular sampling
     - Pose: right-hand, X forward, Y left, Z up, radians
