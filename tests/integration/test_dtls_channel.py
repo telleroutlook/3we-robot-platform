@@ -6,9 +6,9 @@ Validates that:
 - cmd_vel frames are delivered over the encrypted channel
 - Unauthenticated connections are rejected
 
-NOTE: These tests currently use plaintext UDP as a transport smoke test.
-Real DTLS-PSK verification requires a library such as python-dtls.
-The tests validate frame format and endpoint reachability, not encryption.
+Tests are split into two classes:
+- TestDTLSChannel: Transport smoke tests using plaintext UDP (frame format only)
+- TestDTLSEncryption: Real DTLS-PSK tests (requires python3-dtls and a provisioned key)
 """
 
 from __future__ import annotations
@@ -33,8 +33,8 @@ from conftest import topic_collector  # noqa: E402
 # Constants
 # ---------------------------------------------------------------------------
 
-DTLS_PORT: int = 5684
-DTLS_HOST: str = "192.168.4.1"  # Default ESP32 AP address
+DTLS_PORT: int = int(os.environ.get("DTLS_TEST_PORT", "5684"))
+DTLS_HOST: str = os.environ.get("DTLS_TEST_HOST", "192.168.4.1")
 PSK_IDENTITY: bytes = b"robot-controller"
 PSK_KEY: bytes = os.environb.get(b"INTEGRATION_TEST_PSK_KEY", b"")
 
@@ -216,3 +216,90 @@ class TestDTLSChannel:
         assert lx == 0.0
         assert ly == 0.0
         assert az == 0.0
+
+
+# ---------------------------------------------------------------------------
+# Real DTLS-PSK Tests
+# ---------------------------------------------------------------------------
+
+try:
+    from dtls import do_patch as dtls_do_patch
+    from dtls.sslconnection import SSLConnection
+
+    HAS_DTLS = True
+except ImportError:
+    HAS_DTLS = False
+
+
+@pytest.mark.hardware
+@pytest.mark.timeout(60)
+@pytest.mark.skipif(not HAS_DTLS, reason="python3-dtls not installed")
+@pytest.mark.skipif(not PSK_KEY, reason="INTEGRATION_TEST_PSK_KEY not set")
+class TestDTLSEncryption:
+    """Real DTLS-PSK encrypted channel verification.
+
+    Requires:
+    - pip install python3-dtls
+    - INTEGRATION_TEST_PSK_KEY env var set to the robot's provisioned PSK
+    """
+
+    @pytest.fixture(autouse=True)
+    def _patch_dtls(self) -> None:
+        dtls_do_patch()
+
+    def _create_psk_connection(self, timeout: float = 5.0) -> SSLConnection:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(timeout)
+        conn = SSLConnection(
+            sock,
+            keyfile=None,
+            certfile=None,
+            server_side=False,
+            psk={PSK_IDENTITY: PSK_KEY},
+            ciphers="PSK-AES128-CCM8",
+        )
+        conn.connect((DTLS_HOST, DTLS_PORT))
+        conn.do_handshake()
+        return conn
+
+    def test_psk_handshake_succeeds(self) -> None:
+        """DTLS-PSK handshake completes with valid credentials."""
+        conn = self._create_psk_connection()
+        try:
+            assert conn is not None
+        finally:
+            conn.shutdown()
+
+    def test_cmd_vel_over_dtls(self, test_node: Any) -> None:
+        """cmd_vel frame sent over DTLS produces valid ROS2 message."""
+        frame = CmdVelFrame(linear_x=0.2, linear_y=0.0, angular_z=0.5)
+        conn = self._create_psk_connection()
+        try:
+            conn.send(frame.pack())
+        finally:
+            conn.shutdown()
+
+        messages = topic_collector(
+            test_node, "/cmd_vel", Twist, timeout=10.0, count=1
+        )
+        assert len(messages) > 0, (
+            "No /cmd_vel message received after DTLS-encrypted frame"
+        )
+        assert abs(messages[0].linear.x - 0.2) < 0.05
+        assert abs(messages[0].angular.z - 0.5) < 0.05
+
+    def test_wrong_psk_rejected(self) -> None:
+        """DTLS handshake with incorrect PSK must fail."""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(5.0)
+        conn = SSLConnection(
+            sock,
+            keyfile=None,
+            certfile=None,
+            server_side=False,
+            psk={PSK_IDENTITY: b"wrong_key_0123456789abcdef"},
+            ciphers="PSK-AES128-CCM8",
+        )
+        with pytest.raises((ssl.SSLError, OSError)):
+            conn.connect((DTLS_HOST, DTLS_PORT))
+            conn.do_handshake()

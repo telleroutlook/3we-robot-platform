@@ -59,6 +59,13 @@ class MetricsHTTPHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+        elif self.path == "/health":
+            body = b'{"status":"ok"}\n'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
         else:
             self.send_response(404)
             self.end_headers()
@@ -99,7 +106,7 @@ class MetricsExporter(Node):
         store.set("robot_battery_voltage", msg.voltage)
         store.set("robot_battery_current_amps", msg.current)
         pct = msg.percentage * 100.0 if msg.percentage <= 1.0 else msg.percentage
-        store.set("robot_battery_percent", pct)
+        store.set("robot_battery_percentage", pct)
         store.set("robot_battery_power_supply_status", float(msg.power_supply_status))
 
     def _on_cmd_vel(self, msg: Twist) -> None:
@@ -107,7 +114,7 @@ class MetricsExporter(Node):
         store.set("robot_cmd_vel_angular_z", msg.angular.z)
 
     def _on_estop(self, msg: Bool) -> None:
-        store.set("robot_estop_active", 1.0 if msg.data else 0.0)
+        store.set("robot_emergency_stop_active", 1.0 if msg.data else 0.0)
 
     def _on_imu(self, msg: Imu) -> None:
         store.set("robot_imu_linear_accel_x", msg.linear_acceleration.x)

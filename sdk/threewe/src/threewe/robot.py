@@ -20,6 +20,7 @@ from threewe.config import RobotConfig, load_config
 from threewe.exceptions import RobotConnectionError
 
 if TYPE_CHECKING:
+    from threewe.hal.interface import HardwareProfileData
     from threewe.types import (
         BatteryState,
         ExecutionResult,
@@ -81,7 +82,7 @@ class Robot:
         return self._config
 
     @property
-    def hardware(self):
+    def hardware(self) -> HardwareProfileData:
         return self._hardware
 
     @property

@@ -106,6 +106,11 @@ static void payload_event_handler(payload_state_t pstate, const payload_descript
         desc ? desc->power_12v_ma : 0,
         desc ? desc->capabilities : 0);
 
+    if (len < 0 || (size_t)len >= sizeof(payload_json_buf)) {
+        ESP_LOGE(TAG, "Payload JSON truncated or encoding error (len=%d)", len);
+        return;
+    }
+
     payload_msg.data.data = payload_json_buf;
     payload_msg.data.size = (size_t)len;
     payload_msg.data.capacity = sizeof(payload_json_buf);

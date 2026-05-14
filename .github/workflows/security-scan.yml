@@ -1,0 +1,109 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Security Scan
+
+on:
+  push:
+    paths:
+      - 'sdk/**/*.py'
+      - 'monitoring/**/*.py'
+      - 'scripts/**/*.py'
+      - 'tests/**/*.py'
+  pull_request:
+    paths:
+      - 'sdk/**/*.py'
+      - 'monitoring/**/*.py'
+      - 'scripts/**/*.py'
+      - 'tests/**/*.py'
+  schedule:
+    - cron: '22 4 * * 1'  # Weekly Monday 04:22 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bandit:
+    name: Bandit (Python Security Linter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+
+      - name: Install bandit
+        run: pip install bandit[toml]
+
+      - name: Run bandit on SDK
+        run: |
+          bandit -r sdk/ \
+            -c pyproject.toml \
+            --severity-level medium \
+            --confidence-level medium \
+            -f json -o bandit-sdk-report.json || true
+          bandit -r sdk/ \
+            -c pyproject.toml \
+            --severity-level medium \
+            --confidence-level medium
+
+      - name: Run bandit on monitoring
+        run: |
+          bandit -r monitoring/ \
+            --severity-level medium \
+            --confidence-level medium
+
+      - name: Run bandit on scripts
+        run: |
+          bandit -r scripts/ \
+            --severity-level medium \
+            --confidence-level medium \
+            -s B603,B404
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bandit-report
+          path: bandit-sdk-report.json
+          retention-days: 30
+
+  semgrep:
+    name: Semgrep (Multi-Language SAST)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run semgrep
+        run: |
+          semgrep scan \
+            --config auto \
+            --config p/security-audit \
+            --config p/python \
+            --config p/typescript \
+            --error \
+            --exclude='**/node_modules/**' \
+            --exclude='**/build/**' \
+            --exclude='**/.git/**' \
+            --json -o semgrep-report.json \
+            . || true
+          semgrep scan \
+            --config auto \
+            --config p/security-audit \
+            --config p/python \
+            --config p/typescript \
+            --error \
+            --exclude='**/node_modules/**' \
+            --exclude='**/build/**' \
+            --exclude='**/.git/**' \
+            .
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: semgrep-report
+          path: semgrep-report.json
+          retention-days: 30

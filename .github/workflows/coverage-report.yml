@@ -9,9 +9,6 @@ on:
       - 'firmware/tests/**'
   pull_request:
     branches: [main]
-    paths:
-      - 'sdk/**'
-      - 'firmware/tests/**'
   workflow_dispatch:
 
 permissions:
