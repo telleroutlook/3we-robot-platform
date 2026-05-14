@@ -12,7 +12,7 @@ and applies updates for:
 Configuration via ROS2 parameters:
   - update_check_url: HTTPS endpoint for update manifest
   - model_dir: Directory for AI model files
-  - download_dir: Temporary directory for downloads
+  - download_dir: Directory for downloads (default: /var/lib/robot/ota)
   - auto_apply: Whether to apply updates automatically (default: false)
   - rollback_enabled: Keep previous version for rollback (default: true)
 """
@@ -52,7 +52,7 @@ class OtaManagerNode(Node):
 
         self.declare_parameter("update_check_url", "")
         self.declare_parameter("model_dir", "/opt/robot/models")
-        self.declare_parameter("download_dir", "/tmp/robot_ota")
+        self.declare_parameter("download_dir", "/var/lib/robot/ota")
         self.declare_parameter("auto_apply", False)
         self.declare_parameter("rollback_enabled", True)
         self.declare_parameter("check_interval_sec", 3600.0)
@@ -256,7 +256,7 @@ class OtaManagerNode(Node):
             self.get_logger().error(f"Cannot determine filename from URL: {url}")
             return None
 
-        self._download_dir.mkdir(parents=True, exist_ok=True)
+        self._download_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
         local_path = self._download_dir / filename
 
         try:
