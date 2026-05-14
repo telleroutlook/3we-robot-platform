@@ -85,7 +85,7 @@ esp_err_t encoder_init(void)
 
 static void encoder_validate_config(void)
 {
-    uint16_t raw_cpr = ENCODER_CPR / GEAR_RATIO;
+    uint16_t raw_cpr = (uint16_t)((float)ENCODER_CPR / (float)GEAR_RATIO);
     if (raw_cpr < MIN_RAW_CPR) {
         ESP_LOGW(TAG, "Raw encoder CPR %d < minimum %d — high-speed PID may oscillate",
                  raw_cpr, MIN_RAW_CPR);

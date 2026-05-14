@@ -149,6 +149,11 @@ class ROS2Node:
             img = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
             image = img[:, :, ::-1].copy()
         else:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Unknown image encoding %s, attempting bgr8 parse", msg.encoding
+            )
             image = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
         with self._state_lock:
             self._latest_image = image
@@ -161,6 +166,11 @@ class ROS2Node:
             raw = np.frombuffer(msg.data, dtype=np.uint16).reshape(h, w)
             depth = raw.astype(np.float32) / 1000.0
         else:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Unknown depth encoding %s, skipping frame", msg.encoding
+            )
             return
         with self._state_lock:
             self._latest_depth = depth
@@ -241,8 +251,12 @@ class ROS2Node:
         with self._state_lock:
             image = self._latest_image
             depth = self._latest_depth
-        rgb = image if image is not None else np.zeros(
-            (self._config.api.image_size[1], self._config.api.image_size[0], 3), dtype=np.uint8
+        rgb = (
+            image
+            if image is not None
+            else np.zeros(
+                (self._config.api.image_size[1], self._config.api.image_size[0], 3), dtype=np.uint8
+            )
         )
         h, w = rgb.shape[0], rgb.shape[1]
         depth = depth if depth is not None else np.zeros((h, w), dtype=np.float32)
@@ -299,6 +313,11 @@ class ROS2Node:
 
     def set_velocity(self, vx: float, vy: float, omega: float) -> None:
         if self._cmd_vel_pub is None:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "set_velocity called but cmd_vel publisher not ready"
+            )
             return
         from geometry_msgs.msg import Twist
 

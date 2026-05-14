@@ -12,12 +12,12 @@ Quick start:
 """
 
 from threewe.exceptions import (
-    RobotConnectionError,
     EmergencyStopError,
     HardwareError,
     NavigationError,
-    SafetyError,
+    RobotConnectionError,
     RobotTimeoutError,
+    SafetyError,
 )
 from threewe.experiment import ExperimentProtocol
 from threewe.robot import Robot

@@ -38,7 +38,7 @@
 #endif
 
 // Motor limits (derived from configurable parameters)
-#define MAX_LINEAR_VEL          (2.0f * 3.14159265f * WHEEL_RADIUS * (float)MAX_MOTOR_RPM / 60.0f)
+#define MAX_LINEAR_VEL          (2.0f * 3.14159265358979f * WHEEL_RADIUS * (float)MAX_MOTOR_RPM / 60.0f)
 #define MAX_ANGULAR_VEL         3.0f    // rad/s
 
 // PWM

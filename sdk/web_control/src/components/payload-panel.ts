@@ -4,6 +4,9 @@ import type { PayloadState, PayloadPowerRequest, PayloadPowerResponse } from '..
 import { connection } from '../connection';
 import { payloadStateSchema } from '../schemas';
 
+type RailId = '5V' | '12V' | 'VBAT';
+const VALID_RAILS = new Set<string>(['5V', '12V', 'VBAT']);
+
 const TEMPLATE = document.createElement('template');
 TEMPLATE.innerHTML = `
 <style>
@@ -281,7 +284,12 @@ export class RobotPayloadPanel extends HTMLElement {
     }
   }
 
-  private async toggleRail(rail: string, toggleEl: HTMLElement): Promise<void> {
+  private async toggleRail(rail: RailId, toggleEl: HTMLElement): Promise<void> {
+    if (!VALID_RAILS.has(rail)) {
+      // eslint-disable-next-line no-console
+      console.error('[payload-panel] toggleRail called with invalid rail:', rail);
+      return;
+    }
     if (!this.currentPayloadId) return;
     const currentlyActive = toggleEl.classList.contains('active');
     const enable = !currentlyActive;

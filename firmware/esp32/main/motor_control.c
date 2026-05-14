@@ -71,7 +71,6 @@ esp_err_t motor_init(void)
 
 void motor_set_speed(motor_id_t id, float speed_pct)
 {
-    if (safety_is_estopped()) return;
     if (id >= MOTOR_COUNT) return;
 
     float clamped = fmaxf(-1.0f, fminf(1.0f, speed_pct));
@@ -160,6 +159,17 @@ TESTABLE_WEAK void motor_stop_all(void)
     }
     stopped = true;
     portEXIT_CRITICAL(&motor_spinlock);
+}
+
+void IRAM_ATTR motor_stop_all_isr(void)
+{
+    for (int i = 0; i < MOTOR_COUNT; i++) {
+        ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[i].in1_ch, 0);
+        ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[i].in2_ch, 0);
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[i].in1_ch);
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[i].in2_ch);
+    }
+    stopped = true;
 }
 
 bool motor_is_stopped(void)

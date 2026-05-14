@@ -39,16 +39,18 @@ bool ota_signing_check_upload_token(const char *auth_header)
 {
     if (!auth_header || ota_upload_token[0] == '\0') return false;
 
-    const char *prefix = "Bearer ";
-    size_t prefix_len = 7;
-    if (strncmp(auth_header, prefix, prefix_len) != 0) return false;
+    // Build the full expected value "Bearer <token>" and compare constant-time.
+    // This avoids a timing side-channel from a non-constant-time prefix check.
+    char expected[8 + sizeof(ota_upload_token)] = "Bearer ";
+    size_t stored_len = strlen(ota_upload_token);
+    memcpy(expected + 7, ota_upload_token, stored_len);
+    expected[7 + stored_len] = '\0';
 
-    const char *token = auth_header + prefix_len;
-    size_t token_len = strlen(token);
-    size_t expected_len = strlen(ota_upload_token);
-    if (token_len != expected_len) return false;
+    size_t expected_len = 7 + stored_len;
+    size_t actual_len   = strlen(auth_header);
+    if (actual_len != expected_len) return false;
 
-    return constant_time_compare(token, ota_upload_token, expected_len);
+    return constant_time_compare(auth_header, expected, expected_len);
 }
 
 static bool ecdsa_p256_verify(const uint8_t *hash, size_t hash_len,

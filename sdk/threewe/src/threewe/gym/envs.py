@@ -144,7 +144,10 @@ class NavigationEnv(gym.Env if GYM_AVAILABLE else object):  # type: ignore[misc]
         return float(np.sqrt(dx * dx + dy * dy))
 
     def _get_obs(self) -> dict[str, np.ndarray]:
-        """Placeholder: returns zero image and max-range lidar. Hook into a real backend for Sim2Real transfer."""
+        """Placeholder: returns zero image and max-range lidar.
+
+        Hook into a real backend for Sim2Real transfer.
+        """
         return {
             "image": np.zeros((self.image_size[1], self.image_size[0], 3), dtype=np.uint8),
             "lidar": np.full(self.lidar_points, 12.0, dtype=np.float32),
@@ -282,7 +285,10 @@ class ExplorationEnv(gym.Env if GYM_AVAILABLE else object):  # type: ignore[misc
                     self._coverage[ny, nx] = 1.0
 
     def _get_obs(self) -> dict[str, np.ndarray]:
-        """Placeholder: returns zero image and max-range lidar. Hook into a real backend for Sim2Real transfer."""
+        """Placeholder: returns zero image and max-range lidar.
+
+        Hook into a real backend for Sim2Real transfer.
+        """
         return {
             "image": np.zeros((self.image_size[1], self.image_size[0], 3), dtype=np.uint8),
             "lidar": np.full(self.lidar_points, 12.0, dtype=np.float32),
@@ -449,7 +455,10 @@ class ObjectNavEnv(gym.Env if GYM_AVAILABLE else object):  # type: ignore[misc]
         return min_dist if min_dist != float("inf") else 0.0
 
     def _get_obs(self) -> dict[str, np.ndarray]:
-        """Placeholder: returns zero image and max-range lidar. Hook into a real backend for Sim2Real transfer."""
+        """Placeholder: returns zero image and max-range lidar.
+
+        Hook into a real backend for Sim2Real transfer.
+        """
         goal_onehot = np.zeros(self.num_categories, dtype=np.float32)
         goal_onehot[self._target_category] = 1.0
         return {

@@ -31,3 +31,8 @@ class RobotTimeoutError(ThreeweError):
 
 class SafetyError(ThreeweError):
     """Safety constraint violated (speed limit, boundary breach)."""
+
+
+# Aliases for backwards-compatibility and shorter import names
+ConnectionError = RobotConnectionError
+TimeoutError = RobotTimeoutError

@@ -139,8 +139,10 @@ class AsyncPayloadClient:
             Messages received on the topic.
         """
         self._ensure_connected()
-        assert self._node is not None
-        assert self._loop is not None
+        if self._node is None or self._loop is None:
+            raise RuntimeError(
+                "PayloadAsyncClient not connected. Call connect() first."
+            )
 
         queue: asyncio.Queue[Any] = asyncio.Queue()
 
@@ -188,8 +190,10 @@ class AsyncPayloadClient:
             RuntimeError: If service is not available.
         """
         self._ensure_connected()
-        assert self._node is not None
-        assert self._loop is not None
+        if self._node is None or self._loop is None:
+            raise RuntimeError(
+                "PayloadAsyncClient not connected. Call connect() first."
+            )
 
         client = self._node.create_client(srv_type, service_name)
 
@@ -245,8 +249,10 @@ class AsyncPayloadClient:
             True if navigation succeeded, False otherwise.
         """
         self._ensure_connected()
-        assert self._node is not None
-        assert self._loop is not None
+        if self._node is None or self._loop is None:
+            raise RuntimeError(
+                "PayloadAsyncClient not connected. Call connect() first."
+            )
 
         if NavigateToPose is None or PoseStamped is None or ActionClient is None:
             raise ImportError(
@@ -372,8 +378,10 @@ class AsyncPayloadClient:
             BatteryState snapshot.
         """
         self._ensure_connected()
-        assert self._node is not None
-        assert self._loop is not None
+        if self._node is None or self._loop is None:
+            raise RuntimeError(
+                "PayloadAsyncClient not connected. Call connect() first."
+            )
 
         queue: asyncio.Queue[Any] = asyncio.Queue(maxsize=1)
 
@@ -420,8 +428,10 @@ class AsyncPayloadClient:
             PayloadState snapshot.
         """
         self._ensure_connected()
-        assert self._node is not None
-        assert self._loop is not None
+        if self._node is None or self._loop is None:
+            raise RuntimeError(
+                "PayloadAsyncClient not connected. Call connect() first."
+            )
 
         queue: asyncio.Queue[Any] = asyncio.Queue(maxsize=1)
 

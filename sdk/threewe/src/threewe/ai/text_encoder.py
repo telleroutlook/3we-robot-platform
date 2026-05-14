@@ -67,7 +67,7 @@ class TextEncoder:
             return vec
 
         for token in tokens:
-            h = hashlib.md5(token.encode()).hexdigest()  # noqa: S324
+            h = hashlib.sha256(token.encode()).hexdigest()
             idx = int(h[:8], 16) % self._dim
             sign = 1.0 if int(h[8:16], 16) % 2 == 0 else -1.0
             idf = 1.0 / math.log(2.0 + len(token))

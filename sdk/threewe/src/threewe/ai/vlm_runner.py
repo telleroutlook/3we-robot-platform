@@ -90,8 +90,12 @@ class VLMRunner:
                 "Pillow is required for image encoding. Install with: pip install threewe[ai]"
             ) from e
 
-        if image.shape[2] == 3:
+        if image.ndim == 2:
+            pil_image = Image.fromarray(image, mode="L")
+        elif image.ndim == 3 and image.shape[2] == 3:
             pil_image = Image.fromarray(image[:, :, ::-1])
+        elif image.ndim == 3 and image.shape[2] == 4:
+            pil_image = Image.fromarray(image[:, :, 2::-1])  # BGRA -> RGB
         else:
             pil_image = Image.fromarray(image)
 
@@ -184,9 +188,16 @@ async def execute_vlm_instruction(
         try:
             response_text = runner.plan(image, instruction)
             action = json.loads(response_text)
-        except (json.JSONDecodeError, Exception):
+        except json.JSONDecodeError:
             if on_step:
                 on_step(step, response_text if "response_text" in dir() else "", {})
+            continue
+        except Exception as e:
+            import logging
+
+            logging.getLogger(__name__).warning("VLM step %d error: %s", step, e)
+            if on_step:
+                on_step(step, "", {})
             continue
 
         if on_step:

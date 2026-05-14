@@ -114,7 +114,7 @@ class VLARunner:
                 "PyTorch is required for PyTorch VLA models. Install with: pip install torch"
             ) from e
 
-        self._model = torch.load(str(path), map_location=self._device, weights_only=False)
+        self._model = torch.load(str(path), map_location=self._device, weights_only=True)
         if hasattr(self._model, "eval"):
             self._model.eval()
         self._config["runtime"] = "pytorch"
@@ -190,7 +190,12 @@ class VLARunner:
 
             if isinstance(output, torch.Tensor):
                 return output[0].cpu().numpy().astype(np.float32)
-            return np.zeros(3, dtype=np.float32)
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "PyTorch model returned non-tensor output: %s", type(output)
+            )
+            return np.zeros(self.action_dim, dtype=np.float32)
 
     @property
     def action_dim(self) -> int:

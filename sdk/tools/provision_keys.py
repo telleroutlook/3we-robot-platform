@@ -45,10 +45,11 @@ def generate_ota_keypair() -> tuple[bytes, bytes]:
     try:
         from cryptography.hazmat.primitives.asymmetric import ec
         from cryptography.hazmat.primitives import serialization
-    except ImportError:
-        print("Error: 'cryptography' package required for key generation.")
-        print("Install: pip install cryptography")
-        sys.exit(1)
+    except ImportError as exc:
+        raise ImportError(
+            "'cryptography' package required for key generation. "
+            "Install with: pip install cryptography"
+        ) from exc
 
     private_key = ec.generate_private_key(ec.SECP256R1())
     private_pem = private_key.private_bytes(

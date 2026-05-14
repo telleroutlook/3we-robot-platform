@@ -42,6 +42,7 @@ static void IRAM_ATTR estop_isr(void *arg)
     portENTER_CRITICAL_ISR(&safety_spinlock);
     state = SAFETY_ESTOPPED;
     portEXIT_CRITICAL_ISR(&safety_spinlock);
+    motor_stop_all_isr();
 }
 
 esp_err_t safety_init(void)
@@ -216,7 +217,7 @@ void safety_feed_watchdog(void)
     int64_t now = esp_timer_get_time();
     portENTER_CRITICAL(&safety_spinlock);
     int64_t elapsed = now - last_watchdog_feed;
-    if (state == SAFETY_NORMAL && elapsed > (WATCHDOG_TIMEOUT_MS * 1000LL)) {
+    if (state == SAFETY_NORMAL && elapsed >= (WATCHDOG_TIMEOUT_MS * 1000LL)) {
         state = SAFETY_ESTOPPED;
         portEXIT_CRITICAL(&safety_spinlock);
         motor_stop_all();
@@ -326,7 +327,7 @@ void safety_task(void *params)
             int64_t last_feed = last_watchdog_feed;
             portEXIT_CRITICAL(&safety_spinlock);
             int64_t elapsed = esp_timer_get_time() - last_feed;
-            if (elapsed > (WATCHDOG_TIMEOUT_MS * 1000LL)) {
+            if (elapsed >= (WATCHDOG_TIMEOUT_MS * 1000LL)) {
                 portENTER_CRITICAL(&safety_spinlock);
                 state = SAFETY_ESTOPPED;
                 portEXIT_CRITICAL(&safety_spinlock);
