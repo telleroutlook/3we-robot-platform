@@ -169,6 +169,7 @@ def pull_dataset(
     repo_id: str,
     local_dir: str | Path,
     token: str | None = None,
+    revision: str | None = None,
 ) -> Path:
     """Pull a LeRobot dataset from HuggingFace Hub.
 
@@ -176,6 +177,7 @@ def pull_dataset(
         repo_id: HuggingFace repo ID.
         local_dir: Local directory to save to.
         token: HuggingFace API token.
+        revision: Specific dataset revision (commit hash) to pin the download.
 
     Returns:
         Path to the downloaded dataset.
@@ -198,5 +200,6 @@ def pull_dataset(
         repo_type="dataset",
         local_dir=str(local_dir),
         token=token,
+        revision=revision,
     )
     return Path(path)

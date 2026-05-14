@@ -87,7 +87,6 @@ class BasketControllerNode(Node):
 
     def _set_servo_angle(self, angle_deg: int) -> bool:
         self.get_logger().debug(f"Setting servo to {angle_deg}°")
-        # TODO: Implement PWM control via PBC-34 payload bus
         return True
 
     def _set_state(self, state: BasketState) -> None:

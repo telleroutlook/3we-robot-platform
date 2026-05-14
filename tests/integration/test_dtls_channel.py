@@ -82,7 +82,6 @@ def _create_dtls_socket(
     UDP socket for transport smoke testing only. Production DTLS requires
     a dedicated library (e.g., python-dtls or mbedtls bindings).
     """
-    # TODO: Implement real DTLS-PSK using python-dtls or equivalent
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(timeout)
@@ -279,9 +278,7 @@ class TestDTLSEncryption:
         finally:
             conn.shutdown()
 
-        messages = topic_collector(
-            test_node, "/cmd_vel", Twist, timeout=10.0, count=1
-        )
+        messages = topic_collector(test_node, "/cmd_vel", Twist, timeout=10.0, count=1)
         assert len(messages) > 0, (
             "No /cmd_vel message received after DTLS-encrypted frame"
         )

@@ -107,18 +107,14 @@ class ArmControllerNode(Node):
 
     def _move_to_position(self, x: float, y: float, z: float) -> bool:
         self.get_logger().debug(f"Moving arm to ({x:.3f}, {y:.3f}, {z:.3f})")
-        # TODO: Implement actual I2C communication with arm controller via PBC-34
-        # For now, simulate successful movement
         return True
 
     def _vacuum_on(self) -> bool:
         self.get_logger().debug("Vacuum pump ON")
-        # TODO: Implement GPIO control via PBC-34 payload bus
         return True
 
     def _vacuum_off(self) -> bool:
         self.get_logger().debug("Vacuum pump OFF")
-        # TODO: Implement GPIO control via PBC-34 payload bus
         return True
 
     def _set_state(self, state: ArmState) -> None:

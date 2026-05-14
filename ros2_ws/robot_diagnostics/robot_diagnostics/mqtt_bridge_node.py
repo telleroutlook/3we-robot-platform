@@ -86,7 +86,11 @@ class MqttBridgeNode(Node):
         url = self._broker_url.replace("mqtt://", "").replace("mqtts://", "")
         host_port = url.split(":")
         host = host_port[0]
-        port = int(host_port[1]) if len(host_port) > 1 else 1883
+        try:
+            port = int(host_port[1]) if len(host_port) > 1 else 1883
+        except ValueError:
+            self.get_logger().error(f"Invalid MQTT port in URL: {self._broker_url}")
+            return
 
         try:
             from paho.mqtt.enums import CallbackAPIVersion

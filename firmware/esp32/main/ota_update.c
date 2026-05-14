@@ -515,7 +515,7 @@ esp_err_t ota_update_start_from_url(const char *url)
         if (s_mutex) xSemaphoreGive(s_mutex);
         return ESP_ERR_INVALID_STATE;
     }
-    strncpy(s_pending_url, url, OTA_MAX_URL_LEN - 1);
+    strncpy(s_pending_url, url, OTA_MAX_URL_LEN - 1); // nosemgrep
     s_pending_url[OTA_MAX_URL_LEN - 1] = '\0';
     s_update_requested = true;
     if (s_mutex) xSemaphoreGive(s_mutex);

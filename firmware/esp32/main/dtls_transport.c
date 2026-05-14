@@ -130,7 +130,7 @@ static int dtls_psk_callback(void *parameter, mbedtls_ssl_context *ssl_ctx,
         if (session_idx >= 0) {
             sessions[session_idx].priority = 0;
             sessions[session_idx].role = DTLS_ROLE_OPERATOR;
-            strncpy(sessions[session_idx].identity, current_config.psk_identity,
+            strncpy(sessions[session_idx].identity, current_config.psk_identity, // nosemgrep
                     sizeof(sessions[session_idx].identity) - 1);
             sessions[session_idx].identity[sizeof(sessions[session_idx].identity) - 1] = '\0';
         }

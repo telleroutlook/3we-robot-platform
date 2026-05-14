@@ -20,12 +20,7 @@ class RefereeClientNode(Node):
         )
         self.order_pub = self.create_publisher(String, "/competition/orders", 10)
 
-        # TODO: Implement TCP/gRPC connection to referee box
-        # TODO: Parse protobuf messages from referee system
-        # TODO: Publish game phase transitions (SETUP, EXPLORATION, PRODUCTION)
-        # TODO: Forward order assignments to task_executor
-
-        self.get_logger().info("Referee client node initialized (stub)")
+        self.get_logger().warn("Referee client node awaiting implementation")
 
 
 def main(args=None):

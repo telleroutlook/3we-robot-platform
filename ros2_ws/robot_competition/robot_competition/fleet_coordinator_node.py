@@ -19,14 +19,7 @@ class FleetCoordinatorNode(Node):
             String, "/competition/fleet_status", 10
         )
 
-        # TODO: Subscribe to each robot's pose and planned path
-        # TODO: Implement path conflict detection (spatial + temporal)
-        # TODO: Priority-based path yielding (robot with order > idle robot)
-        # TODO: Deadlock detection and resolution
-        # TODO: Task allocation: assign orders to nearest available robot
-        # TODO: Zone-based mutual exclusion for MPS approach corridors
-
-        self.get_logger().info("Fleet coordinator node initialized (stub)")
+        self.get_logger().warn("Fleet coordinator node awaiting implementation")
 
 
 def main(args=None):

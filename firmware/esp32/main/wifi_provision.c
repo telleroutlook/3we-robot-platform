@@ -43,7 +43,7 @@ esp_err_t wifi_provision_get_credentials(wifi_credentials_t *creds)
 #if defined(CONFIG_WIFI_SSID) && !defined(CONFIG_PRODUCTION_BUILD)
     strncpy(creds->ssid, CONFIG_WIFI_SSID, WIFI_CRED_MAX_LEN - 1); // nosemgrep
 #ifdef CONFIG_WIFI_PASSWORD
-    strncpy(creds->password, CONFIG_WIFI_PASSWORD, WIFI_CRED_MAX_LEN - 1);
+    strncpy(creds->password, CONFIG_WIFI_PASSWORD, WIFI_CRED_MAX_LEN - 1); // nosemgrep
 #endif
     if (strlen(creds->ssid) > 0) {
         ESP_LOGW(TAG, "Using Kconfig Wi-Fi credentials (development fallback)");

@@ -156,5 +156,6 @@ class TestPullDataset:
             repo_type="dataset",
             local_dir=str(tmp_path / "out"),
             token="tok",
+            revision=None,
         )
         assert result == tmp_path / "downloaded"

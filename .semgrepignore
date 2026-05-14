@@ -3,5 +3,5 @@
 *.spec.ts
 tests/
 
-# Documentation — contains code examples with ws:// for illustration
+# Documentation — contains code examples with insecure protocols for illustration
 docs/

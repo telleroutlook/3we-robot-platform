@@ -28,12 +28,15 @@ class VLARunner:
         self._text_encoder: Any = None
 
     @classmethod
-    def from_pretrained(cls, model_id: str, device: str = "cpu") -> VLARunner:
+    def from_pretrained(
+        cls, model_id: str, device: str = "cpu", revision: str | None = None
+    ) -> VLARunner:
         """Load a VLA model from HuggingFace Hub.
 
         Args:
             model_id: HuggingFace model identifier (e.g., "lerobot/act_3we_nav")
             device: Target device ("cpu", "cuda", "mps")
+            revision: Specific model revision (commit hash) to pin the download.
         """
         try:
             from huggingface_hub import snapshot_download
@@ -43,7 +46,7 @@ class VLARunner:
                 "Install with: pip install huggingface-hub"
             ) from e
 
-        local_dir = snapshot_download(repo_id=model_id)
+        local_dir = snapshot_download(repo_id=model_id, revision=revision)
         return cls._load_from_dir(local_dir, device)
 
     @classmethod

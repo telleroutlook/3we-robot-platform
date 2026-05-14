@@ -19,13 +19,7 @@ class MpsDetectorNode(Node):
             String, "/competition/mps_detections", 10
         )
 
-        # TODO: Subscribe to camera image topic
-        # TODO: Load YOLO model for MPS light pattern recognition
-        # TODO: Classify light states: RED, YELLOW, GREEN, OFF
-        # TODO: Determine machine type from light sequence
-        # TODO: Publish detected machine states with position
-
-        self.get_logger().info("MPS detector node initialized (stub)")
+        self.get_logger().warn("MPS detector node awaiting implementation")
 
 
 def main(args=None):

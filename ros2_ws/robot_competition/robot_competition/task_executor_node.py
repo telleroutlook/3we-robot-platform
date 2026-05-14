@@ -20,13 +20,7 @@ class TaskExecutorNode(Node):
             String, "/competition/orders", self._order_callback, 10
         )
 
-        # TODO: Load BehaviorTree XML for order execution
-        # TODO: Implement action sequences: navigate, pick, place, deliver
-        # TODO: Handle order priorities and preemption
-        # TODO: Report task progress to fleet_coordinator
-        # TODO: Integrate with Nav2 action client for navigation goals
-
-        self.get_logger().info("Task executor node initialized (stub)")
+        self.get_logger().warn("Task executor node awaiting implementation")
 
     def _order_callback(self, msg):
         self.get_logger().info(f"Received order: {msg.data}")

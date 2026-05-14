@@ -59,6 +59,7 @@ static thermal_state_t state = THERMAL_OK;
 static thermal_callback_t user_callback = NULL;
 static thermal_reading_t last_reading;
 static uint8_t i2c_consecutive_failures;
+static portMUX_TYPE thermal_spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 static esp_err_t ina219_write_reg(uint8_t reg, uint16_t value)
 {
@@ -128,13 +129,18 @@ esp_err_t thermal_monitor_init(void)
 
 thermal_state_t thermal_get_state(void)
 {
-    return state;
+    portENTER_CRITICAL(&thermal_spinlock);
+    thermal_state_t s = state;
+    portEXIT_CRITICAL(&thermal_spinlock);
+    return s;
 }
 
 esp_err_t thermal_get_reading(thermal_reading_t *reading)
 {
     if (!reading) return ESP_ERR_INVALID_ARG;
+    portENTER_CRITICAL(&thermal_spinlock);
     *reading = last_reading;
+    portEXIT_CRITICAL(&thermal_spinlock);
     return ESP_OK;
 }
 
@@ -168,7 +174,9 @@ static void update_thermal_state(thermal_reading_t *r)
     }
 
     if (new_state != state) {
+        portENTER_CRITICAL(&thermal_spinlock);
         state = new_state;
+        portEXIT_CRITICAL(&thermal_spinlock);
         if (state == THERMAL_SHUTDOWN) {
             safety_trigger_estop();
             ESP_LOGE(TAG, "THERMAL SHUTDOWN: temp=%.1f°C — system must power off",
@@ -230,7 +238,9 @@ void thermal_monitor_task(void *params)
                 state < THERMAL_WARNING) {
                 ESP_LOGW(TAG, "I2C sensor failure (%u consecutive) — escalating to THERMAL_WARNING",
                          i2c_consecutive_failures);
+                portENTER_CRITICAL(&thermal_spinlock);
                 state = THERMAL_WARNING;
+                portEXIT_CRITICAL(&thermal_spinlock);
                 if (user_callback) user_callback(state, &reading);
             }
         } else {
@@ -257,7 +267,9 @@ void thermal_monitor_task(void *params)
 #endif
 
         update_thermal_state(&reading);
+        portENTER_CRITICAL(&thermal_spinlock);
         last_reading = reading;
+        portEXIT_CRITICAL(&thermal_spinlock);
 
         vTaskDelay(pdMS_TO_TICKS(500));
     }

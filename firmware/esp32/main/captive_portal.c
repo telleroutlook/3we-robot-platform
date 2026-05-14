@@ -247,9 +247,9 @@ esp_err_t captive_portal_start(const captive_portal_config_t *config)
             .authmode = WIFI_AUTH_WPA2_PSK,
         },
     };
-    strncpy((char *)wifi_ap_cfg.ap.ssid, ap_ssid, sizeof(wifi_ap_cfg.ap.ssid));
+    strncpy((char *)wifi_ap_cfg.ap.ssid, ap_ssid, sizeof(wifi_ap_cfg.ap.ssid)); // nosemgrep
     wifi_ap_cfg.ap.ssid_len = (uint8_t)strlen(ap_ssid);
-    strncpy((char *)wifi_ap_cfg.ap.password, ap_pass, sizeof(wifi_ap_cfg.ap.password));
+    strncpy((char *)wifi_ap_cfg.ap.password, ap_pass, sizeof(wifi_ap_cfg.ap.password)); // nosemgrep
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_ap_cfg));

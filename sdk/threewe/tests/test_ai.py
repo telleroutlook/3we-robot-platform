@@ -165,8 +165,8 @@ class TestVLARunner:
         assert action.dtype == np.float32
         np.testing.assert_allclose(action, [0.1, -0.2, 0.3], atol=1e-6)
 
-    def test_action_dim_default(self):
+    def test_action_dim_default(self, tmp_path):
         from threewe.ai.vla_runner import VLARunner
 
-        runner = VLARunner("/tmp/test")
+        runner = VLARunner(str(tmp_path / "test"))
         assert runner.action_dim == 3
