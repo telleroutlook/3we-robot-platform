@@ -173,6 +173,7 @@ export class RobotJoystick extends HTMLElement {
     this.currentVx = 0;
     this.currentOmega = 0;
     this.updateReadout();
+    this.publishZero();
   };
 
   private updateKnob(e: PointerEvent): void {
@@ -273,6 +274,14 @@ export class RobotJoystick extends HTMLElement {
     ctx.lineWidth = 2;
     ctx.stroke();
   };
+
+  private publishZero(): void {
+    const msg: Twist = {
+      linear: { x: 0, y: 0, z: 0 },
+      angular: { x: 0, y: 0, z: 0 },
+    };
+    connection.publish('/cmd_vel', 'geometry_msgs/Twist', msg);
+  }
 
   private startPublishing(): void {
     this.stopPublishing();

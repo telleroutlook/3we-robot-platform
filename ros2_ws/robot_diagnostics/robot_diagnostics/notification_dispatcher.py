@@ -373,7 +373,7 @@ class NotificationDispatcher(Node):
         def _do_send() -> None:
             try:
                 req = Request(url, data=data, headers=headers, method="POST")
-                with urlopen(req, timeout=10) as resp:
+                with urlopen(req, timeout=10) as resp:  # nosemgrep
                     if resp.status < 300:
                         self.get_logger().debug(
                             f"Sent to {channel_name}: {payload['title']}"

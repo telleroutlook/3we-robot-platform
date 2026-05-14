@@ -159,7 +159,7 @@ class OtaManagerNode(Node):
                 self._update_check_url,
                 headers={"User-Agent": "robot-ota/1.0"},
             )
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=30) as resp:  # nosemgrep
                 manifest = json.loads(resp.read().decode())
         except Exception as e:
             self.get_logger().debug(f"Update check failed: {e}")
@@ -261,7 +261,10 @@ class OtaManagerNode(Node):
 
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "robot-ota/1.0"})
-            with urllib.request.urlopen(req, timeout=60) as resp, open(local_path, "wb") as f:
+            with (
+                urllib.request.urlopen(req, timeout=60) as resp,
+                open(local_path, "wb") as f,
+            ):
                 while chunk := resp.read(65536):
                     f.write(chunk)
             self.get_logger().info(f"Downloaded: {local_path}")

@@ -49,13 +49,16 @@ export class RosbridgeConnection extends EventTarget {
   }
 
   connect(url: string): void {
+    // nosemgrep: detect-insecure-websocket
     if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
       this.setState('error');
       return;
     }
+    // nosemgrep: detect-insecure-websocket
     if (url.startsWith('ws://') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
       // eslint-disable-next-line no-console
       console.warn(
+        // nosemgrep: detect-insecure-websocket
         'Unencrypted ws:// connection to non-localhost host. Use wss:// for remote robot control.'
       );
       this.setState('error');
@@ -63,6 +66,7 @@ export class RosbridgeConnection extends EventTarget {
         new CustomEvent('connection-error', {
           detail: {
             message:
+              // nosemgrep: detect-insecure-websocket
               'Insecure ws:// connection refused. Use wss:// for non-localhost robot control.',
           },
           bubbles: true,

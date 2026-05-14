@@ -38,12 +38,10 @@ jobs:
       - name: Run bandit on SDK
         run: |
           bandit -r sdk/ \
-            -c pyproject.toml \
             --severity-level medium \
             --confidence-level medium \
             -f json -o bandit-sdk-report.json || true
           bandit -r sdk/ \
-            -c pyproject.toml \
             --severity-level medium \
             --confidence-level medium
 

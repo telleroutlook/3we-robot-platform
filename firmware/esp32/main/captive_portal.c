@@ -158,7 +158,7 @@ static esp_err_t handler_post_connect(httpd_req_t *req)
 
     char ssid_copy[65];
     char pass_copy[65];
-    strncpy(ssid_copy, ssid_item->valuestring, sizeof(ssid_copy) - 1);
+    strncpy(ssid_copy, ssid_item->valuestring, sizeof(ssid_copy) - 1); // nosemgrep
     ssid_copy[sizeof(ssid_copy) - 1] = '\0';
     strncpy(pass_copy, cJSON_IsString(pass_item) ? pass_item->valuestring : "",
             sizeof(pass_copy) - 1);

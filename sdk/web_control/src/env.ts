@@ -6,7 +6,9 @@ const envSchema = z.object({
   VITE_ROSBRIDGE_URL: z
     .string()
     .url()
+    // nosemgrep: detect-insecure-websocket
     .refine((url) => url.startsWith('ws://') || url.startsWith('wss://'), {
+      // nosemgrep: detect-insecure-websocket
       message: 'VITE_ROSBRIDGE_URL must use ws:// or wss:// protocol',
     }),
 });

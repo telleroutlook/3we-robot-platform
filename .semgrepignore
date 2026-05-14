@@ -1,0 +1,7 @@
+# Test files — contain intentional insecure patterns for validation
+*.test.ts
+*.spec.ts
+tests/
+
+# Documentation — contains code examples with ws:// for illustration
+docs/

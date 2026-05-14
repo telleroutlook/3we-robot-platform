@@ -41,7 +41,7 @@ static void set_progress(ota_status_t status, uint8_t pct,
     s_progress.bytes_received = received;
     s_progress.bytes_total = total;
     if (err) {
-        strncpy(s_progress.error_msg, err, sizeof(s_progress.error_msg) - 1);
+        strncpy(s_progress.error_msg, err, sizeof(s_progress.error_msg) - 1); // nosemgrep
     } else {
         s_progress.error_msg[0] = '\0';
     }

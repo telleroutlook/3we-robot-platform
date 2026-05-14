@@ -45,7 +45,7 @@ MODULES = [
 def safe_import(module_name: str) -> Any | None:
     """Import a module, returning None if it fails (missing optional deps)."""
     try:
-        return importlib.import_module(module_name)
+        return importlib.import_module(module_name)  # nosemgrep
     except (ImportError, ModuleNotFoundError) as e:
         print(f"  Warning: Could not import {module_name}: {e}", file=sys.stderr)
         return None

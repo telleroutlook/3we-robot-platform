@@ -37,7 +37,11 @@ test.describe('Joystick component', () => {
   });
 
   test('joystick publishes cmd_vel on pointer interaction', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     // Dispatch pointer events directly on the shadow DOM canvas
     await page.evaluate(() => {
@@ -47,12 +51,22 @@ test.describe('Joystick component', () => {
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
 
-      canvas.dispatchEvent(new PointerEvent('pointerdown', {
-        clientX: cx, clientY: cy, bubbles: true, pointerId: 1
-      }));
-      canvas.dispatchEvent(new PointerEvent('pointermove', {
-        clientX: cx, clientY: cy - rect.height * 0.3, bubbles: true, pointerId: 1
-      }));
+      canvas.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          clientX: cx,
+          clientY: cy,
+          bubbles: true,
+          pointerId: 1,
+        })
+      );
+      canvas.dispatchEvent(
+        new PointerEvent('pointermove', {
+          clientX: cx,
+          clientY: cy - rect.height * 0.3,
+          bubbles: true,
+          pointerId: 1,
+        })
+      );
     });
 
     await page.waitForTimeout(100);
@@ -78,7 +92,11 @@ test.describe('Joystick component', () => {
   });
 
   test('releasing joystick sends zero velocity', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     const canvas = page.locator('robot-joystick').locator('canvas#canvas');
     const box = await canvas.boundingBox();
@@ -94,24 +112,35 @@ test.describe('Joystick component', () => {
     await page.waitForTimeout(60);
 
     // Release
+    mock.messages.length = 0;
     await page.mouse.up();
-    await page.waitForTimeout(100); // wait for publish cycle after release
 
-    // The last cmd_vel messages after release should be zero
-    const zeroMsg = mock.messages
-      .filter((msg: unknown) => {
-        const m = msg as { op?: string; topic?: string };
-        return m.op === 'publish' && m.topic === '/cmd_vel';
-      })
-      .pop() as { msg: { linear: { x: number }; angular: { z: number } } } | undefined;
+    // Wait for a zero-velocity cmd_vel message after release
+    const zeroMsg = (await mock.waitForMessage((msg: unknown) => {
+      const m = msg as {
+        op?: string;
+        topic?: string;
+        msg?: { linear?: { x?: number }; angular?: { z?: number } };
+      };
+      return (
+        m.op === 'publish' &&
+        m.topic === '/cmd_vel' &&
+        m.msg?.linear?.x === 0 &&
+        m.msg?.angular?.z === 0
+      );
+    })) as { msg: { linear: { x: number }; angular: { z: number } } };
 
     expect(zeroMsg).toBeTruthy();
-    expect(zeroMsg!.msg.linear.x).toBe(0);
-    expect(zeroMsg!.msg.angular.z).toBe(0);
+    expect(zeroMsg.msg.linear.x).toBe(0);
+    expect(zeroMsg.msg.angular.z).toBe(0);
   });
 
   test('dead zone prevents publishing non-zero velocity for small movements', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     const canvas = page.locator('robot-joystick').locator('canvas#canvas');
     const box = await canvas.boundingBox();
@@ -146,7 +175,11 @@ test.describe('Joystick component', () => {
   });
 
   test('linear velocity is capped at maxLinearVel (0.35 m/s)', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     const canvas = page.locator('robot-joystick').locator('canvas#canvas');
     const box = await canvas.boundingBox();
@@ -176,7 +209,11 @@ test.describe('Joystick component', () => {
   });
 
   test('angular velocity is capped at maxAngularVel (2.5 rad/s)', async ({ page }) => {
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
 
     const canvas = page.locator('robot-joystick').locator('canvas#canvas');
     const box = await canvas.boundingBox();
@@ -214,7 +251,11 @@ test.describe('Joystick component', () => {
     await page.waitForTimeout(50);
 
     // Now interact with joystick
-    const mock = (page as unknown as { __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never }).__mock;
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
     mock.messages.length = 0;
 
     const canvas = page.locator('robot-joystick').locator('canvas#canvas');
@@ -255,12 +296,22 @@ test.describe('Joystick component', () => {
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
 
-      canvas.dispatchEvent(new PointerEvent('pointerdown', {
-        clientX: cx, clientY: cy, bubbles: true, pointerId: 1
-      }));
-      canvas.dispatchEvent(new PointerEvent('pointermove', {
-        clientX: cx + rect.width * 0.2, clientY: cy - rect.height * 0.3, bubbles: true, pointerId: 1
-      }));
+      canvas.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          clientX: cx,
+          clientY: cy,
+          bubbles: true,
+          pointerId: 1,
+        })
+      );
+      canvas.dispatchEvent(
+        new PointerEvent('pointermove', {
+          clientX: cx + rect.width * 0.2,
+          clientY: cy - rect.height * 0.3,
+          bubbles: true,
+          pointerId: 1,
+        })
+      );
     });
 
     await page.waitForTimeout(50);
