@@ -12,6 +12,13 @@
 static int motor_stop_all_calls = 0;
 void motor_stop_all(void) { motor_stop_all_calls++; }
 
+// --- ISR deferred stop mocks ---
+static bool mock_isr_stop_pending = false;
+static int motor_clear_isr_stop_calls = 0;
+bool motor_isr_stop_pending(void) { return mock_isr_stop_pending; }
+void motor_clear_isr_stop(void) { motor_clear_isr_stop_calls++; mock_isr_stop_pending = false; }
+void motor_stop_all_isr(void) { mock_isr_stop_pending = true; }
+
 // --- Callback tracking ---
 static int callback_invoked = 0;
 static safety_state_t callback_last_state = SAFETY_NORMAL;
@@ -26,6 +33,8 @@ static void test_callback(safety_state_t state)
 static void safety_test_setUp(void)
 {
     motor_stop_all_calls = 0;
+    mock_isr_stop_pending = false;
+    motor_clear_isr_stop_calls = 0;
     callback_invoked = 0;
     callback_last_state = SAFETY_NORMAL;
 
@@ -364,4 +373,49 @@ void test_safety_callback_invoked_on_trigger(void)
 
     TEST_ASSERT_EQUAL(1, callback_invoked);
     TEST_ASSERT_EQUAL(SAFETY_ESTOPPED, callback_last_state);
+}
+
+// --- Test 22: ISR deferred stop fires in safety loop ---
+void test_isr_deferred_stop_fires_in_safety_loop(void)
+{
+    safety_test_setUp();
+    TEST_ASSERT_EQUAL(SAFETY_NORMAL, safety_get_state());
+
+    // Simulate ISR setting the pending flag
+    motor_stop_all_isr();
+    TEST_ASSERT_TRUE(motor_isr_stop_pending());
+
+    // Safety task loop iteration processes the deferred stop
+    safety_process_deferred_stop();
+
+    TEST_ASSERT_EQUAL(1, motor_stop_all_calls);
+    TEST_ASSERT_EQUAL(1, motor_clear_isr_stop_calls);
+    TEST_ASSERT_FALSE(motor_isr_stop_pending());
+}
+
+// --- Test 23: ISR deferred stop does not double-fire ---
+void test_isr_deferred_stop_not_double_fired(void)
+{
+    safety_test_setUp();
+
+    motor_stop_all_isr();
+    safety_process_deferred_stop();
+    TEST_ASSERT_EQUAL(1, motor_stop_all_calls);
+
+    // Second iteration with flag already cleared
+    safety_process_deferred_stop();
+    TEST_ASSERT_EQUAL(1, motor_stop_all_calls);
+    TEST_ASSERT_EQUAL(1, motor_clear_isr_stop_calls);
+}
+
+// --- Test 24: No stop when ISR flag not set ---
+void test_isr_deferred_stop_noop_when_not_pending(void)
+{
+    safety_test_setUp();
+    TEST_ASSERT_FALSE(motor_isr_stop_pending());
+
+    safety_process_deferred_stop();
+
+    TEST_ASSERT_EQUAL(0, motor_stop_all_calls);
+    TEST_ASSERT_EQUAL(0, motor_clear_isr_stop_calls);
 }

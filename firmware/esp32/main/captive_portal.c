@@ -7,6 +7,7 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_netif.h"
+#include "esp_https_server.h"
 #include "lwip/sockets.h"
 #include "cJSON.h"
 
@@ -19,6 +20,7 @@
 static const char *TAG = "captive_portal";
 
 static httpd_handle_t s_httpd = NULL;
+static httpd_handle_t s_http_redirect = NULL;
 static TaskHandle_t s_dns_task = NULL;
 static bool s_active = false;
 static captive_portal_done_cb_t s_done_cb = NULL;
@@ -26,6 +28,11 @@ static captive_portal_done_cb_t s_done_cb = NULL;
 #define DNS_PORT        53
 #define AP_IP           "192.168.4.1"
 #define DNS_STACK_SIZE  2048
+
+extern const unsigned char captive_portal_cert_pem_start[] asm("_binary_captive_portal_cert_pem_start");
+extern const unsigned char captive_portal_cert_pem_end[]   asm("_binary_captive_portal_cert_pem_end");
+extern const unsigned char captive_portal_key_pem_start[]  asm("_binary_captive_portal_key_pem_start");
+extern const unsigned char captive_portal_key_pem_end[]    asm("_binary_captive_portal_key_pem_end");
 
 static const char CONFIG_PAGE_HTML[] =
     "<!DOCTYPE html><html><head><meta charset='utf-8'>"
@@ -125,10 +132,17 @@ static esp_err_t handler_get_root(httpd_req_t *req)
     return httpd_resp_send(req, CONFIG_PAGE_HTML, sizeof(CONFIG_PAGE_HTML) - 1);
 }
 
+static esp_err_t handler_redirect_to_https(httpd_req_t *req)
+{
+    httpd_resp_set_status(req, "302 Found");
+    httpd_resp_set_hdr(req, "Location", "https://192.168.4.1/");
+    return httpd_resp_send(req, NULL, 0);
+}
+
 static esp_err_t handler_captive_detect(httpd_req_t *req)
 {
     httpd_resp_set_status(req, "302 Found");
-    httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/");
+    httpd_resp_set_hdr(req, "Location", "https://192.168.4.1/");
     return httpd_resp_send(req, NULL, 0);
 }
 
@@ -243,28 +257,47 @@ esp_err_t captive_portal_start(const captive_portal_config_t *config)
 
     ESP_LOGI(TAG, "AP started: %s (channel %d, pass=%s)", ap_ssid, channel, ap_pass);
 
-    // Start HTTP server
-    httpd_config_t httpd_cfg = HTTPD_DEFAULT_CONFIG();
-    httpd_cfg.max_uri_handlers = 8;
-    httpd_cfg.lru_purge_enable = true;
+    // Start HTTPS server with self-signed certificate
+    httpd_ssl_config_t https_cfg = HTTPD_SSL_CONFIG_DEFAULT();
+    https_cfg.httpd.max_uri_handlers = 8;
+    https_cfg.httpd.lru_purge_enable = true;
+    https_cfg.servercert = captive_portal_cert_pem_start;
+    https_cfg.servercert_len = captive_portal_cert_pem_end - captive_portal_cert_pem_start;
+    https_cfg.prvtkey_pem = captive_portal_key_pem_start;
+    https_cfg.prvtkey_len = captive_portal_key_pem_end - captive_portal_key_pem_start;
 
-    esp_err_t ret = httpd_start(&s_httpd, &httpd_cfg);
+    esp_err_t ret = httpd_ssl_start(&s_httpd, &https_cfg);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "HTTP server start failed: %s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "HTTPS server start failed: %s", esp_err_to_name(ret));
         return ret;
     }
 
     const httpd_uri_t uri_root = { .uri = "/", .method = HTTP_GET, .handler = handler_get_root };
-    const httpd_uri_t uri_204 = { .uri = "/generate_204", .method = HTTP_GET, .handler = handler_captive_detect };
-    const httpd_uri_t uri_hotspot = { .uri = "/hotspot-detect.html", .method = HTTP_GET, .handler = handler_captive_detect };
     const httpd_uri_t uri_connect = { .uri = "/connect", .method = HTTP_POST, .handler = handler_post_connect };
     const httpd_uri_t uri_status = { .uri = "/status", .method = HTTP_GET, .handler = handler_get_status };
 
     httpd_register_uri_handler(s_httpd, &uri_root);
-    httpd_register_uri_handler(s_httpd, &uri_204);
-    httpd_register_uri_handler(s_httpd, &uri_hotspot);
     httpd_register_uri_handler(s_httpd, &uri_connect);
     httpd_register_uri_handler(s_httpd, &uri_status);
+
+    // Start plain HTTP server for captive portal detection redirects
+    httpd_config_t http_cfg = HTTPD_DEFAULT_CONFIG();
+    http_cfg.max_uri_handlers = 4;
+    http_cfg.lru_purge_enable = true;
+    http_cfg.server_port = 80;
+
+    ret = httpd_start(&s_http_redirect, &http_cfg);
+    if (ret == ESP_OK) {
+        const httpd_uri_t uri_redirect = { .uri = "/", .method = HTTP_GET, .handler = handler_redirect_to_https };
+        const httpd_uri_t uri_204 = { .uri = "/generate_204", .method = HTTP_GET, .handler = handler_captive_detect };
+        const httpd_uri_t uri_hotspot = { .uri = "/hotspot-detect.html", .method = HTTP_GET, .handler = handler_captive_detect };
+
+        httpd_register_uri_handler(s_http_redirect, &uri_redirect);
+        httpd_register_uri_handler(s_http_redirect, &uri_204);
+        httpd_register_uri_handler(s_http_redirect, &uri_hotspot);
+    } else {
+        ESP_LOGW(TAG, "HTTP redirect server failed: %s (captive detection may not auto-redirect)", esp_err_to_name(ret));
+    }
 
     // Start DNS redirect task
     s_active = true;
@@ -273,7 +306,7 @@ esp_err_t captive_portal_start(const captive_portal_config_t *config)
         ESP_LOGW(TAG, "DNS task creation failed - captive detection may not work");
     }
 
-    ESP_LOGI(TAG, "Captive portal active at http://192.168.4.1/");
+    ESP_LOGI(TAG, "Captive portal active at https://192.168.4.1/");
     return ESP_OK;
 }
 
@@ -288,8 +321,13 @@ esp_err_t captive_portal_stop(void)
         s_dns_task = NULL;
     }
 
+    if (s_http_redirect) {
+        httpd_stop(s_http_redirect);
+        s_http_redirect = NULL;
+    }
+
     if (s_httpd) {
-        httpd_stop(s_httpd);
+        httpd_ssl_stop(s_httpd);
         s_httpd = NULL;
     }
 

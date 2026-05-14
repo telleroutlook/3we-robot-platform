@@ -247,14 +247,19 @@ TESTABLE_WEAK void safety_check_watchdog(void)
     }
 }
 
+void safety_process_deferred_stop(void)
+{
+    if (motor_isr_stop_pending()) {
+        motor_stop_all();
+        motor_clear_isr_stop();
+    }
+}
+
 void safety_task(void *params)
 {
     while (1) {
         // Process deferred ISR motor stop (ISR only sets a flag for safety)
-        if (motor_isr_stop_pending()) {
-            motor_stop_all();
-            motor_clear_isr_stop();
-        }
+        safety_process_deferred_stop();
 
         // Check hardware E-stop (debounced via ISR + periodic poll)
         portENTER_CRITICAL(&safety_spinlock);

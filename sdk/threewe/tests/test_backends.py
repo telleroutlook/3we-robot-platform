@@ -260,3 +260,54 @@ class TestSim2RealConsistencyContract:
         gz_map = self.gazebo.get_map()
         real_map = self.real.get_map()
         assert gz_map.data.dtype == real_map.data.dtype
+
+
+class TestCameraChannelOrder:
+    """Verify BGR→RGB conversion in _image_callback."""
+
+    def _make_image_msg(self, data: bytes, encoding: str, h: int, w: int):
+        msg = MagicMock()
+        msg.height = h
+        msg.width = w
+        msg.encoding = encoding
+        msg.data = data
+        return msg
+
+    def test_bgr8_converted_to_rgb(self):
+        from threewe.backends._ros2_node import ROS2Node
+
+        node = object.__new__(ROS2Node)
+        node._state_lock = __import__("threading").Lock()
+        node._latest_image = None
+
+        h, w = 2, 2
+        bgr_array = np.zeros((h, w, 3), dtype=np.uint8)
+        bgr_array[0, 0] = [255, 0, 0]  # pure blue in BGR
+        bgr_array[1, 1] = [0, 255, 0]  # pure green in BGR
+
+        msg = self._make_image_msg(bgr_array.tobytes(), "bgr8", h, w)
+        node._image_callback(msg)
+
+        result = node._latest_image
+        assert result[0, 0, 0] == 0  # R channel (was B=255 in BGR)
+        assert result[0, 0, 2] == 255  # B channel (was B=255, now at index 2)
+        assert result[1, 1, 1] == 255  # G stays at index 1
+
+    def test_rgb8_unchanged(self):
+        from threewe.backends._ros2_node import ROS2Node
+
+        node = object.__new__(ROS2Node)
+        node._state_lock = __import__("threading").Lock()
+        node._latest_image = None
+
+        h, w = 2, 2
+        rgb_array = np.zeros((h, w, 3), dtype=np.uint8)
+        rgb_array[0, 0] = [255, 0, 0]  # pure red in RGB
+
+        msg = self._make_image_msg(rgb_array.tobytes(), "rgb8", h, w)
+        node._image_callback(msg)
+
+        result = node._latest_image
+        assert result[0, 0, 0] == 255  # R channel unchanged
+        assert result[0, 0, 1] == 0
+        assert result[0, 0, 2] == 0

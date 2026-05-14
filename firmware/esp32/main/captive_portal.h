@@ -4,6 +4,7 @@
 
 #include "esp_err.h"
 #include "esp_http_server.h"
+#include "esp_https_server.h"
 
 #include <stdbool.h>
 

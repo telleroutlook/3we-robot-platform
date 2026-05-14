@@ -148,6 +148,9 @@ extern void test_safety_relay_selftest_fail_welded(void);
 extern void test_safety_clear_relay_fault_success(void);
 extern void test_safety_clear_relay_fault_wrong_state(void);
 extern void test_safety_callback_invoked_on_trigger(void);
+extern void test_isr_deferred_stop_fires_in_safety_loop(void);
+extern void test_isr_deferred_stop_not_double_fired(void);
+extern void test_isr_deferred_stop_noop_when_not_pending(void);
 
 // test_thermal_monitor.c
 extern void test_thermal_init_success(void);
@@ -498,6 +501,9 @@ int main(void)
     RUN_TEST(test_safety_clear_relay_fault_success);
     RUN_TEST(test_safety_clear_relay_fault_wrong_state);
     RUN_TEST(test_safety_callback_invoked_on_trigger);
+    RUN_TEST(test_isr_deferred_stop_fires_in_safety_loop);
+    RUN_TEST(test_isr_deferred_stop_not_double_fired);
+    RUN_TEST(test_isr_deferred_stop_noop_when_not_pending);
 
     // Thermal monitor (INA219)
     RUN_TEST(test_thermal_init_success);

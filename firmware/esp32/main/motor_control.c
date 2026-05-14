@@ -153,7 +153,7 @@ TESTABLE_WEAK void motor_stop_all(void)
     portEXIT_CRITICAL(&motor_spinlock);
 }
 
-void IRAM_ATTR motor_stop_all_isr(void)
+TESTABLE_WEAK void IRAM_ATTR motor_stop_all_isr(void)
 {
     // ISR-safe: only set flag. Hardware safety relay cuts power immediately;
     // this flag triggers software-level PWM zeroing from the safety task.
@@ -161,12 +161,12 @@ void IRAM_ATTR motor_stop_all_isr(void)
     stopped = true;
 }
 
-bool motor_isr_stop_pending(void)
+TESTABLE_WEAK bool motor_isr_stop_pending(void)
 {
     return isr_stop_requested;
 }
 
-void motor_clear_isr_stop(void)
+TESTABLE_WEAK void motor_clear_isr_stop(void)
 {
     isr_stop_requested = false;
 }

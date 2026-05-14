@@ -24,3 +24,6 @@ CONFIG_MBEDTLS_SSL_DTLS_ANTI_REPLAY=y
 # Certificate bundle for HTTPS verification (OTA downloads)
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
+
+# HTTPS server for captive portal (self-signed cert, defense-in-depth)
+CONFIG_ESP_HTTPS_SERVER_ENABLE=y
