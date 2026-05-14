@@ -148,6 +148,13 @@ The core abstraction is \texttt{BackendBase}, implemented by five backends:
 
 All backends return frozen dataclasses (\texttt{Pose2D}, \texttt{LaserScan}, \texttt{RGBDImage}) with identical fields and semantics, enforced by shared type definitions.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/simulation.pdf}
+\caption{Mock backend visualization: autonomous navigation in the \texttt{office\_v2} scene. The robot (blue) follows a planned path (orange) while 360$^\circ$ LiDAR rays (green) detect obstacles. This zero-dependency simulation runs on any machine without GPU or ROS2.}
+\label{fig:simulation}
+\end{figure}
+
 \subsection{API Design}
 
 The following example demonstrates the complete workflow for VLM-powered navigation:
