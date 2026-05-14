@@ -185,6 +185,7 @@ extern void test_captive_portal_store_rejects_null_ssid(void);
 extern void test_captive_portal_store_accepts_valid(void);
 extern void test_captive_portal_store_empty_password(void);
 extern void test_captive_portal_store_null_password(void);
+extern void test_captive_portal_ap_password_charset(void);
 
 // test_ota_update.c
 extern void test_ota_update_progress_initial_idle(void);
@@ -538,6 +539,7 @@ int main(void)
     RUN_TEST(test_captive_portal_store_accepts_valid);
     RUN_TEST(test_captive_portal_store_empty_password);
     RUN_TEST(test_captive_portal_store_null_password);
+    RUN_TEST(test_captive_portal_ap_password_charset);
 
     // OTA update
     RUN_TEST(test_ota_update_progress_initial_idle);

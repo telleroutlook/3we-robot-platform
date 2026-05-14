@@ -4,10 +4,13 @@
 
 #include "esp_log.h"
 #include "esp_mac.h"
+#include "esp_random.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_netif.h"
 #include "esp_https_server.h"
+#include "nvs_flash.h"
+#include "nvs.h"
 #include "lwip/sockets.h"
 #include "cJSON.h"
 
@@ -28,6 +31,43 @@ static captive_portal_done_cb_t s_done_cb = NULL;
 #define DNS_PORT        53
 #define AP_IP           "192.168.4.1"
 #define DNS_STACK_SIZE  2048
+
+#define NVS_NAMESPACE_CP  "captive_portal"
+#define NVS_KEY_AP_PASS   "ap_pass"
+#define AP_PASS_LEN       12
+
+static void _generate_random_password(char *buf, size_t len)
+{
+    static const char charset[] =
+        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    for (size_t i = 0; i < len; i++) {
+        buf[i] = charset[esp_random() % (sizeof(charset) - 1)];
+    }
+    buf[len] = '\0';
+}
+
+static void _get_or_create_ap_password(char *ap_pass, size_t buf_size)
+{
+    nvs_handle_t nvs;
+    bool loaded = false;
+
+    if (nvs_open(NVS_NAMESPACE_CP, NVS_READWRITE, &nvs) == ESP_OK) {
+        size_t pass_len = buf_size;
+        if (nvs_get_str(nvs, NVS_KEY_AP_PASS, ap_pass, &pass_len) == ESP_OK &&
+            pass_len > 1) {
+            loaded = true;
+        } else {
+            _generate_random_password(ap_pass, AP_PASS_LEN);
+            nvs_set_str(nvs, NVS_KEY_AP_PASS, ap_pass);
+            nvs_commit(nvs);
+        }
+        nvs_close(nvs);
+    }
+
+    if (!loaded && ap_pass[0] == '\0') {
+        _generate_random_password(ap_pass, AP_PASS_LEN);
+    }
+}
 
 extern const unsigned char captive_portal_cert_pem_start[] asm("_binary_captive_portal_cert_pem_start");
 extern const unsigned char captive_portal_cert_pem_end[]   asm("_binary_captive_portal_cert_pem_end");
@@ -235,10 +275,13 @@ esp_err_t captive_portal_start(const captive_portal_config_t *config)
     char ap_ssid[32];
     snprintf(ap_ssid, sizeof(ap_ssid), "RobotPlatform_%02X%02X", mac[4], mac[5]);
 
-    // Derive WPA2 passphrase from MAC to protect credential exchange
-    char ap_pass[16];
-    snprintf(ap_pass, sizeof(ap_pass), "RP%02X%02X%02X%02X",
-             mac[2], mac[3], mac[4], mac[5]);
+    // Get or generate random WPA2 passphrase (stored in NVS for persistence)
+    char ap_pass[AP_PASS_LEN + 1];
+    _get_or_create_ap_password(ap_pass, sizeof(ap_pass));
+
+    ESP_LOGW(TAG, "============================================");
+    ESP_LOGW(TAG, "  Provisioning AP password: %s", ap_pass);
+    ESP_LOGW(TAG, "============================================");
 
     wifi_config_t wifi_ap_cfg = {
         .ap = {

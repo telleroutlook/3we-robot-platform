@@ -91,3 +91,17 @@ void test_captive_portal_store_null_password(void)
     TEST_ASSERT_EQUAL_STRING("OpenNet", mock_nvs_ssid);
     TEST_ASSERT_EQUAL_STRING("", mock_nvs_pass);
 }
+
+// Test: AP password charset excludes ambiguous characters
+void test_captive_portal_ap_password_charset(void)
+{
+    static const char charset[] =
+        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    TEST_ASSERT_NULL(strchr(charset, '0'));
+    TEST_ASSERT_NULL(strchr(charset, 'O'));
+    TEST_ASSERT_NULL(strchr(charset, '1'));
+    TEST_ASSERT_NULL(strchr(charset, 'l'));
+    TEST_ASSERT_NULL(strchr(charset, 'I'));
+    TEST_ASSERT_NULL(strchr(charset, 'i'));
+    TEST_ASSERT_TRUE(strlen(charset) > 50);
+}
