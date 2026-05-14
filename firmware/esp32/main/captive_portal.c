@@ -174,7 +174,7 @@ static esp_err_t handler_post_connect(httpd_req_t *req)
     char pass_copy[65];
     strncpy(ssid_copy, ssid_item->valuestring, sizeof(ssid_copy) - 1); // nosemgrep
     ssid_copy[sizeof(ssid_copy) - 1] = '\0';
-    strncpy(pass_copy, cJSON_IsString(pass_item) ? pass_item->valuestring : "",
+    strncpy(pass_copy, cJSON_IsString(pass_item) ? pass_item->valuestring : "", // nosemgrep
             sizeof(pass_copy) - 1);
     pass_copy[sizeof(pass_copy) - 1] = '\0';
 

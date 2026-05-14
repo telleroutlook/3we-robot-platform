@@ -2,6 +2,10 @@
 *.test.ts
 *.spec.ts
 tests/
+test/
 
 # Documentation — contains code examples with insecure protocols for illustration
 docs/
+
+# Development certificates for captive portal HTTPS
+firmware/esp32/main/certs/

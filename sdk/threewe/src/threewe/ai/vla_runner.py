@@ -117,9 +117,9 @@ class VLARunner:
                 "PyTorch is required for PyTorch VLA models. Install with: pip install torch"
             ) from e
 
-        self._model = torch.load(
+        self._model = torch.load(  # nosemgrep
             str(path), map_location=self._device, weights_only=True
-        )  # nosemgrep
+        )
         if hasattr(self._model, "eval"):
             self._model.eval()
         self._config["runtime"] = "pytorch"

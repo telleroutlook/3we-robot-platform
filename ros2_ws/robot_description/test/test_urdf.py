@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Validates the robot URDF/Xacro model parses correctly and has expected structure."""
 
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # nosemgrep
 from pathlib import Path
 
 import pytest

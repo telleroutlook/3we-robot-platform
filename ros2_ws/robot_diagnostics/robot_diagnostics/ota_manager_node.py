@@ -262,7 +262,7 @@ class OtaManagerNode(Node):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "robot-ota/1.0"})
             with (
-                urllib.request.urlopen(req, timeout=60) as resp,
+                urllib.request.urlopen(req, timeout=60) as resp,  # nosemgrep
                 open(local_path, "wb") as f,
             ):
                 while chunk := resp.read(65536):

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Validates simulation configuration files, world files, and Gazebo Xacro overlay."""
 
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # nosemgrep
 from pathlib import Path
 
 import pytest
