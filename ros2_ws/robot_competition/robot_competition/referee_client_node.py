@@ -15,7 +15,9 @@ class RefereeClientNode(Node):
         self.declare_parameter("referee_port", 4444)
         self.declare_parameter("team_name", "3WE")
 
-        self.game_state_pub = self.create_publisher(String, "/competition/game_state", 10)
+        self.game_state_pub = self.create_publisher(
+            String, "/competition/game_state", 10
+        )
         self.order_pub = self.create_publisher(String, "/competition/orders", 10)
 
         # TODO: Implement TCP/gRPC connection to referee box

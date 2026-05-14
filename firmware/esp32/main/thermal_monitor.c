@@ -149,9 +149,11 @@ static void update_thermal_state(thermal_reading_t *r)
     r->effective_temp_c = fmaxf(r->estimated_temp_c, r->ntc_temp_c);
 
     thermal_state_t new_state;
-    if (r->effective_temp_c >= THERMAL_CRITICAL_TEMP_C ||
-        fabsf(r->current_ma) > (THERMAL_CURRENT_MAX_A * 1000.0f)) {
+    if (r->effective_temp_c >= THERMAL_SHUTDOWN_TEMP_C) {
         new_state = THERMAL_SHUTDOWN;
+    } else if (r->effective_temp_c >= THERMAL_CRITICAL_TEMP_C ||
+        fabsf(r->current_ma) > (THERMAL_CURRENT_MAX_A * 1000.0f)) {
+        new_state = THERMAL_CRITICAL;
     } else if (r->effective_temp_c >= THERMAL_WARNING_TEMP_C) {
         new_state = THERMAL_WARNING;
     } else if (state == THERMAL_WARNING &&
@@ -165,7 +167,11 @@ static void update_thermal_state(thermal_reading_t *r)
         state = new_state;
         if (state == THERMAL_SHUTDOWN) {
             safety_trigger_estop();
-            ESP_LOGE(TAG, "THERMAL SHUTDOWN: temp=%.1f°C, current=%.0fmA",
+            ESP_LOGE(TAG, "THERMAL SHUTDOWN: temp=%.1f°C — system must power off",
+                     r->effective_temp_c);
+        } else if (state == THERMAL_CRITICAL) {
+            safety_trigger_estop();
+            ESP_LOGE(TAG, "THERMAL CRITICAL: temp=%.1f°C, current=%.0fmA — E-stop triggered",
                      r->estimated_temp_c, r->current_ma);
         } else if (state == THERMAL_WARNING) {
             ESP_LOGW(TAG, "Thermal warning: temp=%.1f°C", r->estimated_temp_c);

@@ -255,7 +255,7 @@ esp_err_t captive_portal_start(const captive_portal_config_t *config)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_ap_cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "AP started: %s (channel %d, pass=%s)", ap_ssid, channel, ap_pass);
+    ESP_LOGI(TAG, "AP started: %s (channel %d)", ap_ssid, channel);
 
     // Start HTTPS server with self-signed certificate
     httpd_ssl_config_t https_cfg = HTTPD_SSL_CONFIG_DEFAULT();

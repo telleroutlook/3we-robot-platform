@@ -73,12 +73,16 @@ esp_err_t motor_init(void)
 void motor_set_speed(motor_id_t id, float speed_pct)
 {
     if (id >= MOTOR_COUNT) return;
-    if (safety_is_estopped()) return;
 
     float clamped = fmaxf(-1.0f, fminf(1.0f, speed_pct));
     uint32_t duty = (uint32_t)(fabsf(clamped) * PWM_DUTY_CAP * PWM_MAX_DUTY);
 
     portENTER_CRITICAL(&motor_spinlock);
+
+    if (safety_is_estopped()) {
+        portEXIT_CRITICAL(&motor_spinlock);
+        return;
+    }
 
     if (clamped >= 0.0f) {
         ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch, duty);

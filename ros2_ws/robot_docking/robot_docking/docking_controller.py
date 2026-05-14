@@ -76,9 +76,11 @@ class DockingController(Node):
 
         cb_group = ReentrantCallbackGroup()
 
-        self._nav2_client = ActionClient(
-            self, self._get_navigate_action_type(), "navigate_to_pose"
-        )
+        nav_action_type = self._get_navigate_action_type()
+        if nav_action_type is None:
+            self._nav2_client = None
+        else:
+            self._nav2_client = ActionClient(self, nav_action_type, "navigate_to_pose")
 
         dock_action_type = self._get_dock_action_type()
         if dock_action_type is None:
@@ -106,11 +108,9 @@ class DockingController(Node):
             return NavigateToPose
         except ImportError:
             self.get_logger().warn(
-                "nav2_msgs not available — using stub NavigateToPose"
+                "nav2_msgs not available — navigation action disabled"
             )
-            from nav2_msgs.action import NavigateToPose
-
-            return NavigateToPose
+            return None
 
     def _get_dock_action_type(self):
         try:
@@ -193,6 +193,11 @@ class DockingController(Node):
         self.get_logger().info(
             f"Sending Nav2 goal: ({wp_x:.2f}, {wp_y:.2f}, yaw={wp_yaw:.2f})"
         )
+
+        if self._nav2_client is None:
+            self.get_logger().error("Nav2 client unavailable (nav2_msgs not installed)")
+            self._stage = DockingStage.FAILED
+            return
 
         if not self._nav2_client.wait_for_server(timeout_sec=5.0):
             self.get_logger().error("Nav2 action server not available")

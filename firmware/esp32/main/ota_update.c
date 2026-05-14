@@ -290,7 +290,8 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
     if (cooldown_s > OTA_RATE_LIMIT_MAX_S) cooldown_s = OTA_RATE_LIMIT_MAX_S;
     if (s_last_upload_us != 0 && (now_us - s_last_upload_us) < (int64_t)cooldown_s * 1000000LL) {
         ESP_LOGW(TAG, "OTA upload rate-limited (cooldown %lus)", (unsigned long)cooldown_s);
-        httpd_resp_send_err(req, HTTPD_408_REQ_TIMEOUT, "Rate limited, try again later");
+        httpd_resp_set_status(req, "429 Too Many Requests");
+        httpd_resp_send(req, "Rate limited, try again later", HTTPD_RESP_USE_STRLEN);
         return ESP_FAIL;
     }
     s_last_upload_us = now_us;

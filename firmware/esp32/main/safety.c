@@ -228,22 +228,20 @@ void safety_feed_watchdog(void)
 
 TESTABLE_WEAK void safety_check_watchdog(void)
 {
+    bool should_estop = false;
     portENTER_CRITICAL(&safety_spinlock);
-    safety_state_t current_state = state;
-    portEXIT_CRITICAL(&safety_spinlock);
-    if (current_state == SAFETY_NORMAL) {
-        portENTER_CRITICAL(&safety_spinlock);
-        int64_t last_feed = last_watchdog_feed;
-        portEXIT_CRITICAL(&safety_spinlock);
-        int64_t elapsed = esp_timer_get_time() - last_feed;
+    if (state == SAFETY_NORMAL) {
+        int64_t elapsed = esp_timer_get_time() - last_watchdog_feed;
         if (elapsed >= (WATCHDOG_TIMEOUT_MS * 1000LL)) {
-            portENTER_CRITICAL(&safety_spinlock);
             state = SAFETY_ESTOPPED;
-            portEXIT_CRITICAL(&safety_spinlock);
-            motor_stop_all();
-            notify_state_change(SAFETY_ESTOPPED);
-            ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
+            should_estop = true;
         }
+    }
+    portEXIT_CRITICAL(&safety_spinlock);
+    if (should_estop) {
+        motor_stop_all();
+        notify_state_change(SAFETY_ESTOPPED);
+        ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
     }
 }
 
