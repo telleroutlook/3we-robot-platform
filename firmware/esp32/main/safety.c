@@ -28,6 +28,8 @@ static volatile int64_t last_watchdog_feed = 0;
 static safety_callback_t user_callback = NULL;
 static float speed_limit_mps = DEFAULT_SPEED_LIMIT;
 static volatile uint8_t relay_fault_count = 0;
+static volatile uint8_t relay_healthy_count = 0;
+#define RELAY_HEALTHY_THRESHOLD 10
 
 static void persist_relay_fault(void);
 
@@ -258,6 +260,7 @@ void safety_task(void *params)
         // Dual-channel consistency check: both channels must agree
         if (relay_fb != relay_fb2) {
             portENTER_CRITICAL(&safety_spinlock);
+            relay_healthy_count = 0;
             if (relay_fault_count < UINT8_MAX) relay_fault_count++;
             uint8_t fault_count = relay_fault_count;
             if (fault_count >= 3) {
@@ -280,6 +283,7 @@ void safety_task(void *params)
         portENTER_CRITICAL(&safety_spinlock);
         current_state = state;
         if (current_state == SAFETY_NORMAL && relay_fb == 0) {
+            relay_healthy_count = 0;
             if (relay_fault_count < UINT8_MAX) relay_fault_count++;
             uint8_t fault_count = relay_fault_count;
             if (fault_count >= 3) {
@@ -298,6 +302,7 @@ void safety_task(void *params)
             }
             ESP_LOGE(TAG, "RELAY FAULT: relay unexpectedly de-energized in NORMAL state");
         } else if (current_state == SAFETY_ESTOPPED && relay_fb != 0) {
+            relay_healthy_count = 0;
             if (relay_fault_count < UINT8_MAX) relay_fault_count++;
             uint8_t fault_count = relay_fault_count;
             if (fault_count >= 3) {
@@ -314,7 +319,11 @@ void safety_task(void *params)
             portEXIT_CRITICAL(&safety_spinlock);
             motor_stop_all();
         } else {
-            relay_fault_count = 0;  /* both channels healthy and state consistent — clear transient faults */
+            relay_healthy_count++;
+            if (relay_healthy_count >= RELAY_HEALTHY_THRESHOLD) {
+                relay_fault_count = 0;
+                relay_healthy_count = 0;
+            }
             portEXIT_CRITICAL(&safety_spinlock);
         }
 

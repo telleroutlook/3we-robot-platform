@@ -72,16 +72,12 @@ esp_err_t motor_init(void)
 void motor_set_speed(motor_id_t id, float speed_pct)
 {
     if (id >= MOTOR_COUNT) return;
+    if (safety_is_estopped()) return;
 
     float clamped = fmaxf(-1.0f, fminf(1.0f, speed_pct));
     uint32_t duty = (uint32_t)(fabsf(clamped) * PWM_DUTY_CAP * PWM_MAX_DUTY);
 
     portENTER_CRITICAL(&motor_spinlock);
-
-    if (safety_is_estopped()) {
-        portEXIT_CRITICAL(&motor_spinlock);
-        return;
-    }
 
     if (clamped >= 0.0f) {
         ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[id].in1_ch, duty);
@@ -133,11 +129,6 @@ motor_output_t motor_mecanum_drive(const cmd_vel_t *cmd)
 
     for (int i = 0; i < MOTOR_COUNT; i++) {
         out.speeds[i] = (raw[i] * scale) / MAX_LINEAR_VEL;
-        if (safety_is_estopped()) {
-            motor_stop_all();
-            memset(&out, 0, sizeof(out));
-            return out;
-        }
         motor_set_speed((motor_id_t)i, out.speeds[i]);
     }
 

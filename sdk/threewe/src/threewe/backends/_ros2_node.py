@@ -144,17 +144,17 @@ class ROS2Node:
     def _image_callback(self, msg) -> None:
         h, w = msg.height, msg.width
         if msg.encoding == "bgr8":
-            image = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
+            img = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3).copy()
+            image = img[:, :, ::-1]
         elif msg.encoding == "rgb8":
-            img = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
-            image = img[:, :, ::-1].copy()
+            image = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3).copy()
         else:
             import logging
 
             logging.getLogger(__name__).warning(
-                "Unknown image encoding %s, attempting bgr8 parse", msg.encoding
+                "Unknown image encoding %s, attempting raw parse", msg.encoding
             )
-            image = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3)
+            image = np.frombuffer(msg.data, dtype=np.uint8).reshape(h, w, 3).copy()
         with self._state_lock:
             self._latest_image = image
 
@@ -420,20 +420,37 @@ class ROS2Node:
             return MoveResult(success=True, final_pose=self._latest_pose, reason="reached")
 
         direction = 1.0 if distance >= 0 else -1.0
-        start_pose = self._latest_pose
+        timeout = abs(distance) / speed * 3.0
+        start_time = time.time()
+        with self._state_lock:
+            start_pose = self._latest_pose
         traveled = 0.0
 
         while traveled < abs(distance):
+            if time.time() - start_time > timeout:
+                self.stop()
+                with self._state_lock:
+                    final_pose = self._latest_pose
+                return MoveResult(
+                    success=False,
+                    final_pose=final_pose,
+                    distance=traveled,
+                    reason="timeout",
+                )
             self.set_velocity(direction * speed, 0.0, 0.0)
             await asyncio.sleep(0.05)
-            dx = self._latest_pose.x - start_pose.x
-            dy = self._latest_pose.y - start_pose.y
+            with self._state_lock:
+                current_pose = self._latest_pose
+            dx = current_pose.x - start_pose.x
+            dy = current_pose.y - start_pose.y
             traveled = math.sqrt(dx * dx + dy * dy)
 
         self.stop()
+        with self._state_lock:
+            final_pose = self._latest_pose
         return MoveResult(
             success=True,
-            final_pose=self._latest_pose,
+            final_pose=final_pose,
             distance=traveled,
             reason="reached",
         )
@@ -447,19 +464,35 @@ class ROS2Node:
             return MoveResult(success=True, final_pose=self._latest_pose, reason="reached")
 
         direction = 1.0 if angle >= 0 else -1.0
-        start_theta = self._latest_pose.theta
+        timeout = abs(angle) / speed * 3.0
+        start_time = time.time()
+        with self._state_lock:
+            start_theta = self._latest_pose.theta
         rotated = 0.0
 
         while rotated < abs(angle):
+            if time.time() - start_time > timeout:
+                self.stop()
+                with self._state_lock:
+                    final_pose = self._latest_pose
+                return MoveResult(
+                    success=False,
+                    final_pose=final_pose,
+                    reason="timeout",
+                )
             self.set_velocity(0.0, 0.0, direction * speed)
             await asyncio.sleep(0.05)
-            diff = self._latest_pose.theta - start_theta
+            with self._state_lock:
+                current_theta = self._latest_pose.theta
+            diff = current_theta - start_theta
             rotated = abs(math.atan2(math.sin(diff), math.cos(diff)))
 
         self.stop()
+        with self._state_lock:
+            final_pose = self._latest_pose
         return MoveResult(
             success=True,
-            final_pose=self._latest_pose,
+            final_pose=final_pose,
             reason="reached",
         )
 

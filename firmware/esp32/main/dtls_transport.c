@@ -23,6 +23,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "esp_mac.h"
 
 #include <string.h>
 
@@ -178,8 +179,13 @@ esp_err_t dtls_init(const dtls_config_t *config)
     mbedtls_ssl_cache_init(&cache_ctx);
     mbedtls_net_init(&listen_fd);
 
+    uint8_t mac[6];
+    esp_efuse_mac_get_default(mac);
+    uint8_t pers[20];
+    memcpy(pers, "robot-platform", 14);
+    memcpy(pers + 14, mac, 6);
     int ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
-                                     (const unsigned char *)"robot-platform", 14);
+                                     pers, sizeof(pers));
     if (ret != 0) {
         ESP_LOGE(TAG, "DRBG seed failed: -0x%04x", -ret);
         return ESP_FAIL;
@@ -585,9 +591,9 @@ static void evict_timed_out_sessions(void)
         }
     }
 
-    uint32_t idle_timeout_us = current_config.authority_idle_timeout_ms * 1000U;
-    if (idle_timeout_us == 0) idle_timeout_us = DTLS_AUTHORITY_IDLE_MS * 1000U;
-    if (authority_check_idle(&authority, now, idle_timeout_us)) {
+    int64_t idle_timeout_us = (int64_t)current_config.authority_idle_timeout_ms * 1000;
+    if (idle_timeout_us == 0) idle_timeout_us = (int64_t)DTLS_AUTHORITY_IDLE_MS * 1000;
+    if (authority_check_idle(&authority, now, (uint32_t)idle_timeout_us)) {
         ESP_LOGW(TAG, "Authority holder idle-timed out, control released");
     }
 }

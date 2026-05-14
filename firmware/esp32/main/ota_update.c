@@ -437,14 +437,26 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
 static esp_err_t handler_ota_status(httpd_req_t *req)
 {
     ota_progress_t p = ota_update_get_progress();
-    char resp[256];
+    char escaped_error[256] = {0};
+    size_t j = 0;
+    for (size_t i = 0; p.error_msg[i] != '\0' && j < sizeof(escaped_error) - 2; i++) {
+        char c = p.error_msg[i];
+        if (c == '"' || c == '\\') {
+            escaped_error[j++] = '\\';
+        }
+        if (j < sizeof(escaped_error) - 1) {
+            escaped_error[j++] = c;
+        }
+    }
+    escaped_error[j] = '\0';
+    char resp[512];
     snprintf(resp, sizeof(resp),
              "{\"status\":%d,\"progress\":%d,\"received\":%lu,\"total\":%lu,"
              "\"version\":\"0x%08lX\",\"error\":\"%s\"}",
              (int)p.status, (int)p.progress_pct,
              (unsigned long)p.bytes_received, (unsigned long)p.bytes_total,
              (unsigned long)ota_get_current_version(),
-             p.error_msg);
+             escaped_error);
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_send(req, resp, -1);
 }
