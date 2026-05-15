@@ -18,6 +18,16 @@ where the same 5 lines of Python run identically in simulation and on real hardw
 
 > **Note:** The animation above is a concept demo (generated with matplotlib), not a Gazebo simulation or real hardware recording. It illustrates the target API and navigation behavior.
 
+### Try it now — 30 seconds, zero dependencies beyond numpy
+
+[![asciicast](https://asciinema.org/a/akn7EAEkGo9VmOZv.svg)](https://asciinema.org/a/akn7EAEkGo9VmOZv)
+
+```bash
+git clone https://github.com/telleroutlook/3we-robot-platform.git
+cd 3we-robot-platform && pip install -e sdk/threewe/
+python examples/navigate_office.py
+```
+
 </div>
 
 ---
@@ -81,19 +91,8 @@ asyncio.run(main())
 
 > **Backends**: Use `backend="mock"` to try the API instantly, `"gazebo"` for physics simulation (requires ROS2), `"isaac_sim"` for GPU-accelerated parallel simulation, or `"real"` for physical hardware.
 
-### See It in Action
-
-[![asciicast](https://asciinema.org/a/akn7EAEkGo9VmOZv.svg)](https://asciinema.org/a/akn7EAEkGo9VmOZv)
-
-Or run the demo yourself:
-
-```bash
-pip install -e sdk/threewe/
-python examples/navigate_office.py
-```
-
 <details>
-<summary><b>Terminal Demo — expected output</b></summary>
+<summary><b>Expected output from navigate_office.py</b></summary>
 
 ```console
 $ pip install -e sdk/threewe/
