@@ -18,13 +18,12 @@ Usage:
 
 import math
 import os
-import sys
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.patches import Circle, FancyArrowPatch, Wedge, FancyBboxPatch
+from matplotlib.patches import Circle, Wedge
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 import numpy as np
 
@@ -137,7 +136,7 @@ def generate_smooth_path(waypoints, points_per_segment=30):
     wp = np.array(waypoints)
     t = np.zeros(len(wp))
     for i in range(1, len(wp)):
-        t[i] = t[i-1] + np.linalg.norm(wp[i] - wp[i-1])
+        t[i] = t[i - 1] + np.linalg.norm(wp[i] - wp[i - 1])
 
     t_fine = np.linspace(t[0], t[-1], len(wp) * points_per_segment)
     cs_x = CubicSpline(t, wp[:, 0])
@@ -154,7 +153,7 @@ def generate_linear_path(waypoints, step=0.08):
     for i in range(1, len(waypoints)):
         sx, sy = trajectory[-1]
         gx, gy = waypoints[i]
-        dist = math.sqrt((gx - sx)**2 + (gy - sy)**2)
+        dist = math.sqrt((gx - sx) ** 2 + (gy - sy) ** 2)
         n_steps = max(1, int(dist / step))
         for j in range(1, n_steps + 1):
             t = j / n_steps
@@ -186,9 +185,9 @@ def build_trajectory():
 
 # === Animation State ===
 
-TITLE_FRAMES = 60       # 2s
-ARRIVE_FRAMES = 60      # 2s
-SUMMARY_FRAMES = 90     # 3s
+TITLE_FRAMES = 60  # 2s
+ARRIVE_FRAMES = 60  # 2s
+SUMMARY_FRAMES = 90  # 3s
 
 trajectory, waypoints = build_trajectory()
 
@@ -248,36 +247,77 @@ def setup_scene(ax):
         ax.axhline(y, color=C["grid"], linewidth=0.3, zorder=0)
 
     # Boundary
-    boundary = plt.Rectangle((0, 0), SCENE_W, SCENE_H,
-                              fill=False, edgecolor=C["wall"],
-                              linewidth=2.0, zorder=2)
+    boundary = plt.Rectangle(
+        (0, 0),
+        SCENE_W,
+        SCENE_H,
+        fill=False,
+        edgecolor=C["wall"],
+        linewidth=2.0,
+        zorder=2,
+    )
     ax.add_patch(boundary)
 
     # Obstacles
     for obs in OBSTACLES:
         x_min, y_min, x_max, y_max = obs
-        rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min,
-                              facecolor=C["obstacle_fill"],
-                              edgecolor=C["obstacle"],
-                              linewidth=1.0, zorder=3, alpha=0.8)
+        rect = plt.Rectangle(
+            (x_min, y_min),
+            x_max - x_min,
+            y_max - y_min,
+            facecolor=C["obstacle_fill"],
+            edgecolor=C["obstacle"],
+            linewidth=1.0,
+            zorder=3,
+            alpha=0.8,
+        )
         ax.add_patch(rect)
 
     # Labels
     for lx, ly, label in OBSTACLE_LABELS:
-        ax.text(lx, ly, label, ha="center", va="center",
-                fontsize=7, color=C["text_dim"], fontstyle="italic", zorder=4)
+        ax.text(
+            lx,
+            ly,
+            label,
+            ha="center",
+            va="center",
+            fontsize=7,
+            color=C["text_dim"],
+            fontstyle="italic",
+            zorder=4,
+        )
 
     # Start & Goal markers
     ax.plot(*waypoints[0], "s", color=C["start"], markersize=10, zorder=6)
     ax.plot(*waypoints[-1], "*", color=C["goal"], markersize=14, zorder=6)
-    ax.text(waypoints[0][0], waypoints[0][1] - 0.8, "Start",
-            ha="center", fontsize=8, color=C["start"], fontweight="bold")
-    ax.text(waypoints[-1][0], waypoints[-1][1] + 0.8, "Goal",
-            ha="center", fontsize=8, color=C["goal"], fontweight="bold")
+    ax.text(
+        waypoints[0][0],
+        waypoints[0][1] - 0.8,
+        "Start",
+        ha="center",
+        fontsize=8,
+        color=C["start"],
+        fontweight="bold",
+    )
+    ax.text(
+        waypoints[-1][0],
+        waypoints[-1][1] + 0.8,
+        "Goal",
+        ha="center",
+        fontsize=8,
+        color=C["goal"],
+        fontweight="bold",
+    )
 
     # Scene label
-    ax.text(SCENE_W / 2, SCENE_H + 0.5, "office_v2  (20m × 15m)",
-            ha="center", fontsize=9, color=C["text_dim"])
+    ax.text(
+        SCENE_W / 2,
+        SCENE_H + 0.5,
+        "office_v2  (20m × 15m)",
+        ha="center",
+        fontsize=9,
+        color=C["text_dim"],
+    )
 
 
 def draw_robot(ax, x, y, theta, lidar=True):
@@ -291,35 +331,59 @@ def draw_robot(ax, x, y, theta, lidar=True):
             dist = raycast(x, y, ray_angle, OBSTACLES, SCENE_W, SCENE_H)
             hit_x = x + dist * math.cos(ray_angle)
             hit_y = y + dist * math.sin(ray_angle)
-            ax.plot([x, hit_x], [y, hit_y], color=C["lidar"],
-                    linewidth=0.3, alpha=0.35, zorder=4)
-            ax.plot(hit_x, hit_y, ".", color=C["lidar_hit"],
-                    markersize=1.5, alpha=0.7, zorder=5)
+            ax.plot(
+                [x, hit_x],
+                [y, hit_y],
+                color=C["lidar"],
+                linewidth=0.3,
+                alpha=0.35,
+                zorder=4,
+            )
+            ax.plot(
+                hit_x,
+                hit_y,
+                ".",
+                color=C["lidar_hit"],
+                markersize=1.5,
+                alpha=0.7,
+                zorder=5,
+            )
 
     # FOV wedge
     fov_deg = 120
     fov_radius = 2.0
-    wedge = Wedge((x, y), fov_radius,
-                  math.degrees(theta) - fov_deg / 2,
-                  math.degrees(theta) + fov_deg / 2,
-                  facecolor=C["robot_fill"], edgecolor="none",
-                  alpha=0.25, zorder=3)
+    wedge = Wedge(
+        (x, y),
+        fov_radius,
+        math.degrees(theta) - fov_deg / 2,
+        math.degrees(theta) + fov_deg / 2,
+        facecolor=C["robot_fill"],
+        edgecolor="none",
+        alpha=0.25,
+        zorder=3,
+    )
     ax.add_patch(wedge)
 
     # Robot body
-    robot_circle = Circle((x, y), ROBOT_RADIUS * 3,
-                          facecolor=C["robot_fill"],
-                          edgecolor=C["robot"],
-                          linewidth=1.5, zorder=7)
+    robot_circle = Circle(
+        (x, y),
+        ROBOT_RADIUS * 3,
+        facecolor=C["robot_fill"],
+        edgecolor=C["robot"],
+        linewidth=1.5,
+        zorder=7,
+    )
     ax.add_patch(robot_circle)
 
     # Heading arrow
     arrow_len = ROBOT_RADIUS * 5
-    ax.annotate("", xy=(x + arrow_len * math.cos(theta),
-                        y + arrow_len * math.sin(theta)),
-                xytext=(x, y),
-                arrowprops=dict(arrowstyle="->", color=C["robot"], lw=2.0),
-                zorder=8)
+    ax.annotate(
+        "",
+        xy=(x + arrow_len * math.cos(theta), y + arrow_len * math.sin(theta)),
+        xytext=(x, y),
+        arrowprops=dict(arrowstyle="->", color=C["robot"], lw=2.0),
+        zorder=8,
+    )
 
 
 def render_title(frame, fig, ax_main, ax_hud):
@@ -331,16 +395,49 @@ def render_title(frame, fig, ax_main, ax_hud):
 
     alpha = min(1.0, frame / 30.0)
 
-    ax_main.text(5, 6.5, "3we", ha="center", va="center",
-                 fontsize=72, fontweight="bold", color=C["robot"], alpha=alpha,
-                 fontfamily="monospace")
-    ax_main.text(5, 4.8, "Open Infrastructure for Embodied AI",
-                 ha="center", va="center", fontsize=20, color=C["text"], alpha=alpha)
-    ax_main.text(5, 3.5, "Autonomous Navigation Demo  ·  office_v2 scene",
-                 ha="center", va="center", fontsize=13, color=C["text_dim"], alpha=alpha)
-    ax_main.text(5, 2.2, "github.com/telleroutlook/3we-robot-platform",
-                 ha="center", va="center", fontsize=10, color=C["text_dim"],
-                 alpha=alpha * 0.7, fontfamily="monospace")
+    ax_main.text(
+        5,
+        6.5,
+        "3we",
+        ha="center",
+        va="center",
+        fontsize=72,
+        fontweight="bold",
+        color=C["robot"],
+        alpha=alpha,
+        fontfamily="monospace",
+    )
+    ax_main.text(
+        5,
+        4.8,
+        "Open Infrastructure for Embodied AI",
+        ha="center",
+        va="center",
+        fontsize=20,
+        color=C["text"],
+        alpha=alpha,
+    )
+    ax_main.text(
+        5,
+        3.5,
+        "Autonomous Navigation Demo  ·  office_v2 scene",
+        ha="center",
+        va="center",
+        fontsize=13,
+        color=C["text_dim"],
+        alpha=alpha,
+    )
+    ax_main.text(
+        5,
+        2.2,
+        "github.com/telleroutlook/3we-robot-platform",
+        ha="center",
+        va="center",
+        fontsize=10,
+        color=C["text_dim"],
+        alpha=alpha * 0.7,
+        fontfamily="monospace",
+    )
 
     ax_hud.set_facecolor(C["bg"])
     ax_hud.axis("off")
@@ -353,23 +450,44 @@ def render_navigation(nav_frame, fig, ax_main, ax_hud):
     x, y, theta, idx = get_robot_state(nav_frame)
 
     # Trajectory trail (already visited)
-    trail = trajectory[:idx+1]
+    trail = trajectory[: idx + 1]
     if len(trail) > 1:
         tx = [p[0] for p in trail]
         ty = [p[1] for p in trail]
-        ax_main.plot(tx, ty, color=C["trajectory"], linewidth=2.0,
-                     alpha=0.85, zorder=5, solid_capstyle="round")
+        ax_main.plot(
+            tx,
+            ty,
+            color=C["trajectory"],
+            linewidth=2.0,
+            alpha=0.85,
+            zorder=5,
+            solid_capstyle="round",
+        )
         # Glow effect
-        ax_main.plot(tx, ty, color=C["trajectory_glow"], linewidth=4.0,
-                     alpha=0.15, zorder=4, solid_capstyle="round")
+        ax_main.plot(
+            tx,
+            ty,
+            color=C["trajectory_glow"],
+            linewidth=4.0,
+            alpha=0.15,
+            zorder=4,
+            solid_capstyle="round",
+        )
 
     # Planned path (faded)
     future = trajectory[idx:]
     if len(future) > 1:
         fx = [p[0] for p in future]
         fy = [p[1] for p in future]
-        ax_main.plot(fx, fy, color=C["waypoint"], linewidth=1.0,
-                     alpha=0.3, linestyle="--", zorder=4)
+        ax_main.plot(
+            fx,
+            fy,
+            color=C["waypoint"],
+            linewidth=1.0,
+            alpha=0.3,
+            linestyle="--",
+            zorder=4,
+        )
 
     draw_robot(ax_main, x, y, theta)
 
@@ -381,42 +499,91 @@ def render_navigation(nav_frame, fig, ax_main, ax_hud):
 
     progress = idx / max(1, len(trajectory) - 1)
     dist_traveled = sum(
-        math.sqrt((trajectory[i+1][0]-trajectory[i][0])**2 +
-                  (trajectory[i+1][1]-trajectory[i][1])**2)
-        for i in range(min(idx, len(trajectory)-1))
+        math.sqrt(
+            (trajectory[i + 1][0] - trajectory[i][0]) ** 2
+            + (trajectory[i + 1][1] - trajectory[i][1]) ** 2
+        )
+        for i in range(min(idx, len(trajectory) - 1))
     )
 
     # Code display
     code_lines = [
-        'from threewe import Robot',
-        '',
+        "from threewe import Robot",
+        "",
         'async with Robot(backend="mock") as robot:',
-        '    await robot.navigate_to(11.0, 12.0)',
+        "    await robot.navigate_to(11.0, 12.0)",
     ]
     code_y = 0.85
     for i, line in enumerate(code_lines):
         color = C["code"]
-        if "from" in line or "import" in line or "async" in line or "with" in line or "await" in line:
+        if (
+            "from" in line
+            or "import" in line
+            or "async" in line
+            or "with" in line
+            or "await" in line
+        ):
             color = C["code_kw"]
         elif '"' in line:
             color = C["code_str"]
-        ax_hud.text(0.3, code_y - i * 0.22, line, fontsize=9,
-                    color=color, fontfamily="monospace", va="top")
+        ax_hud.text(
+            0.3,
+            code_y - i * 0.22,
+            line,
+            fontsize=9,
+            color=color,
+            fontfamily="monospace",
+            va="top",
+        )
 
     # Stats on right
-    ax_hud.text(7.5, 0.75, f"Position: ({x:.1f}, {y:.1f})", fontsize=9,
-                color=C["text_dim"], fontfamily="monospace")
-    ax_hud.text(7.5, 0.50, f"Distance: {dist_traveled:.1f}m", fontsize=9,
-                color=C["text_dim"], fontfamily="monospace")
-    ax_hud.text(7.5, 0.25, f"Progress: {progress*100:.0f}%", fontsize=9,
-                color=C["trajectory"], fontfamily="monospace")
+    ax_hud.text(
+        7.5,
+        0.75,
+        f"Position: ({x:.1f}, {y:.1f})",
+        fontsize=9,
+        color=C["text_dim"],
+        fontfamily="monospace",
+    )
+    ax_hud.text(
+        7.5,
+        0.50,
+        f"Distance: {dist_traveled:.1f}m",
+        fontsize=9,
+        color=C["text_dim"],
+        fontfamily="monospace",
+    )
+    ax_hud.text(
+        7.5,
+        0.25,
+        f"Progress: {progress * 100:.0f}%",
+        fontsize=9,
+        color=C["trajectory"],
+        fontfamily="monospace",
+    )
 
     # Progress bar
     bar_x, bar_y, bar_w, bar_h = 7.4, 0.05, 2.3, 0.08
-    ax_hud.add_patch(plt.Rectangle((bar_x, bar_y), bar_w, bar_h,
-                                    facecolor=C["grid"], edgecolor="none", zorder=2))
-    ax_hud.add_patch(plt.Rectangle((bar_x, bar_y), bar_w * progress, bar_h,
-                                    facecolor=C["trajectory"], edgecolor="none", zorder=3))
+    ax_hud.add_patch(
+        plt.Rectangle(
+            (bar_x, bar_y),
+            bar_w,
+            bar_h,
+            facecolor=C["grid"],
+            edgecolor="none",
+            zorder=2,
+        )
+    )
+    ax_hud.add_patch(
+        plt.Rectangle(
+            (bar_x, bar_y),
+            bar_w * progress,
+            bar_h,
+            facecolor=C["trajectory"],
+            edgecolor="none",
+            zorder=3,
+        )
+    )
 
 
 def render_arrival(frame, fig, ax_main, ax_hud):
@@ -426,10 +593,24 @@ def render_arrival(frame, fig, ax_main, ax_hud):
     # Full trajectory
     tx = [p[0] for p in trajectory]
     ty = [p[1] for p in trajectory]
-    ax_main.plot(tx, ty, color=C["trajectory"], linewidth=2.0,
-                 alpha=0.85, zorder=5, solid_capstyle="round")
-    ax_main.plot(tx, ty, color=C["trajectory_glow"], linewidth=4.0,
-                 alpha=0.15, zorder=4, solid_capstyle="round")
+    ax_main.plot(
+        tx,
+        ty,
+        color=C["trajectory"],
+        linewidth=2.0,
+        alpha=0.85,
+        zorder=5,
+        solid_capstyle="round",
+    )
+    ax_main.plot(
+        tx,
+        ty,
+        color=C["trajectory_glow"],
+        linewidth=4.0,
+        alpha=0.15,
+        zorder=4,
+        solid_capstyle="round",
+    )
 
     # Robot at final position
     x, y = trajectory[-1]
@@ -443,12 +624,21 @@ def render_arrival(frame, fig, ax_main, ax_hud):
 
     # Pulsing "Goal Reached" text
     pulse = 0.7 + 0.3 * math.sin(frame * 0.2)
-    ax_main.text(SCENE_W / 2, SCENE_H / 2, "✓ Goal Reached",
-                 ha="center", va="center", fontsize=28, fontweight="bold",
-                 color=C["start"], alpha=pulse,
-                 bbox=dict(boxstyle="round,pad=0.5", facecolor=C["bg"],
-                           edgecolor=C["start"], alpha=0.8),
-                 zorder=10)
+    ax_main.text(
+        SCENE_W / 2,
+        SCENE_H / 2,
+        "✓ Goal Reached",
+        ha="center",
+        va="center",
+        fontsize=28,
+        fontweight="bold",
+        color=C["start"],
+        alpha=pulse,
+        bbox=dict(
+            boxstyle="round,pad=0.5", facecolor=C["bg"], edgecolor=C["start"], alpha=0.8
+        ),
+        zorder=10,
+    )
 
     # HUD
     ax_hud.set_facecolor(C["hud_bg"])
@@ -457,12 +647,22 @@ def render_arrival(frame, fig, ax_main, ax_hud):
     ax_hud.axis("off")
 
     total_dist = sum(
-        math.sqrt((trajectory[i+1][0]-trajectory[i][0])**2 +
-                  (trajectory[i+1][1]-trajectory[i][1])**2)
-        for i in range(len(trajectory)-1)
+        math.sqrt(
+            (trajectory[i + 1][0] - trajectory[i][0]) ** 2
+            + (trajectory[i + 1][1] - trajectory[i][1]) ** 2
+        )
+        for i in range(len(trajectory) - 1)
     )
-    ax_hud.text(5, 0.5, f"Navigation complete  ·  {total_dist:.1f}m traveled  ·  {len(waypoints)} waypoints",
-                ha="center", va="center", fontsize=12, color=C["start"], fontfamily="monospace")
+    ax_hud.text(
+        5,
+        0.5,
+        f"Navigation complete  ·  {total_dist:.1f}m traveled  ·  {len(waypoints)} waypoints",
+        ha="center",
+        va="center",
+        fontsize=12,
+        color=C["start"],
+        fontfamily="monospace",
+    )
 
 
 def render_summary(frame, fig, ax_main, ax_hud):
@@ -475,42 +675,85 @@ def render_summary(frame, fig, ax_main, ax_hud):
     alpha = min(1.0, frame / 20.0)
 
     total_dist = sum(
-        math.sqrt((trajectory[i+1][0]-trajectory[i][0])**2 +
-                  (trajectory[i+1][1]-trajectory[i][1])**2)
-        for i in range(len(trajectory)-1)
+        math.sqrt(
+            (trajectory[i + 1][0] - trajectory[i][0]) ** 2
+            + (trajectory[i + 1][1] - trajectory[i][1]) ** 2
+        )
+        for i in range(len(trajectory) - 1)
     )
 
-    ax_main.text(5, 8.5, "3we Navigation Demo — Summary",
-                 ha="center", fontsize=22, fontweight="bold",
-                 color=C["text"], alpha=alpha)
+    ax_main.text(
+        5,
+        8.5,
+        "3we Navigation Demo — Summary",
+        ha="center",
+        fontsize=22,
+        fontweight="bold",
+        color=C["text"],
+        alpha=alpha,
+    )
 
     metrics = [
         ("Scene", "office_v2 (20m × 15m)"),
-        ("Backend", "Mock (zero-dependency, no GPU/ROS2 needed)"),
+        ("Backend", "Visualization demo (matplotlib)"),
         ("Waypoints", f"{len(waypoints)}"),
         ("Total distance", f"{total_dist:.1f} m"),
         ("Obstacles avoided", f"{len(OBSTACLES)}"),
         ("LiDAR rays", "72 × 360°"),
-        ("API code", "4 lines of Python"),
-        ("Sim2Real", "Same code → Robot(backend=\"real\")"),
+        ("API code", "4 lines of Python (target API)"),
+        ("Roadmap", "SDK mock backend → Gazebo → Real hardware"),
     ]
 
     y = 7.2
     for label, value in metrics:
-        ax_main.text(3.0, y, label + ":", ha="right", fontsize=11,
-                     color=C["text_dim"], alpha=alpha)
-        ax_main.text(3.3, y, value, ha="left", fontsize=11,
-                     color=C["text"], alpha=alpha, fontfamily="monospace")
+        ax_main.text(
+            3.0,
+            y,
+            label + ":",
+            ha="right",
+            fontsize=11,
+            color=C["text_dim"],
+            alpha=alpha,
+        )
+        ax_main.text(
+            3.3,
+            y,
+            value,
+            ha="left",
+            fontsize=11,
+            color=C["text"],
+            alpha=alpha,
+            fontfamily="monospace",
+        )
         y -= 0.65
 
-    ax_main.text(5, 1.5, "pip install threewe", ha="center", fontsize=14,
-                 color=C["code"], alpha=alpha, fontfamily="monospace",
-                 bbox=dict(boxstyle="round,pad=0.3", facecolor=C["hud_bg"],
-                           edgecolor=C["code"], alpha=0.5 * alpha))
+    ax_main.text(
+        5,
+        1.5,
+        "github.com/telleroutlook/3we-robot-platform",
+        ha="center",
+        fontsize=14,
+        color=C["code"],
+        alpha=alpha,
+        fontfamily="monospace",
+        bbox=dict(
+            boxstyle="round,pad=0.3",
+            facecolor=C["hud_bg"],
+            edgecolor=C["code"],
+            alpha=0.5 * alpha,
+        ),
+    )
 
-    ax_main.text(5, 0.6, "3we.org  ·  github.com/telleroutlook/3we-robot-platform",
-                 ha="center", fontsize=9, color=C["text_dim"], alpha=alpha * 0.7,
-                 fontfamily="monospace")
+    ax_main.text(
+        5,
+        0.6,
+        "3we.org  ·  github.com/telleroutlook/3we-robot-platform",
+        ha="center",
+        fontsize=9,
+        color=C["text_dim"],
+        alpha=alpha * 0.7,
+        fontfamily="monospace",
+    )
 
     ax_hud.set_facecolor(C["bg"])
     ax_hud.axis("off")
@@ -519,7 +762,7 @@ def render_summary(frame, fig, ax_main, ax_hud):
 def main():
     print(f"Generating demo video: {OUTPUT_PATH}")
     print(f"  Resolution: 1920×1080 @ {FPS}fps")
-    print(f"  Duration: {TOTAL_FRAMES/FPS:.1f}s ({TOTAL_FRAMES} frames)")
+    print(f"  Duration: {TOTAL_FRAMES / FPS:.1f}s ({TOTAL_FRAMES} frames)")
     print(f"  Trajectory: {len(trajectory)} points, {len(waypoints)} waypoints")
     print()
 
@@ -536,8 +779,7 @@ def main():
             print(f"  Rendering: {pct:.0f}% (frame {frame}/{TOTAL_FRAMES})", end="\r")
         render_frame(frame, fig, ax_main, ax_hud)
 
-    writer = FFMpegWriter(fps=FPS, bitrate=4000,
-                          extra_args=["-pix_fmt", "yuv420p"])
+    writer = FFMpegWriter(fps=FPS, bitrate=4000, extra_args=["-pix_fmt", "yuv420p"])
 
     anim = FuncAnimation(fig, animate, frames=TOTAL_FRAMES, repeat=False)
     anim.save(OUTPUT_PATH, writer=writer, dpi=DPI)

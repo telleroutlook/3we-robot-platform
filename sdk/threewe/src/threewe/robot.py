@@ -55,6 +55,7 @@ class Robot:
         hardware: str = "3we_standard_v2",
         scene: str = "office_v2",
         auto_connect: bool = True,
+        verbose: bool = False,
     ) -> None:
         if isinstance(config, str):
             self._config = load_config(config)
@@ -66,6 +67,7 @@ class Robot:
         self._hardware = load_hardware_profile(hardware)
         self._backend_name = backend
         self._scene = scene
+        self._verbose = verbose
         self._backend: BackendBase = self._create_backend(backend)
         self._auto_connect = auto_connect
 
@@ -284,7 +286,7 @@ class Robot:
         elif backend == "mock":
             from threewe.backends.mock import MockBackend
 
-            return MockBackend(config=self._config, scene=self._scene)
+            return MockBackend(config=self._config, scene=self._scene, verbose=self._verbose)
         else:
             raise ValueError(
                 f"Unknown backend '{backend}'. Choose from: 'gazebo', 'real', 'isaac_sim', 'mock'"

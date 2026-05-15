@@ -13,6 +13,7 @@ Gaussian sensor noise, and collision detection.
 
 from __future__ import annotations
 
+import asyncio
 import math
 import time
 from typing import TYPE_CHECKING
@@ -49,11 +50,14 @@ class MockBackend(BackendBase):
     kinematics. Includes Gaussian sensor noise and collision detection.
     """
 
-    def __init__(self, config: RobotConfig, scene: str = "office_v2") -> None:
+    def __init__(
+        self, config: RobotConfig, scene: str = "office_v2", *, verbose: bool = False
+    ) -> None:
         self._config = config
         self._scene_name = scene
         self._scene = get_scene(scene)
         self._connected = False
+        self._verbose = verbose
 
         self._x = 1.0
         self._y = 1.0
@@ -67,13 +71,20 @@ class MockBackend(BackendBase):
     def connect(self) -> None:
         self._connected = True
         self._last_tick = time.monotonic()
+        if self._verbose:
+            self._log(f"Robot initialized  backend=mock  scene={self._scene_name}")
 
     def disconnect(self) -> None:
         self._connected = False
+        if self._verbose:
+            self._log("Disconnected")
 
     @property
     def is_connected(self) -> bool:
         return self._connected
+
+    def _log(self, msg: str) -> None:
+        print(f"\033[36m[3we]\033[0m {msg}", flush=True)
 
     def _tick(self) -> None:
         """Integrate velocity into position since last call."""
@@ -298,10 +309,16 @@ class MockBackend(BackendBase):
                 reason="reached",
             )
 
+        if self._verbose:
+            self._log(f"Navigating to ({target_x:.1f}, {target_y:.1f})...")
+            self._log(f"Planning path... distance={total_distance:.1f}m")
+
         dx = (target_x - self._x) / total_distance
         dy = (target_y - self._y) / total_distance
         moved = 0.0
         blocked = False
+        report_interval = max(1, int(total_distance / _MOVE_STEP / 5))
+        step_count = 0
 
         while moved < total_distance:
             step = min(_MOVE_STEP, total_distance - moved)
@@ -313,6 +330,17 @@ class MockBackend(BackendBase):
             self._x = new_x
             self._y = new_y
             moved += step
+            step_count += 1
+
+            if self._verbose and step_count % report_interval == 0:
+                heading = math.degrees(math.atan2(dy, dx))
+                remaining = total_distance - moved
+                self._log(
+                    f"  pos=({self._x:.1f}, {self._y:.1f})"
+                    f"  heading={heading:.0f}°"
+                    f"  remaining={remaining:.1f}m"
+                )
+                await asyncio.sleep(0.15)
 
         self._theta = target_theta
         self._vx = 0.0
@@ -321,6 +349,12 @@ class MockBackend(BackendBase):
 
         actual_dist = math.sqrt((self._x - start_x) ** 2 + (self._y - start_y) ** 2)
         duration = actual_dist / speed if speed > 0 else 0.0
+
+        if self._verbose:
+            if not blocked:
+                self._log(f"Goal reached  distance={actual_dist:.1f}m  time={duration:.1f}s")
+            else:
+                self._log(f"Blocked by obstacle at ({self._x:.1f}, {self._y:.1f})")
 
         return MoveResult(
             success=not blocked,

@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/badge/Code-Apache_2.0-blue.svg)](LICENSE)
 [![License](https://img.shields.io/badge/Hardware-CERN--OHL--P_v2-green.svg)](LICENSE-HARDWARE)
-[![PyPI](https://img.shields.io/badge/pip_install-threewe-orange.svg)](sdk/threewe/)
+[![PyPI](https://img.shields.io/badge/pip_install-threewe_(coming_soon)-orange.svg)](sdk/threewe/)
 [![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blueviolet.svg)](https://ros.org/)
 
 The **open-source PyTorch for Embodied AI** — a complete robot platform
@@ -15,6 +15,8 @@ where the same 5 lines of Python run identically in simulation and on real hardw
 <img src="https://img.xuexiao.eu.org/1778836342754-19b737g.gif" alt="3we autonomous navigation demo" width="720">
 
 *Autonomous navigation in office_v2 scene — 360° LiDAR, real-time obstacle avoidance, 4 lines of Python*
+
+> **Note:** The animation above is a concept demo (generated with matplotlib), not a Gazebo simulation or real hardware recording. It illustrates the target API and navigation behavior.
 
 </div>
 
@@ -48,6 +50,8 @@ Switch `backend="gazebo"` to `backend="real"` — zero code changes, same API.
 
 ## Quick Start
 
+> **Status:** The `threewe` SDK is under active development. The API below is the target interface — `pip install threewe` is not yet available on PyPI. You can install from source with `pip install -e sdk/threewe/` to try the mock backend today.
+
 ```bash
 pip install threewe[sim]
 ```
@@ -77,39 +81,53 @@ asyncio.run(main())
 
 ### See It in Action
 
+Play the terminal recording locally (requires [asciinema](https://asciinema.org)):
+
+```bash
+asciinema play demo/sdk_demo.cast
+```
+
+Or run the demo yourself:
+
+```bash
+pip install -e sdk/threewe/
+python examples/navigate_office.py
+```
+
 <details>
-<summary><b>Terminal Demo — pip install to running in 30 seconds</b></summary>
+<summary><b>Terminal Demo — expected output</b></summary>
 
 ```console
-$ pip install threewe[sim]
-Successfully installed threewe-1.0.0 numpy-1.26.4 ...
+$ pip install -e sdk/threewe/
+Successfully installed threewe-0.1.0a0
 
-$ python3 -c "
-import asyncio
-from threewe import Robot
+$ python examples/navigate_office.py
+============================================================
+  3we Robot Platform — Office Navigation Demo
+============================================================
 
-async def demo():
-    async with Robot(backend='mock') as robot:
-        result = await robot.move_to(x=3.0, y=2.0)
-        print(f'Navigation: {result.success} (distance: {result.distance:.2f}m)')
-        print(f'Pose: {robot.get_pose()}')
-        scan = robot.get_lidar_scan()
-        print(f'LiDAR: {len(scan.ranges)} rays, min={min(scan.ranges):.2f}m')
+[3we] Robot initialized  backend=mock  scene=office_v2
 
-asyncio.run(demo())
-"
-Navigation: True (distance: 3.61m)
-Pose: Pose2D(x=3.00, y=2.00, theta=0.59)
-LiDAR: 360 rays, min=0.82m
+  Start pose: (1.0, 1.0)
+  LiDAR: 360 rays, nearest obstacle: 0.99m
 
-$ threewe benchmark run --task pointnav --episodes 5 --backend mock
-Running pointnav benchmark (5 episodes)...
-  Episode 1/5: SPL=0.92, success=True
-  Episode 2/5: SPL=0.87, success=True
-  Episode 3/5: SPL=0.94, success=True
-  Episode 4/5: SPL=0.89, success=True
-  Episode 5/5: SPL=0.91, success=True
-Mean SPL: 0.906 ± 0.027 | Success rate: 100%
+  Following path: 5 waypoints
+
+[3we] Navigating to (2.0, 3.0)...
+[3we] Planning path... distance=2.2m
+[3we]   pos=(1.5, 2.1)  heading=63°  remaining=1.0m
+[3we] Goal reached  distance=2.2m  time=4.5s
+[3we] Navigating to (7.0, 3.5)...
+[3we] Planning path... distance=5.0m
+[3we]   pos=(4.0, 3.2)  heading=6°  remaining=3.0m
+[3we] Goal reached  distance=5.0m  time=10.0s
+...
+
+  Final pose: (12.0, 10.0)
+  Total distance: 20.5m
+  Result: success
+
+============================================================
 ```
 
 </details>
@@ -275,10 +293,10 @@ Step-by-step tutorials in [`notebooks/`](notebooks/):
 ## Roadmap
 
 - [x] **Phase 1**: ESP32 firmware + ROS2 stack + Hardware design
-- [x] **Phase 1**: `threewe` Python API + Sim2Real backends
-- [x] **Phase 1**: Gymnasium environments + VLM/VLA integration
-- [x] **Phase 1**: Benchmark framework + Example scripts
-- [x] **Phase 1**: Isaac Sim backend
+- [ ] **Phase 1**: `threewe` Python API + Sim2Real backends *(mock backend in progress)*
+- [ ] **Phase 1**: Gymnasium environments + VLM/VLA integration
+- [ ] **Phase 1**: Benchmark framework + Example scripts
+- [ ] **Phase 1**: Isaac Sim backend
 - [ ] **Phase 2**: Hardware Abstraction Layer for 3rd-party robots
 - [ ] **Phase 2**: Foundation model fine-tuning pipelines
 - [ ] **Phase 3**: 3we Hub (model/dataset sharing)
