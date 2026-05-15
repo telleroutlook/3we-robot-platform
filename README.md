@@ -6,11 +6,12 @@
 
 [![License](https://img.shields.io/badge/Code-Apache_2.0-blue.svg)](LICENSE)
 [![License](https://img.shields.io/badge/Hardware-CERN--OHL--P_v2-green.svg)](LICENSE-HARDWARE)
+[![Tests](https://github.com/telleroutlook/3we-robot-platform/actions/workflows/python-tests.yml/badge.svg)](https://github.com/telleroutlook/3we-robot-platform/actions/workflows/python-tests.yml)
 [![PyPI](https://img.shields.io/badge/pip_install-threewe_(coming_soon)-orange.svg)](sdk/threewe/)
 [![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blueviolet.svg)](https://ros.org/)
 
-The **open-source PyTorch for Embodied AI** — a complete robot platform
-where the same 5 lines of Python run identically in simulation and on real hardware.
+An open-source robot platform for Embodied AI research — the same Python code
+runs identically in simulation and on real hardware, with <$500 reproducible hardware.
 
 <img src="https://img.xuexiao.eu.org/1778836342754-19b737g.gif" alt="3we autonomous navigation demo" width="720">
 
@@ -184,17 +185,19 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 
 ## Platform Comparison
 
+> Different tools for different needs. This table highlights where 3we fits — it is not a claim of superiority.
+
 | Feature | **3we** | TurtleBot 4 | LeRobot | Isaac Lab |
 |:--------|:---:|:---:|:---:|:---:|
-| Python API (no ROS2 knowledge) | **Yes** | No | N/A | Partial |
-| Sim2Real (zero code change) | **Yes** | No | No | Yes |
-| Open Hardware (PCB + BOM) | **Full** | Partial | N/A | N/A |
-| Gymnasium Interface | **Yes** | No | Partial | Yes |
-| VLM/VLA Integration | **Built-in** | No | Yes | No |
-| Hardware Cost | **<$500** | ~$1200 | ~$2000+ | N/A |
-| Payload Hot-plug Bus | **PBC-34** | USB | N/A | N/A |
-| Safety (HW E-stop) | **ISO 13850** | Software | N/A | N/A |
-| Encrypted Comms | **DTLS 1.2** | None | N/A | N/A |
+| Python API (no ROS2 knowledge needed) | Yes | No | N/A | Partial |
+| Sim2Real (zero code change) | Yes | No | No | Yes |
+| Open Hardware (PCB + BOM) | Full | Partial | N/A | N/A |
+| Gymnasium Interface | Yes | No | Partial | Yes |
+| VLM/VLA Integration | Yes | No | Yes | No |
+| Hardware Cost | <$500 | ~$1200 | ~$2000+ | N/A |
+| Payload Hot-plug Bus | PBC-34 | USB | N/A | N/A |
+| Safety (HW E-stop) | Yes | Software | N/A | N/A |
+| Community / Maturity | Early stage | Established | Active | Active |
 
 ---
 
@@ -293,7 +296,7 @@ Step-by-step tutorials in [`notebooks/`](notebooks/). Most require ROS2 + Gazebo
 ## Roadmap
 
 - [x] **Phase 1**: ESP32 firmware + ROS2 stack + Hardware design
-- [x] **Phase 1**: `threewe` Python API + Mock backend (309 tests passing)
+- [x] **Phase 1**: `threewe` Python API + Mock backend
 - [x] **Phase 1**: Gymnasium environments + VLM/VLA integration
 - [x] **Phase 1**: Benchmark framework + Example scripts
 - [ ] **Phase 1**: Gazebo/Isaac Sim backends (interface done, integration testing in progress)
