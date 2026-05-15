@@ -29,6 +29,8 @@ cd 3we-robot-platform && pip install -e sdk/threewe/
 python examples/navigate_office.py
 ```
 
+> The recording was made with [`demo/record_demo.sh`](demo/record_demo.sh) — clone the repo and run it yourself to verify.
+
 </div>
 
 ---
@@ -93,7 +95,7 @@ asyncio.run(main())
 > **Backends**: Use `backend="mock"` to try the API instantly, `"gazebo"` for physics simulation (requires ROS2), `"isaac_sim"` for GPU-accelerated parallel simulation, or `"real"` for physical hardware.
 
 <details>
-<summary><b>Expected output from navigate_office.py</b></summary>
+<summary><b>Actual output (from the recording above)</b></summary>
 
 ```console
 $ pip install -e sdk/threewe/
