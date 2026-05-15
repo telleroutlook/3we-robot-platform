@@ -30,7 +30,7 @@
 
 \author{\IEEEauthorblockN{3we Contributors}
 \IEEEauthorblockA{Open Source Project\\
-\url{https://github.com/3we-org/3we-robot-platform}}}
+\url{https://github.com/telleroutlook/3we-robot-platform}}}
 
 \maketitle
 
@@ -39,7 +39,7 @@
 Embodied AI research requires tight integration of simulation, real hardware, and learning algorithms---yet existing platforms force researchers to choose between expensive proprietary systems, simulation-only environments, or hardware platforms with steep ROS2 learning curves.
 We present \textbf{3we}, a fully open-source infrastructure where the same Python code runs identically across a lightweight mock simulator, Gazebo, NVIDIA Isaac Sim, and real hardware (Raspberry Pi~5 + Hailo-8L) with zero modification.
 The platform provides an AI-First Python API that reduces typical ROS2 navigation code from 60+ lines to 5, Gymnasium-compatible environments, native VLM/VLA integration, and standardized benchmarks across 7 evaluation scenes.
-On reproducible hardware costing under \$300 (BOM), we demonstrate Sim-to-Real transfer ratios exceeding 0.6 on point navigation tasks and provide community baselines achieving 82\% success rate (SPL 0.65) in structured environments.
+On reproducible hardware costing under \$300 (BOM), preliminary validation yields Sim-to-Real transfer ratios exceeding 0.6 on point navigation tasks, with community baselines achieving 82\% success rate (SPL 0.65) in structured simulation environments.
 All software (Apache~2.0), hardware designs (CERN-OHL-P~v2), and documentation (CC-BY-SA~4.0) are publicly available.
 \end{abstract}
 
@@ -242,7 +242,7 @@ Dynamic obstacle & Collision rate & real $\leq$ sim $\times$ 1.5 & 0.81 \\
 \end{tabular}
 \end{table}
 
-Overall pass rate requires $\geq$80\% of tests passing. The transfer ratios in Table~\ref{tab:transfer} demonstrate that policies trained in simulation maintain effectiveness on real hardware with the documented noise model.
+Overall pass rate requires $\geq$80\% of tests passing. The transfer ratios in Table~\ref{tab:transfer} are derived from preliminary hardware trials with the documented noise model; large-scale validation is ongoing.
 
 % ===========================================================================
 \section{Benchmark Suite}
@@ -266,7 +266,7 @@ The benchmark suite defines three navigation tasks of increasing difficulty:
 
 \subsection{Evaluation Environments}
 
-Seven standardized scenes span diverse settings: \texttt{office\_v2} (20$\times$15m), \texttt{apartment\_v1} (8$\times$10m), \texttt{corridor\_v1} (50m linear), \texttt{warehouse\_v1} (40$\times$30m), \texttt{cluttered\_v1} (12$\times$10m), \texttt{outdoor\_v1} (50$\times$50m), and \texttt{dynamic\_v1} (15$\times$15m, moving obstacles).
+Seven standardized scenes span diverse settings: \texttt{office\_v2} (20$\times$15m), \texttt{apartment\_v1} (8$\times$10m), \texttt{corridor\_v1} (50m linear), \texttt{warehouse\_v1} (30$\times$20m), \texttt{cluttered\_v1} (5$\times$5m), \texttt{outdoor\_v1} (50$\times$30m), and \texttt{dynamic\_v1} (15$\times$15m, moving obstacles).
 
 Each scene provides 10--50 predefined start/goal pairs for reproducibility, with seeds ranging [0, 99] for 100-episode evaluation runs.
 
@@ -327,7 +327,7 @@ Key contributions include: (1)~zero-code Sim2Real transfer across four backends,
 
 Future directions include: Isaac Sim domain randomization for large-scale RL, a community data hub for trajectory sharing (compatible with LeRobot/Open-X formats), Hardware Abstraction Layer for third-party robot support, and systematic VLA model deployment evaluation on edge hardware.
 
-The platform is available at \url{https://github.com/3we-org/3we-robot-platform} under Apache~2.0 (software), CERN-OHL-P~v2 (hardware), and CC-BY-SA~4.0 (documentation).
+The platform is available at \url{https://github.com/telleroutlook/3we-robot-platform} under Apache~2.0 (software), CERN-OHL-P~v2 (hardware), and CC-BY-SA~4.0 (documentation).
 
 % ===========================================================================
 \balance

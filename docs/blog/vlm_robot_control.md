@@ -472,10 +472,10 @@ The key insight is that you do not need to understand ROS2, Nav2, SLAM, or motor
 
 ## Links
 
-- GitHub: [https://github.com/3we-org/3we-robot-platform](https://github.com/3we-org/3we-robot-platform)
-- Documentation: [https://docs.3we.org](https://docs.3we.org)
+- GitHub: [https://github.com/telleroutlook/3we-robot-platform](https://github.com/telleroutlook/3we-robot-platform)
+- Documentation: [https://3we.org](https://3we.org)
 - PyPI: [https://pypi.org/project/threewe](https://pypi.org/project/threewe)
-- Discord: [https://discord.gg/3we-robotics](https://discord.gg/3we-robotics)
+- Forum: [https://discussion.3we.org](https://discussion.3we.org)
 
 ---
 
