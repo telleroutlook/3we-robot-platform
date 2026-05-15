@@ -81,11 +81,7 @@ asyncio.run(main())
 
 ### See It in Action
 
-Play the terminal recording locally (requires [asciinema](https://asciinema.org)):
-
-```bash
-asciinema play demo/sdk_demo.cast
-```
+[![asciicast](https://asciinema.org/a/akn7EAEkGo9VmOZv.svg)](https://asciinema.org/a/akn7EAEkGo9VmOZv)
 
 Or run the demo yourself:
 
