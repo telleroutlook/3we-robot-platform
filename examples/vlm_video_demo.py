@@ -121,7 +121,7 @@ class VideoRecorder:
 
             cv2.putText(
                 frame,
-                "github.com/3we-org/3we-robot-platform",
+                "github.com/telleroutlook/3we-robot-platform",
                 (w // 2 - 180, h - 30),
                 font,
                 0.4,

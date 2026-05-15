@@ -12,6 +12,10 @@
 The **open-source PyTorch for Embodied AI** — a complete robot platform
 where the same 5 lines of Python run identically in simulation and on real hardware.
 
+<img src="https://img.xuexiao.eu.org/1778836342754-19b737g.gif" alt="3we autonomous navigation demo" width="720">
+
+*Autonomous navigation in office_v2 scene — 360° LiDAR, real-time obstacle avoidance, 4 lines of Python*
+
 </div>
 
 ---
