@@ -27,13 +27,13 @@ where the same 5 lines of Python run identically in simulation and on real hardw
 ```python
 from threewe import Robot
 
-async with Robot(backend="gazebo") as robot:
+async with Robot(backend="mock") as robot:
     image = robot.get_image()
     await robot.move_to(x=2.0, y=1.0)
     pose = robot.get_pose()
 ```
 
-Switch `backend="gazebo"` to `backend="real"` — zero code changes, same API.
+Switch `backend="mock"` to `backend="gazebo"` or `backend="real"` — zero code changes, same API.
 
 ---
 
@@ -50,10 +50,12 @@ Switch `backend="gazebo"` to `backend="real"` — zero code changes, same API.
 
 ## Quick Start
 
-> **Status:** The `threewe` SDK is under active development. The API below is the target interface — `pip install threewe` is not yet available on PyPI. You can install from source with `pip install -e sdk/threewe/` to try the mock backend today.
+> **Status:** The `threewe` SDK is under active development. `pip install threewe` is not yet available on PyPI. Install from source to try it today:
 
 ```bash
-pip install threewe[sim]
+git clone https://github.com/telleroutlook/3we-robot-platform.git
+cd 3we-robot-platform
+pip install -e sdk/threewe/
 ```
 
 ```python
@@ -221,7 +223,7 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 3we-robot-platform/
 ├── sdk/threewe/          # AI-First Python package (pip install threewe)
 │   ├── src/threewe/      #   Robot, Types, Backends, Gym, AI, Data, Benchmark
-│   └── tests/            #   76+ unit tests
+│   └── tests/            #   309 unit tests
 ├── examples/             # Ready-to-run demo scripts
 ├── firmware/             # ESP32-S3 firmware (ESP-IDF + micro-ROS)
 ├── ros2_ws/              # ROS2 packages (Nav2, SLAM, Gazebo, Perception)
@@ -235,6 +237,8 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 ---
 
 ## Installation Options
+
+> **Current**: Install from source with `pip install -e sdk/threewe/`. The commands below will work once the package is published to PyPI.
 
 ```bash
 # Core (types, Robot class, config)
@@ -263,40 +267,55 @@ sudo apt install ros-jazzy-desktop
 
 ## Examples
 
-| Script | Description |
-|:-------|:-----------|
-| [`hello_world.py`](examples/hello_world.py) | Connect, capture image, navigate |
-| [`vlm_navigation.py`](examples/vlm_navigation.py) | GPT-4o visual navigation |
-| [`rl_obstacle_avoidance.py`](examples/rl_obstacle_avoidance.py) | PPO training in simulation |
-| [`slam_exploration.py`](examples/slam_exploration.py) | Autonomous SLAM exploration |
-| [`sim2real_demo.py`](examples/sim2real_demo.py) | Same code, different backends |
-| [`data_collection.py`](examples/data_collection.py) | Record trajectories for imitation learning |
+| Script | Description | Backend |
+|:-------|:-----------|:--------|
+| [`navigate_office.py`](examples/navigate_office.py) | Multi-waypoint navigation with verbose output | mock |
+| [`hello_world.py`](examples/hello_world.py) | Connect, capture image, navigate | mock |
+| [`rl_obstacle_avoidance.py`](examples/rl_obstacle_avoidance.py) | PPO training in simulation | mock |
+| [`slam_exploration.py`](examples/slam_exploration.py) | Autonomous SLAM exploration | mock |
+| [`data_collection.py`](examples/data_collection.py) | Record trajectories for imitation learning | mock |
+| [`vlm_navigation.py`](examples/vlm_navigation.py) | GPT-4o visual navigation | mock + API key |
+| [`sim2real_demo.py`](examples/sim2real_demo.py) | Same code, different backends | gazebo |
 
 ### Jupyter Notebooks
 
-Step-by-step tutorials in [`notebooks/`](notebooks/):
+Step-by-step tutorials in [`notebooks/`](notebooks/). Most require ROS2 + Gazebo unless noted:
 
-| Notebook | Topic |
-|:---------|:------|
-| [01_hello_world](notebooks/01_hello_world.ipynb) | Connect, sensors, basic navigation |
-| [02_slam_exploration](notebooks/02_slam_exploration.ipynb) | Autonomous mapping |
-| [03_point_navigation](notebooks/03_point_navigation.ipynb) | Waypoints and path following |
-| [04_rl_training](notebooks/04_rl_training.ipynb) | Gymnasium + PPO training |
-| [05_data_collection](notebooks/05_data_collection.ipynb) | Record trajectories, export to LeRobot |
+| Notebook | Topic | Requires |
+|:---------|:------|:---------|
+| [01_hello_world](notebooks/01_hello_world.ipynb) | Connect, sensors, basic navigation | Gazebo |
+| [02_slam_exploration](notebooks/02_slam_exploration.ipynb) | Autonomous mapping | Gazebo |
+| [03_point_navigation](notebooks/03_point_navigation.ipynb) | Waypoints and path following | Gazebo |
+| [04_rl_training](notebooks/04_rl_training.ipynb) | Gymnasium + PPO training | mock (works standalone) |
+| [05_data_collection](notebooks/05_data_collection.ipynb) | Record trajectories, export to LeRobot | Gazebo |
 
 ---
 
 ## Roadmap
 
 - [x] **Phase 1**: ESP32 firmware + ROS2 stack + Hardware design
-- [ ] **Phase 1**: `threewe` Python API + Sim2Real backends *(mock backend in progress)*
-- [ ] **Phase 1**: Gymnasium environments + VLM/VLA integration
-- [ ] **Phase 1**: Benchmark framework + Example scripts
-- [ ] **Phase 1**: Isaac Sim backend
+- [x] **Phase 1**: `threewe` Python API + Mock backend (309 tests passing)
+- [x] **Phase 1**: Gymnasium environments + VLM/VLA integration
+- [x] **Phase 1**: Benchmark framework + Example scripts
+- [ ] **Phase 1**: Gazebo/Isaac Sim backends (interface done, integration testing in progress)
+- [ ] **Phase 1**: PyPI publishing (`pip install threewe`)
 - [ ] **Phase 2**: Hardware Abstraction Layer for 3rd-party robots
 - [ ] **Phase 2**: Foundation model fine-tuning pipelines
 - [ ] **Phase 3**: 3we Hub (model/dataset sharing)
 - [ ] **Phase 3**: Multi-robot fleet management
+
+---
+
+## Blog & Dev Notes
+
+Engineering deep-dives at [3we.org/blog](https://3we.org/blog/overview/):
+
+| Post | Topic |
+|:-----|:------|
+| [Dev Log #1: Why These Parts](https://3we.org/blog/dev-log-001/) | ESP32-S3 vs STM32, mecanum wheels, PBC-34 bus design, honest project status |
+| [Sim2Real: Same Code to Real Hardware](https://3we.org/blog/sim2real-practice/) | Backend abstraction, domain randomization, validation protocol |
+| [Build a $300 ROS2 Research Robot](https://3we.org/blog/build-robot/) | Complete BOM, assembly, software setup |
+| [30 Lines: Let GPT-4o Control a Robot](https://3we.org/blog/vlm-control/) | VLM perception-action loop, local model support |
 
 ---
 
