@@ -4,6 +4,10 @@
 #include "ota_preflight.h"
 #include "ota_compat.h"
 
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+#include "display.h"
+#endif
+
 #include "esp_log.h"
 #include "esp_ota_ops.h"
 #include "esp_http_client.h"
@@ -52,6 +56,45 @@ static void set_progress(ota_status_t status, uint8_t pct,
         s_progress.error_msg[0] = '\0';
     }
     if (s_mutex) xSemaphoreGive(s_mutex);
+}
+
+static esp_err_t verify_flash_content(const esp_partition_t *part, uint32_t size,
+                                      const uint8_t *expected_hash)
+{
+    uint8_t flash_hash[OTA_HASH_SIZE];
+    mbedtls_sha256_context verify_ctx;
+    mbedtls_sha256_init(&verify_ctx);
+    mbedtls_sha256_starts(&verify_ctx, 0);
+
+    uint8_t *vbuf = malloc(OTA_BUF_SIZE);
+    if (!vbuf) {
+        mbedtls_sha256_free(&verify_ctx);
+        return ESP_ERR_NO_MEM;
+    }
+
+    uint32_t offset = 0;
+    while (offset < size) {
+        uint32_t to_read = (size - offset) < OTA_BUF_SIZE ?
+                           (size - offset) : OTA_BUF_SIZE;
+        esp_err_t err = esp_partition_read(part, offset, vbuf, to_read);
+        if (err != ESP_OK) {
+            free(vbuf);
+            mbedtls_sha256_free(&verify_ctx);
+            return err;
+        }
+        mbedtls_sha256_update(&verify_ctx, vbuf, to_read);
+        offset += to_read;
+        esp_task_wdt_reset();
+    }
+    free(vbuf);
+
+    mbedtls_sha256_finish(&verify_ctx, flash_hash);
+    mbedtls_sha256_free(&verify_ctx);
+
+    if (memcmp(expected_hash, flash_hash, OTA_HASH_SIZE) != 0) {
+        return ESP_ERR_OTA_VALIDATE_FAILED;
+    }
+    return ESP_OK;
 }
 
 static esp_err_t perform_ota_from_url(const char *url)
@@ -220,6 +263,9 @@ static esp_err_t perform_ota_from_url(const char *url)
     if (!ota_verify_image_hash(computed_hash, firmware_size, header)) {
         esp_ota_abort(ota_handle);
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Signature verification failed");
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+        display_log_fault(FAULT_SRC_OTA, 1, "OTA SIG FAIL");
+#endif
         return ESP_ERR_OTA_VALIDATE_FAILED;
     }
 
@@ -230,40 +276,16 @@ static esp_err_t perform_ota_from_url(const char *url)
     }
 
     // Re-read flash to verify written content matches the signed hash
-    uint8_t flash_hash[OTA_HASH_SIZE];
-    mbedtls_sha256_context verify_ctx;
-    mbedtls_sha256_init(&verify_ctx);
-    mbedtls_sha256_starts(&verify_ctx, 0);
-
-    uint8_t *vbuf = malloc(OTA_BUF_SIZE);
-    if (!vbuf) {
+    err = verify_flash_content(update_part, firmware_size, computed_hash);
+    if (err == ESP_ERR_NO_MEM) {
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Out of memory for flash verify");
-        return ESP_ERR_NO_MEM;
-    }
-
-    uint32_t offset = 0;
-    while (offset < firmware_size) {
-        uint32_t to_read = (firmware_size - offset) < OTA_BUF_SIZE ?
-                           (firmware_size - offset) : OTA_BUF_SIZE;
-        err = esp_partition_read(update_part, offset, vbuf, to_read);
-        if (err != ESP_OK) {
-            free(vbuf);
-            mbedtls_sha256_free(&verify_ctx);
-            set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Flash read-back failed");
-            return err;
-        }
-        mbedtls_sha256_update(&verify_ctx, vbuf, to_read);
-        offset += to_read;
-        esp_task_wdt_reset();
-    }
-    free(vbuf);
-
-    mbedtls_sha256_finish(&verify_ctx, flash_hash);
-    mbedtls_sha256_free(&verify_ctx);
-
-    if (memcmp(computed_hash, flash_hash, OTA_HASH_SIZE) != 0) {
+        return err;
+    } else if (err == ESP_ERR_OTA_VALIDATE_FAILED) {
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Flash content mismatch after write");
-        return ESP_ERR_OTA_VALIDATE_FAILED;
+        return err;
+    } else if (err != ESP_OK) {
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Flash read-back failed");
+        return err;
     }
 
     // Set boot partition
@@ -436,6 +458,9 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
         esp_ota_abort(ota_handle);
         s_upload_fail_streak++;
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Signature verification failed");
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+        display_log_fault(FAULT_SRC_OTA, 1, "OTA SIG FAIL");
+#endif
         httpd_resp_set_type(req, "application/json");
         httpd_resp_send(req, "{\"success\":false,\"error\":\"Signature verification failed\"}", -1);
         return ESP_FAIL;
@@ -446,6 +471,15 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "OTA end failed");
         httpd_resp_set_type(req, "application/json");
         httpd_resp_send(req, "{\"success\":false,\"error\":\"OTA finalize failed\"}", -1);
+        return ESP_FAIL;
+    }
+
+    err = verify_flash_content(update_part, firmware_size, computed_hash);
+    if (err != ESP_OK) {
+        s_upload_fail_streak++;
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Flash content mismatch after write");
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, "{\"success\":false,\"error\":\"Flash verification failed\"}", -1);
         return ESP_FAIL;
     }
 
