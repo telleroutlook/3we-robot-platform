@@ -3,5 +3,6 @@ dependencies:
   ssd1306:
     git: https://github.com/nopnop2002/esp-idf-ssd1306.git
     path: components/ssd1306
+    version: 3994b245b9964eecc34d134343ba7dcc8f0da62a
     rules:
       - if: "idf_version >= 5.0"
