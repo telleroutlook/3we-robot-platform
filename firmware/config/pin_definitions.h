@@ -125,6 +125,14 @@
 #define MCP23017_DRV_FAULT_FRONT_BIT  4  // GPB4: DRV8833 front nFAULT (active-low)
 #define MCP23017_DRV_FAULT_REAR_BIT   5  // GPB5: DRV8833 rear nFAULT (active-low)
 
+// Status display panel buttons (optional add-on, active-low with MCP23017 internal pull-up)
+#define DISPLAY_BTN_UP_BIT            14  // GPB6: UP button
+#define DISPLAY_BTN_DOWN_BIT          15  // GPB7: DOWN button
+#define DISPLAY_BTN_OK_BIT            4   // GPA4: OK/Enter button
+
+// OLED display I2C address (SH1106/SSD1306 compatible, optional add-on)
+#define DISPLAY_I2C_ADDR              0x3C
+
 // CAN bus (MCP2515 + TJA1050, Industrial SKU only)
 // GPIO 33–37 are occupied by PSRAM on ESP32-S3-WROOM-1-N8R8 — must avoid.
 // Industrial SKU omits the HC-SR04 ultrasonic array (uses LiDAR instead),

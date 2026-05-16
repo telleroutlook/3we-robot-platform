@@ -100,6 +100,7 @@ Adds AI compute capability for full Python API, ROS2, VLM/VLA inference.
 | 4G LTE module | 168 | Remote operation, fleet telemetry |
 | Rear USB camera | 65 | 360° visual coverage |
 | Extra 2S battery pack | 35 | Extended runtime (~2× baseline) |
+| 1.3" OLED + 3-key panel | 18 | On-robot status display, fault codes, diagnostics |
 
 ---
 

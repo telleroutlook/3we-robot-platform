@@ -119,6 +119,27 @@ To enable interrupt-driven operation (future rev or user modification):
    DRV8833 fault, GPIO change)
 4. Reduces I2C bus load from continuous polling to event-driven
 
+## Status Display Panel (Optional Add-on)
+
+1.3" SH1106 128×64 OLED with 3 integrated tactile buttons (UP/DOWN/OK).
+Connects via existing I2C bus (address 0x3C) + MCP23017 button inputs.
+
+| Signal | Connection | Notes |
+|--------|-----------|-------|
+| OLED VCC | +3V3 | From I2C header |
+| OLED GND | GND | From I2C header |
+| OLED SDA | I2C_SDA (GPIO 1) | Shared bus |
+| OLED SCL | I2C_SCL (GPIO 2) | Shared bus |
+| BTN_UP | MCP23017 GPB6 | Active-low with internal pull-up |
+| BTN_DOWN | MCP23017 GPB7 | Active-low with internal pull-up |
+| BTN_OK | MCP23017 GPA4 | Active-low with internal pull-up |
+
+No PCB modification required. Module mounts on chassis top panel via M2 standoffs,
+connects through 4-pin GH1.25 (I2C) + 3-pin GH1.25 (buttons) to mainboard headers.
+
+I2C bus load: +10pF capacitance (SH1106 typical). Existing 2.2kΩ pull-ups remain
+adequate for 400kHz with total bus capacitance < 250pF.
+
 ## Industrial SKU Motor Driver Strategy
 
 The mainboard PCB uses DRV8833 (dual H-bridge, 1.2A/ch) for Basic and Standard SKUs. The Industrial SKU requires BTS7960 (43A half-bridge) for 550 motors at 12V.

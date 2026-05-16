@@ -5,3 +5,4 @@ ANT1,4G LTE Antenna SMA,-,-,-,1,15.00,Taobao,700-2700MHz omnidirectional
 SIM1,Nano-SIM Holder,-,-,-,1,2.00,LCSC,Push-push type
 LIDAR1,LD06 LiDAR,Module,LDRobot,LD06,1,120.00,Taobao,360° 12m range @ 10Hz
 CAM2,USB Camera (rear),USB,Various,-,1,65.00,Taobao,720P rear-facing
+OLED1,1.3 inch OLED + 3-Key Module,Module,Various,SH1106-128x64-3KEY,1,18.00,Taobao,I2C 0x3C SH1106 128×64 + 3 tactile buttons (UP/DOWN/OK) integrated on PCB
