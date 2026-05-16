@@ -162,6 +162,7 @@ jobs:
         working-directory: firmware/esp32
         run: |
           . $IDF_PATH/export.sh
+          git config --global --add safe.directory /__w/3we-robot-platform/3we-robot-platform
           mkdir -p managed_components
           trap 'rm -f secure_boot_signing_key.pem' EXIT
           espsecure.py generate_signing_key --version 2 secure_boot_signing_key.pem
