@@ -86,15 +86,19 @@ static const char *TAG = "main";
 static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT  BIT0
 #define WIFI_FAIL_BIT       BIT1
+static bool s_wifi_reconnect_enabled = false;
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-        esp_wifi_connect();
+        if (s_wifi_reconnect_enabled) {
+            esp_wifi_connect();
+        }
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        s_wifi_reconnect_enabled = true;
     }
 }
 
