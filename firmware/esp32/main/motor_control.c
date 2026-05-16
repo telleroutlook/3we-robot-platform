@@ -136,13 +136,24 @@ motor_output_t motor_mecanum_drive(const cmd_vel_t *cmd)
 
     for (int i = 0; i < MOTOR_COUNT; i++) {
         out.speeds[i] = (raw[i] * scale) / MAX_LINEAR_VEL;
+
+        float clamped = fmaxf(-1.0f, fminf(1.0f, out.speeds[i]));
+        uint32_t duty = (uint32_t)(fabsf(clamped) * PWM_DUTY_CAP * PWM_MAX_DUTY);
+
+        if (clamped >= 0.0f) {
+            ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[i].in1_ch, duty);
+            ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[i].in2_ch, 0);
+        } else {
+            ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[i].in1_ch, 0);
+            ledc_set_duty(LEDC_LOW_SPEED_MODE, motors[i].in2_ch, duty);
+        }
+
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[i].in1_ch);
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[i].in2_ch);
     }
 
+    stopped = false;
     portEXIT_CRITICAL(&motor_spinlock);
-
-    for (int i = 0; i < MOTOR_COUNT; i++) {
-        motor_set_speed((motor_id_t)i, out.speeds[i]);
-    }
 
     return out;
 }
@@ -161,6 +172,7 @@ TESTABLE_WEAK void motor_stop_all(void)
         ledc_update_duty(LEDC_LOW_SPEED_MODE, motors[i].in2_ch);
     }
     stopped = true;
+    isr_stop_requested = false;
     portEXIT_CRITICAL(&motor_spinlock);
 }
 
@@ -185,7 +197,7 @@ TESTABLE_WEAK void motor_clear_isr_stop(void)
 bool motor_is_stopped(void)
 {
     portENTER_CRITICAL(&motor_spinlock);
-    bool s = stopped;
+    bool s = stopped && !isr_stop_requested;
     portEXIT_CRITICAL(&motor_spinlock);
     return s;
 }
