@@ -76,7 +76,10 @@ TESTABLE_WEAK esp_err_t i2c_bus_recover(void)
         .master.clk_speed = I2C_FREQ_HZ,
     };
     esp_err_t err = i2c_param_config(I2C_NUM_0, &conf);
-    if (err != ESP_OK) return err;
+    if (err != ESP_OK) {
+        xSemaphoreGive(i2c_mutex);
+        return err;
+    }
     err = i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0);
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "I2C bus recovered successfully");
