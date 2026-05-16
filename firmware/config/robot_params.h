@@ -90,7 +90,7 @@
 #define US_FOV_RAD              0.26f   // ~15 degrees beam width
 #define US_TRIGGER_PULSE_US     10
 #define US_TIMEOUT_US           25000   // ~4.3m max
-#define US_SAFETY_THRESHOLD_M   0.05f   // Emergency stop distance
+#define US_SAFETY_THRESHOLD_M   0.15f   // Emergency stop distance (must be > US_CROSS_ECHO_MIN_M)
 #define US_CROSS_ECHO_MIN_M     0.08f   // Reject readings below this (multipath from shared trigger)
 
 // micro-ROS publish rates

@@ -143,6 +143,8 @@ void ultrasonic_task(void *params)
 {
     (void)params;
     ultrasonic_id_t current = US_FRONT;
+    static uint8_t us_estop_counter[US_COUNT] = {0};
+#define US_ESTOP_DEBOUNCE 2
 
     while (1) {
         float dist;
@@ -151,9 +153,14 @@ void ultrasonic_task(void *params)
             last_distance[current] = dist;
             portEXIT_CRITICAL(&distance_spinlock);
             if (dist < US_SAFETY_THRESHOLD_M && !safety_is_estopped()) {
-                ESP_LOGW(TAG, "Obstacle at %.3fm on sensor %d - triggering estop",
-                         dist, current);
-                safety_trigger_estop();
+                if (++us_estop_counter[current] >= US_ESTOP_DEBOUNCE) {
+                    us_estop_counter[current] = 0;
+                    ESP_LOGW(TAG, "Obstacle at %.3fm on sensor %d - triggering estop",
+                             dist, current);
+                    safety_trigger_estop();
+                }
+            } else {
+                us_estop_counter[current] = 0;
             }
         }
 
