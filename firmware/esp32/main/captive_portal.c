@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_random.h"
+#include "esp_timer.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_netif.h"
@@ -35,6 +36,12 @@ static captive_portal_done_cb_t s_done_cb = NULL;
 #define NVS_NAMESPACE_CP  "captive_portal"
 #define NVS_KEY_AP_PASS   "ap_pass"
 #define AP_PASS_LEN       12
+
+#define CONNECT_RATE_LIMIT_MAX   3
+#define CONNECT_RATE_LIMIT_WINDOW_US  (60 * 1000000LL)
+
+static int64_t s_connect_timestamps[CONNECT_RATE_LIMIT_MAX];
+static int s_connect_ts_idx = 0;
 
 static void _generate_random_password(char *buf, size_t len)
 {
@@ -188,6 +195,20 @@ static esp_err_t handler_captive_detect(httpd_req_t *req)
 
 static esp_err_t handler_post_connect(httpd_req_t *req)
 {
+    // Rate limit: max 3 requests per 60 seconds
+    int64_t now = esp_timer_get_time();
+    int oldest_idx = (s_connect_ts_idx + 1) % CONNECT_RATE_LIMIT_MAX;
+    if (s_connect_timestamps[oldest_idx] != 0 &&
+        (now - s_connect_timestamps[oldest_idx]) < CONNECT_RATE_LIMIT_WINDOW_US) {
+        ESP_LOGW(TAG, "/connect rate-limited");
+        httpd_resp_set_status(req, "429 Too Many Requests");
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, "{\"success\":false,\"message\":\"Too many attempts. Wait 60 seconds.\"}", -1);
+        return ESP_FAIL;
+    }
+    s_connect_timestamps[s_connect_ts_idx] = now;
+    s_connect_ts_idx = (s_connect_ts_idx + 1) % CONNECT_RATE_LIMIT_MAX;
+
     char body[256] = {0};
     int received = httpd_req_recv(req, body, sizeof(body) - 1);
     if (received <= 0) {
