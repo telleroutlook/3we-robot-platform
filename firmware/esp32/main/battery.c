@@ -29,8 +29,11 @@ static int reading_idx = 0;
 static bool initialized = false;
 
 #define BATT_CRITICAL_SHUTDOWN_MS  5000
+#define BATT_RECOVERY_COUNT       10
 static uint32_t critical_start_tick = 0;
 static bool shutdown_initiated = false;
+static bool critical_estop_triggered = false;
+static uint8_t recovery_counter = 0;
 
 esp_err_t battery_init(void)
 {
@@ -54,7 +57,7 @@ esp_err_t battery_init(void)
 
     // Prefill moving average with first real ADC reading (not nominal)
     int raw_init = 0;
-    adc_oneshot_read(adc_manager_get_handle(), BATT_ADC_CHANNEL, &raw_init);
+    adc_manager_read(BATT_ADC_CHANNEL, &raw_init);
     int mv_init = 0;
     adc_cali_raw_to_voltage(cali_handle, raw_init, &mv_init);
     float first_reading = ((float)mv_init / 1000.0f) * BATT_VOLTAGE_DIVIDER;
@@ -78,7 +81,7 @@ float battery_read_voltage(void)
     if (!initialized) return 0.0f;
 
     int raw = 0;
-    adc_oneshot_read(adc_manager_get_handle(), BATT_ADC_CHANNEL, &raw);
+    adc_manager_read(BATT_ADC_CHANNEL, &raw);
 
     int mv = 0;
     adc_cali_raw_to_voltage(cali_handle, raw, &mv);
@@ -129,13 +132,15 @@ void battery_task(void *params)
         battery_read_voltage();
 
         if (battery_get_state() == BATT_CRITICAL) {
+            recovery_counter = 0;
             if (critical_start_tick == 0) {
                 critical_start_tick = xTaskGetTickCount();
             }
 
             uint32_t elapsed = (xTaskGetTickCount() - critical_start_tick) * portTICK_PERIOD_MS;
 
-            if (!shutdown_initiated) {
+            if (!critical_estop_triggered) {
+                critical_estop_triggered = true;
                 ESP_LOGE(TAG, "CRITICAL: Battery %.2fV - triggering safety stop", voltage_avg);
 #ifdef CONFIG_ROBOT_DISPLAY_ENABLED
                 display_log_fault(FAULT_SRC_BATTERY, 1, "BATT CRITICAL");
@@ -154,8 +159,12 @@ void battery_task(void *params)
                 esp_wifi_stop();
             }
         } else {
-            critical_start_tick = 0;
-            shutdown_initiated = false;
+            if (++recovery_counter >= BATT_RECOVERY_COUNT) {
+                critical_start_tick = 0;
+                shutdown_initiated = false;
+                critical_estop_triggered = false;
+                recovery_counter = 0;
+            }
         }
 
         vTaskDelay(period);
@@ -170,7 +179,7 @@ static float s_pack2_voltage = 0.0f;
 static float battery_pack2_read_voltage_raw(void)
 {
     int raw = 0;
-    adc_oneshot_read(adc_manager_get_handle(), BATT_PACK2_ADC_CHANNEL, &raw);
+    adc_manager_read(BATT_PACK2_ADC_CHANNEL, &raw);
     int mv = 0;
     adc_cali_raw_to_voltage(cali_handle, raw, &mv);
     return ((float)mv / 1000.0f) * BATT_VOLTAGE_DIVIDER;
