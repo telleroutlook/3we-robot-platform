@@ -28,6 +28,10 @@
 #include "canbus.h"
 #endif
 
+#ifdef CONFIG_CURRENT_SENSE_ENABLED
+#include "current_sense.h"
+#endif
+
 #ifdef CONFIG_ROBOT_DISPLAY_ENABLED
 #include "display.h"
 #endif
@@ -160,7 +164,10 @@ void app_main(void)
 
     if (safety_get_state() == SAFETY_RELAY_FAULT) {
         ESP_LOGE(TAG, "SAFETY HALT: relay fault persisted - requires physical service");
-        while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+        while (1) {
+            external_wdt_confirm_alive();
+            vTaskDelay(pdMS_TO_TICKS(100));
+        }
     }
 
     // OTA rollback: track pending verification state for delayed validation
@@ -197,6 +204,10 @@ void app_main(void)
 
     ESP_ERROR_CHECK(adc_manager_init());
     ESP_ERROR_CHECK(battery_init());
+
+#ifdef CONFIG_CURRENT_SENSE_ENABLED
+    ESP_ERROR_CHECK(current_sense_init());
+#endif
 
     // Heartbeat monitor (Pi 5 power watchdog)
     ESP_ERROR_CHECK(heartbeat_monitor_init());
