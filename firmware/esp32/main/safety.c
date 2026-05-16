@@ -10,6 +10,10 @@
 #include "display.h"
 #endif
 
+#ifdef CONFIG_CURRENT_SENSE_ENABLED
+#include "current_sense.h"
+#endif
+
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -430,6 +434,10 @@ void safety_task(void *params)
         }
 
         safety_check_watchdog();
+
+#ifdef CONFIG_CURRENT_SENSE_ENABLED
+        current_sense_update();
+#endif
 
         external_wdt_confirm_alive();
 
