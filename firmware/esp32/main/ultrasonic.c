@@ -57,6 +57,7 @@ esp_err_t ultrasonic_init(void)
         last_distance[i] = US_MAX_RANGE_M;
 
         rx_done_sem[i] = xSemaphoreCreateBinary();
+        if (!rx_done_sem[i]) return ESP_ERR_NO_MEM;
 
         rmt_rx_channel_config_t rx_chan_cfg = {
             .gpio_num = echo_pins[i],

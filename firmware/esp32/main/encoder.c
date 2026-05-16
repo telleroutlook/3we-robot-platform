@@ -110,7 +110,10 @@ int32_t encoder_get_count(motor_id_t id)
 float encoder_get_speed_rps(motor_id_t id)
 {
     if (id >= MOTOR_COUNT) return 0.0f;
-    return speed_rps[id];
+    portENTER_CRITICAL(&encoder_spinlock);
+    float val = speed_rps[id];
+    portEXIT_CRITICAL(&encoder_spinlock);
+    return val;
 }
 
 void encoder_update(void)
@@ -120,9 +123,8 @@ void encoder_update(void)
         portENTER_CRITICAL(&encoder_spinlock);
         pcnt_unit_get_count(pcnt_units[i], &count);
         pcnt_unit_clear_count(pcnt_units[i]);
-        portEXIT_CRITICAL(&encoder_spinlock);
-
         int32_t delta = (int32_t)count;
         speed_rps[i] = ((float)delta / (float)ENCODER_CPR) * (float)CONTROL_FREQ_HZ;
+        portEXIT_CRITICAL(&encoder_spinlock);
     }
 }

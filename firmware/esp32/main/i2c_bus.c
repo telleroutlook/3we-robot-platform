@@ -20,6 +20,11 @@ TESTABLE_WEAK esp_err_t i2c_bus_recover(void)
 {
     ESP_LOGW(TAG, "Attempting I2C bus recovery (9 SCL clocks)");
 
+    if (!xSemaphoreTake(i2c_mutex, pdMS_TO_TICKS(500))) {
+        ESP_LOGE(TAG, "Cannot acquire I2C mutex for recovery");
+        return ESP_ERR_TIMEOUT;
+    }
+
     i2c_driver_delete(I2C_NUM_0);
 
     gpio_config_t scl_cfg = {
@@ -76,6 +81,7 @@ TESTABLE_WEAK esp_err_t i2c_bus_recover(void)
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "I2C bus recovered successfully");
     }
+    xSemaphoreGive(i2c_mutex);
     return err;
 }
 

@@ -472,6 +472,7 @@ static void handle_new_connection(void)
         ESP_LOGE(TAG, "SSL setup for slot %d failed: -0x%04x", slot, -ret);
         mbedtls_ssl_free(&sessions[slot].ssl);
         mbedtls_net_free(&sessions[slot].client_fd);
+        sessions[slot].state = DTLS_SESSION_EMPTY;
         return;
     }
 

@@ -44,6 +44,9 @@ static const char *TAG = "thermal";
 
 // NTC thermistor parameters (10K B3950)
 #ifdef CONFIG_THERMAL_NTC_ENABLED
+#if defined(CONFIG_CURRENT_SENSE_ENABLED)
+#error "NTC (ADC_CH5) and current sense FR (ADC_CH5) share GPIO 6 — cannot coexist"
+#endif
 #define NTC_R25             10000.0f // Resistance at 25°C
 #define NTC_BETA            3950.0f  // B-value
 #define NTC_SERIES_R        10000.0f // Series resistor in voltage divider
