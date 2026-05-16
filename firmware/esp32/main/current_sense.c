@@ -16,6 +16,8 @@
 
 static const char *TAG = "current_sense";
 
+static portMUX_TYPE cs_spinlock = portMUX_INITIALIZER_UNLOCKED;
+
 #define ACS712_SENSITIVITY_MV_PER_A  185.0f  // ACS712-05B: 185 mV/A
 #define ACS712_ZERO_CURRENT_MV       2500.0f // 2.5V at 0A (5V supply / 2)
 #define SOFT_LIMIT_MA                3000.0f
@@ -66,14 +68,19 @@ esp_err_t current_sense_init(void)
 esp_err_t current_sense_read(current_reading_t *reading)
 {
     if (!reading) return ESP_ERR_INVALID_ARG;
+    portENTER_CRITICAL(&cs_spinlock);
     *reading = last_reading;
+    portEXIT_CRITICAL(&cs_spinlock);
     return ESP_OK;
 }
 
 current_state_t current_sense_get_state(int channel)
 {
     if (channel < 0 || channel >= CURRENT_SENSE_CHANNELS) return CURRENT_OK;
-    return channel_state[channel];
+    portENTER_CRITICAL(&cs_spinlock);
+    current_state_t s = channel_state[channel];
+    portEXIT_CRITICAL(&cs_spinlock);
+    return s;
 }
 
 void current_sense_update(void)
@@ -84,8 +91,12 @@ void current_sense_update(void)
     int64_t now_us = esp_timer_get_time();
     float total = 0.0f;
     uint32_t flags = 0;
+    current_reading_t reading;
+    current_state_t new_states[CURRENT_SENSE_CHANNELS];
 
     for (int i = 0; i < CURRENT_SENSE_CHANNELS; i++) {
+        new_states[i] = channel_state[i];
+
         int raw = 0;
         adc_manager_read(adc_channels[i], &raw);
 
@@ -95,14 +106,14 @@ void current_sense_update(void)
         float current_ma = ((float)voltage_mv - ACS712_ZERO_CURRENT_MV) / ACS712_SENSITIVITY_MV_PER_A * 1000.0f;
         current_ma = fabsf(current_ma);
 
-        last_reading.current_ma[i] = current_ma;
+        reading.current_ma[i] = current_ma;
         total += current_ma;
 
         if (current_ma >= HARD_LIMIT_MA) {
             if (overcurrent_start_us[i] == 0) {
                 overcurrent_start_us[i] = now_us;
             } else if ((now_us - overcurrent_start_us[i]) >= (HARD_LIMIT_DURATION_MS * 1000)) {
-                channel_state[i] = CURRENT_HARD_LIMIT;
+                new_states[i] = CURRENT_HARD_LIMIT;
                 flags |= (1u << i);
                 safety_trigger_estop();
                 ESP_LOGE(TAG, "Motor %d HARD overcurrent %.0f mA — E-STOP", i, current_ma);
@@ -111,16 +122,23 @@ void current_sense_update(void)
             if (overcurrent_start_us[i] == 0) {
                 overcurrent_start_us[i] = now_us;
             } else if ((now_us - overcurrent_start_us[i]) >= (SOFT_LIMIT_DURATION_MS * 1000)) {
-                channel_state[i] = CURRENT_SOFT_LIMIT;
+                new_states[i] = CURRENT_SOFT_LIMIT;
                 flags |= (1u << i);
                 ESP_LOGW(TAG, "Motor %d soft overcurrent %.0f mA — limiting", i, current_ma);
             }
         } else {
             overcurrent_start_us[i] = 0;
-            channel_state[i] = CURRENT_OK;
+            new_states[i] = CURRENT_OK;
         }
     }
 
-    last_reading.total_current_ma = total;
-    last_reading.overcurrent_flags = flags;
+    reading.total_current_ma = total;
+    reading.overcurrent_flags = flags;
+
+    portENTER_CRITICAL(&cs_spinlock);
+    last_reading = reading;
+    for (int i = 0; i < CURRENT_SENSE_CHANNELS; i++) {
+        channel_state[i] = new_states[i];
+    }
+    portEXIT_CRITICAL(&cs_spinlock);
 }
