@@ -91,6 +91,17 @@ esp_err_t i2c_driver_install(int port, int mode, int slv_rx, int slv_tx, int fla
     return ESP_OK;
 }
 
+esp_err_t i2c_driver_delete(int port)
+{
+    (void)port;
+    return ESP_OK;
+}
+
+void esp_rom_delay_us(uint32_t us)
+{
+    (void)us;
+}
+
 esp_err_t i2c_master_write_to_device(int port, uint8_t addr,
                                       const uint8_t *data, size_t len, int timeout)
 {

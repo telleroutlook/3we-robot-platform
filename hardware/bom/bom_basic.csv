@@ -22,8 +22,8 @@ C1-C10,100nF,0402,Various,-,10,0.02,LCSC,Bypass capacitors
 C11-C14,22uF,0805,Various,-,4,0.15,LCSC,Bulk decoupling (X5R 16V)
 C15,100nF,0402,Various,-,1,0.02,LCSC,Relay FB2 RC filter
 R1-R2,2.2kΩ,0603,Various,-,2,0.01,LCSC,I2C pull-up (sized for 400kHz with payload bus capacitance up to 200pF)
-R3,20kΩ,0603,Various,-,1,0.01,LCSC,Battery ADC divider upper
-R4,10kΩ,0603,Various,-,1,0.01,LCSC,Battery ADC divider lower
+R3,20kΩ 1%,0603,Various,-,1,0.02,LCSC,Battery ADC divider upper (1% for measurement accuracy)
+R4,10kΩ 1%,0603,Various,-,1,0.02,LCSC,Battery ADC divider lower (1% for measurement accuracy)
 R5,10kΩ,0603,Various,-,1,0.01,LCSC,E-stop pull-down (fail-safe: wire break/NC open → ESTOP=LOW → safe state)
 R6,10kΩ,0603,Various,-,1,0.01,LCSC,EN pull-up (ESP32)
 R7,0.02Ω 1%,2512,Various,-,1,0.20,LCSC,INA219 shunt resistor (PGA=÷8: 16A range at 0.5mA resolution)

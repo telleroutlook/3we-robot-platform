@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 esp_err_t i2c_bus_init(void);
+esp_err_t i2c_bus_recover(void);
 SemaphoreHandle_t i2c_bus_get_mutex(void);
 
 // MCP23017 register-level helpers (shared by payload_hotplug, payload_power)

@@ -885,6 +885,74 @@ bootstrap caps must be directly adjacent to BST and SW pins (≤3mm trace length
 
 ---
 
+## Round 7: Fixes 38–42 (Reliability, Safety Margin, Fault Recovery)
+
+Priority: #39 > #42/#40 > #38 > #41
+
+### Fix 38: Ultrasonic Cross-Echo Minimum Distance Gate (Firmware)
+
+Shared trigger (GPIO12) fires all 4 HC-SR04 simultaneously. During round-robin capture,
+acoustic multipath from adjacent sensors can produce false short-distance readings
+(corridor scenario: side pulse reflects at angle to front receiver).
+
+Added `US_CROSS_ECHO_MIN_M = 0.08f` parameter in robot_params.h. In `ultrasonic_read()`,
+any echo arriving faster than this threshold is rejected as physically implausible
+multipath and returns `ESP_ERR_INVALID_RESPONSE`. Value derived from minimum inter-sensor
+geometric path length (~100mm on 200mm-wide chassis, with 20mm safety margin).
+
+### Fix 39: Disable E-Stop GPIO Internal Pull-Up (Firmware — SAFETY)
+
+GPIO41 had `pull_up_en = GPIO_PULLUP_ENABLE` (internal ~45kΩ). With external R5 (10kΩ
+pull-down to GND), normal operation is fine (10k dominates). But if R5 fails open-circuit
+(solder crack), the internal pull-up silently defeats the E-stop by holding ESTOP=HIGH
+regardless of NC switch state.
+
+Changed to `pull_up_en = GPIO_PULLUP_DISABLE`. Now R5 is the sole bias path — if R5
+breaks, GPIO floats low (safe direction). Every single-point failure now results in
+safe state, consistent with ISO 13850 fail-safe architecture from Fix 34.
+
+### Fix 40/42: I2C Bus Recovery (Firmware)
+
+Added `i2c_bus_recover()` to i2c_bus.c:
+1. Delete I2C driver (releases GPIO pins)
+2. Bit-bang 9 SCL clock pulses (standard I2C bus recovery per NXP UM10204 §3.1.16)
+3. Generate STOP condition (SDA rising while SCL high)
+4. Re-initialize I2C master driver
+
+In thermal_monitor.c, recovery is attempted after 3 consecutive I2C failures
+(`I2C_RECOVERY_ATTEMPT_COUNT`). On successful recovery, INA219 is re-reset and
+recalibrated. If recovery fails or 3 more failures occur post-recovery (total 6),
+then escalate to THERMAL_WARNING as before.
+
+Handles the primary failure mode where a malfunctioning payload device holds SDA low,
+blocking INA219/BNO055/MCP23017 access. Full hardware isolation (TCA9548A) deferred to
+Rev 2.0.
+
+### Fix 41: Battery Voltage Divider 1% Tolerance (BOM)
+
+R3 (20kΩ) and R4 (10kΩ) changed from 5% to 1% tolerance in BOM. With 5% resistors,
+the divider ratio ranges from 2.85–3.16, giving ±5% voltage measurement error. At
+critical threshold (6.0V pack), this could delay shutdown by minutes during discharge
+below 3.0V/cell, accelerating lithium dendrite formation.
+
+1% tolerance narrows error to ±60mV — adequate margin against the 6.0V threshold.
+Consistent with other precision dividers (R30/R31, R37/R38) already at 1%.
+
+---
+
+## BOM Delta (Fixes 38–42)
+
+| Fix | Components | Cost Impact |
+|-----|-----------|-------------|
+| #38 | None — firmware only | ¥0 |
+| #39 | None — firmware only | ¥0 |
+| #40/42 | None — firmware only | ¥0 |
+| #41 | R3/R4 upgraded 5%→1% | +¥0.02 |
+
+Total additional cost: **¥0.02/board**
+
+---
+
 ## Deferred Items
 
 | Issue | Reason | Target |
@@ -895,7 +963,7 @@ bootstrap caps must be directly adjacent to BST and SW pins (≤3mm trace length
 
 ## Sign-off Checklist
 
-- [ ] Schematic Rev 1.1f updated with all fixes (1–37, excluding #28 deferred)
+- [ ] Schematic Rev 1.1f updated with all fixes (1–42, excluding #28 deferred)
 - [ ] DRC clean (no ERC errors)
 - [ ] BOM regenerated from schematic
 - [ ] PCB layout updated, DRC clean
@@ -922,3 +990,7 @@ bootstrap caps must be directly adjacent to BST and SW pins (≤3mm trace length
 - [ ] BNO055 I2C address reads as 0x28 on bus scan (i2cdetect)
 - [ ] MCP23017 I2C address reads as 0x20 on bus scan (i2cdetect)
 - [ ] USB ESD: confirm no signal degradation with U11 in path (eye diagram or enumeration test)
+- [ ] Ultrasonic cross-echo: in corridor, verify no false E-stop from side reflections
+- [ ] E-stop GPIO41: confirm no internal pull-up (disconnect R5, measure pin voltage = floating low)
+- [ ] I2C recovery: hold SDA low with test jig → verify bus recovers within 3 polling cycles
+- [ ] Battery ADC: measure voltage with DMM vs firmware reading — error should be <±1%

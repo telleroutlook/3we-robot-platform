@@ -118,7 +118,12 @@ esp_err_t ultrasonic_read(ultrasonic_id_t id, float *distance_m)
 
     *distance_m = ((float)pulse_us * 0.000343f) / 2.0f;
 
-    if (*distance_m < US_MIN_RANGE_M) *distance_m = US_MIN_RANGE_M;
+    // Reject cross-echo multipath from shared trigger firing all sensors simultaneously
+    if (*distance_m < US_CROSS_ECHO_MIN_M) {
+        *distance_m = US_MAX_RANGE_M;
+        return ESP_ERR_INVALID_RESPONSE;
+    }
+
     if (*distance_m > US_MAX_RANGE_M) *distance_m = US_MAX_RANGE_M;
 
     return ESP_OK;

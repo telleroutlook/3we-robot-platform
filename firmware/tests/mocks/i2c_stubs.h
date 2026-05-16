@@ -21,6 +21,8 @@ typedef struct {
 
 esp_err_t i2c_param_config(int port, const i2c_config_t *conf);
 esp_err_t i2c_driver_install(int port, int mode, int slv_rx, int slv_tx, int flags);
+esp_err_t i2c_driver_delete(int port);
+void esp_rom_delay_us(uint32_t us);
 esp_err_t i2c_master_write_to_device(int port, uint8_t addr,
                                       const uint8_t *data, size_t len, int timeout);
 esp_err_t i2c_master_write_read_device(int port, uint8_t addr,

@@ -54,6 +54,7 @@ static adc_cali_handle_t ntc_cali_handle;
 
 // Escalate to THERMAL_WARNING if I2C fails this many consecutive cycles
 #define I2C_FAILURE_ESCALATION_COUNT 6
+#define I2C_RECOVERY_ATTEMPT_COUNT   3
 
 static thermal_state_t state = THERMAL_OK;
 static thermal_callback_t user_callback = NULL;
@@ -233,6 +234,17 @@ void thermal_monitor_task(void *params)
         if (read_failures > 0) {
             if (i2c_consecutive_failures < UINT8_MAX) {
                 i2c_consecutive_failures++;
+            }
+            if (i2c_consecutive_failures == I2C_RECOVERY_ATTEMPT_COUNT) {
+                ESP_LOGW(TAG, "I2C failures (%u) — attempting bus recovery",
+                         i2c_consecutive_failures);
+                if (i2c_bus_recover() == ESP_OK) {
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                    ina219_write_reg(INA219_REG_CONFIG, 0x8000);
+                    vTaskDelay(pdMS_TO_TICKS(5));
+                    ina219_write_reg(INA219_REG_CALIB, INA219_CALIBRATION);
+                    ina219_write_reg(INA219_REG_CONFIG, INA219_CONFIG);
+                }
             }
             if (i2c_consecutive_failures >= I2C_FAILURE_ESCALATION_COUNT &&
                 state < THERMAL_WARNING) {
