@@ -34,15 +34,6 @@ ota_progress_t ota_update_get_progress(void)
     return p;
 }
 
-// wifi_provision_store_credentials (wifi_provision.c not in test build)
-static int wifi_store_calls = 0;
-esp_err_t wifi_provision_store_credentials(const char *ssid, const char *password)
-{
-    (void)ssid; (void)password;
-    wifi_store_calls++;
-    return ESP_OK;
-}
-
 // esp_restart stub
 static int restart_calls = 0;
 void esp_restart(void) { restart_calls++; }
@@ -52,7 +43,6 @@ void esp_restart(void) { restart_calls++; }
 static void display_test_setUp(void)
 {
     mock_i2c_reset();
-    wifi_store_calls = 0;
     restart_calls = 0;
 }
 

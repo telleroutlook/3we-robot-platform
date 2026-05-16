@@ -126,9 +126,9 @@
 #define MCP23017_DRV_FAULT_REAR_BIT   5  // GPB5: DRV8833 rear nFAULT (active-low)
 
 // Status display panel buttons (optional add-on, active-low with MCP23017 internal pull-up)
-#define DISPLAY_BTN_UP_BIT            14  // GPB6: UP button
-#define DISPLAY_BTN_DOWN_BIT          15  // GPB7: DOWN button
-#define DISPLAY_BTN_OK_BIT            4   // GPA4: OK/Enter button
+#define DISPLAY_BTN_UP_BIT            6   // GPB6: UP button (bit within GPIOB register)
+#define DISPLAY_BTN_DOWN_BIT          7   // GPB7: DOWN button (bit within GPIOB register)
+#define DISPLAY_BTN_OK_BIT            4   // GPA4: OK/Enter button (bit within GPIOA register)
 
 // OLED display I2C address (SH1106/SSD1306 compatible, optional add-on)
 #define DISPLAY_I2C_ADDR              0x3C

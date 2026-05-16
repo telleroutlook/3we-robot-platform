@@ -11,10 +11,11 @@
 
 #ifndef UNIT_TEST_BUILD
 #include "ota_update.h"
-#include "wifi_provision.h"
 #include "esp_wifi.h"
 #include "esp_netif.h"
 #include "esp_app_desc.h"
+#include "nvs_flash.h"
+#include "nvs.h"
 #include "ssd1306.h"
 #endif
 
@@ -33,7 +34,6 @@
 typedef struct { uint8_t status; uint8_t progress_pct; uint32_t bytes_received; uint32_t bytes_total; char error_msg[64]; } ota_progress_t;
 #define OTA_STATUS_IDLE 0
 extern ota_progress_t ota_update_get_progress(void);
-extern esp_err_t wifi_provision_store_credentials(const char *ssid, const char *password);
 #endif
 
 static const char *TAG = "display";
@@ -108,35 +108,56 @@ esp_err_t display_init(void)
     uint8_t probe = 0x00;
     esp_err_t ret = i2c_master_write_to_device(
         I2C_NUM_0, DISPLAY_I2C_ADDR, &probe, 1, pdMS_TO_TICKS(50));
+    i2c_bus_unlock();
+
     if (ret != ESP_OK) {
-        i2c_bus_unlock();
         ESP_LOGW(TAG, "OLED not found at 0x%02X", DISPLAY_I2C_ADDR);
         return ret;
     }
 
-    // Configure MCP23017 pull-ups for buttons
-    // GPA4 (OK button) — ensure pull-up enabled
+    // Configure MCP23017 button pins.
+    // mcp23017_read_register manages its own I2C locking — do NOT hold
+    // the bus lock around these calls (non-recursive mutex would deadlock).
+
+    // GPA4 (OK button) — ensure direction is input
+    uint8_t iodira = 0;
+    mcp23017_read_register(MCP23017_ADDR, MCP_IODIRA, &iodira);
+    iodira |= (1 << DISPLAY_BTN_OK_BIT);
+    if (i2c_bus_lock()) {
+        uint8_t buf_dir_a[2] = { MCP_IODIRA, iodira };
+        i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf_dir_a, 2, pdMS_TO_TICKS(50));
+        i2c_bus_unlock();
+    }
+
+    // GPA4 pull-up enabled
     uint8_t gppua = 0;
     mcp23017_read_register(MCP23017_ADDR, MCP_GPPUA, &gppua);
     gppua |= (1 << DISPLAY_BTN_OK_BIT);
-    uint8_t buf_a[2] = { MCP_GPPUA, gppua };
-    i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf_a, 2, pdMS_TO_TICKS(50));
+    if (i2c_bus_lock()) {
+        uint8_t buf_a[2] = { MCP_GPPUA, gppua };
+        i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf_a, 2, pdMS_TO_TICKS(50));
+        i2c_bus_unlock();
+    }
 
-    // GPB6 (UP), GPB7 (DOWN) — ensure pull-ups enabled
-    uint8_t gppub = 0;
-    mcp23017_read_register(MCP23017_ADDR, MCP_GPPUB, &gppub);
-    gppub |= (1 << 6) | (1 << 7);
-    uint8_t buf_b[2] = { MCP_GPPUB, gppub };
-    i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf_b, 2, pdMS_TO_TICKS(50));
-
-    // Ensure GPB6, GPB7 are inputs
+    // GPB6 (UP), GPB7 (DOWN) — ensure direction is input
     uint8_t iodirb = 0;
     mcp23017_read_register(MCP23017_ADDR, MCP_IODIRB, &iodirb);
-    iodirb |= (1 << 6) | (1 << 7);
-    uint8_t buf_dir[2] = { MCP_IODIRB, iodirb };
-    i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf_dir, 2, pdMS_TO_TICKS(50));
+    iodirb |= (1 << DISPLAY_BTN_UP_BIT) | (1 << DISPLAY_BTN_DOWN_BIT);
+    if (i2c_bus_lock()) {
+        uint8_t buf_dir[2] = { MCP_IODIRB, iodirb };
+        i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf_dir, 2, pdMS_TO_TICKS(50));
+        i2c_bus_unlock();
+    }
 
-    i2c_bus_unlock();
+    // GPB6, GPB7 pull-ups enabled
+    uint8_t gppub = 0;
+    mcp23017_read_register(MCP23017_ADDR, MCP_GPPUB, &gppub);
+    gppub |= (1 << DISPLAY_BTN_UP_BIT) | (1 << DISPLAY_BTN_DOWN_BIT);
+    if (i2c_bus_lock()) {
+        uint8_t buf_b[2] = { MCP_GPPUB, gppub };
+        i2c_master_write_to_device(I2C_NUM_0, MCP23017_ADDR, buf_b, 2, pdMS_TO_TICKS(50));
+        i2c_bus_unlock();
+    }
 
 #ifndef UNIT_TEST_BUILD
     // Initialize SSD1306/SH1106 driver
@@ -193,8 +214,8 @@ static void buttons_read(uint32_t now_ms)
 
     // Active-low: pressed when bit is 0
     s_btn_ok.raw   = !(gpioa & (1 << DISPLAY_BTN_OK_BIT));
-    s_btn_up.raw   = !(gpiob & (1 << 6));
-    s_btn_down.raw = !(gpiob & (1 << 7));
+    s_btn_up.raw   = !(gpiob & (1 << DISPLAY_BTN_UP_BIT));
+    s_btn_down.raw = !(gpiob & (1 << DISPLAY_BTN_DOWN_BIT));
 
     debounce_button(&s_btn_up, now_ms);
     debounce_button(&s_btn_down, now_ms);
@@ -481,7 +502,16 @@ void display_log_fault(display_fault_source_t source, uint8_t code, const char *
 static void trigger_wifi_reset(void)
 {
     ESP_LOGW(TAG, "WiFi reset triggered via display button long-press");
-    wifi_provision_store_credentials("", "");
+
+#ifndef UNIT_TEST_BUILD
+    nvs_handle_t nvs;
+    if (nvs_open("wifi", NVS_READWRITE, &nvs) == ESP_OK) {
+        nvs_erase_all(nvs);
+        nvs_commit(nvs);
+        nvs_close(nvs);
+    }
+#endif
+
     vTaskDelay(pdMS_TO_TICKS(100));
     esp_restart();
 }
@@ -494,7 +524,9 @@ static void display_hw_clear(void)
 {
 #ifndef UNIT_TEST_BUILD
     if (!s_hw_initialized) return;
+    if (!i2c_bus_lock()) return;
     ssd1306_clear_screen(&s_dev, false);
+    i2c_bus_unlock();
 #endif
 }
 
@@ -502,7 +534,9 @@ static void display_hw_show(void)
 {
 #ifndef UNIT_TEST_BUILD
     if (!s_hw_initialized) return;
+    if (!i2c_bus_lock()) return;
     ssd1306_show_buffer(&s_dev);
+    i2c_bus_unlock();
 #endif
 }
 
@@ -510,7 +544,9 @@ static void display_hw_draw_string(int line, const char *str)
 {
 #ifndef UNIT_TEST_BUILD
     if (!s_hw_initialized) return;
+    if (!i2c_bus_lock()) return;
     ssd1306_display_text(&s_dev, line, str, strlen(str), false);
+    i2c_bus_unlock();
 #else
     (void)line;
     (void)str;
