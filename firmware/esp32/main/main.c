@@ -59,7 +59,7 @@ static const char *TAG = "main";
 #define TASK_STACK_MICROROS  16384
 #define TASK_STACK_DTLS      12288
 #define TASK_STACK_PAYLOAD   3072
-#define TASK_STACK_THERMAL   2048
+#define TASK_STACK_THERMAL   3072
 #define TASK_STACK_UDP       4096
 #define TASK_STACK_CANBUS    3072
 #define TASK_STACK_OTA       8192
