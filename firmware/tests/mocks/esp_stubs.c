@@ -232,3 +232,4 @@ int esp_wifi_sta_get_ap_info(wifi_ap_record_t *ap_info) {
 }
 void mock_set_wifi_rssi(int8_t rssi) { mock_wifi_rssi_val = rssi; }
 void mock_set_wifi_connected(int connected) { mock_wifi_connected_val = connected; }
+int esp_wifi_stop(void) { return 0; }

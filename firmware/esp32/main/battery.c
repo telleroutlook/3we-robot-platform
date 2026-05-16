@@ -4,11 +4,14 @@
 #include "safety.h"
 #include "pin_definitions.h"
 #include "robot_params.h"
+#include "payload_hotplug.h"
 
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
 #include "esp_log.h"
+#include "esp_wifi.h"
+#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -20,6 +23,10 @@ static float voltage_avg = 0.0f;
 static float readings[BATT_ADC_SAMPLES];
 static int reading_idx = 0;
 static bool initialized = false;
+
+#define BATT_CRITICAL_SHUTDOWN_MS  5000
+static uint32_t critical_start_tick = 0;
+static bool shutdown_initiated = false;
 
 esp_err_t battery_init(void)
 {
@@ -108,8 +115,30 @@ void battery_task(void *params)
         battery_read_voltage();
 
         if (battery_get_state() == BATT_CRITICAL) {
-            ESP_LOGE(TAG, "CRITICAL: Battery %.2fV - triggering safety stop", voltage_avg);
-            safety_trigger_estop();
+            if (critical_start_tick == 0) {
+                critical_start_tick = xTaskGetTickCount();
+            }
+
+            uint32_t elapsed = (xTaskGetTickCount() - critical_start_tick) * portTICK_PERIOD_MS;
+
+            if (!shutdown_initiated) {
+                ESP_LOGE(TAG, "CRITICAL: Battery %.2fV - triggering safety stop", voltage_avg);
+                safety_trigger_estop();
+            }
+
+            if (elapsed >= BATT_CRITICAL_SHUTDOWN_MS && !shutdown_initiated) {
+                shutdown_initiated = true;
+                ESP_LOGE(TAG, "CRITICAL sustained %lums - initiating low-power shutdown",
+                         (unsigned long)elapsed);
+                payload_power_off();
+#ifdef CONFIG_PI5_POWER_ENABLED
+                gpio_set_level(PI5_RELAY_GPIO, 0);
+#endif
+                esp_wifi_stop();
+            }
+        } else {
+            critical_start_tick = 0;
+            shutdown_initiated = false;
         }
 
         vTaskDelay(period);

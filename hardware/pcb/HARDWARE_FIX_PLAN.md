@@ -692,9 +692,99 @@ Total additional cost: ~¥3.10/board
 
 ---
 
+## Additional Fixes (Rev 1.1e)
+
+### Fix 26: DRV8833 AISEN/BISEN Tied to GND
+
+DRV8833 xISEN pins were floating — internal 200mV current limit comparator would
+trigger on noise. Connected U2a and U2b AISEN/BISEN pins directly to GND (added
+#PWR43, #PWR44 GND symbols). Disables hardware current limiting; overcurrent
+protection handled by INA219 + firmware monitor. This matches TI EVM default
+configuration.
+
+Cost: ¥0 (no new components, just PCB traces to GND plane).
+
+### Fix 29: E-stop Hardwired to Relay Coil Supply Path
+
+**Critical safety fix.** Previously E-stop was GPIO input only — relay control
+depended on firmware ISR. If MCU frozen, pressing E-stop could not cut motors.
+
+**Solution**: Added SW1b (second NC contact pair on same E-stop button) in series
+with relay coil +5V supply:
+```
++5V_ESP → [SW1b NC2 contacts] → +5V_ESTOP_COIL → RLY1 coil+ / R17 pull-up
+```
+
+- Normal: NC2 closed → +5V_ESTOP_COIL = +5V_ESP → relay energized
+- E-stop pressed: NC2 opens → coil de-energized → relay releases → motors cut
+- R17 (Q5 gate pull-up) also connects to +5V_ESTOP_COIL → Q5 gate loses drive
+
+Zero firmware dependency. Compliant with ISO 13850 "independent of control system".
+SW1 BOM updated to specify dual NC contact pairs.
+
+### Fix 30: DRV8833 nSLEEP Pull-up to ESTOP Net
+
+R28/R29 pull-up changed from +3V3 to ESTOP net:
+- Normal (ESTOP=HIGH via R5 pull-up): nSLEEP=HIGH → DRV8833 active
+- E-stop (ESTOP=LOW): nSLEEP=LOW → DRV8833 hardware sleep → outputs Hi-Z
+
+Provides secondary motor shutdown layer: even if relay contacts weld (fail-closed),
+DRV8833 sleep mode disables H-bridge outputs. Forms defense-in-depth with Fix 29.
+
+### Fix 31: Battery Critical Low-Power Shutdown (Firmware)
+
+After BATT_CRITICAL state sustained for 5s, firmware executes graceful shutdown:
+1. `payload_power_off()` — cuts payload 5V rail
+2. `gpio_set_level(PI5_RELAY_GPIO, 0)` — cuts Pi5 (if CONFIG_PI5_POWER_ENABLED)
+3. `esp_wifi_stop()` — disables WiFi (major current draw)
+
+Prevents BMS hard-cutoff causing uncontrolled power loss and NVS corruption.
+System continues running only: external WDT feed + E-stop monitor + battery monitor.
+
+### Fix 27: Pi5 Power Management SKU Guard (Firmware)
+
+Added `CONFIG_PI5_POWER_ENABLED` Kconfig option:
+- Default ON for Standard/Industrial SKUs
+- Default OFF for Basic SKU
+
+When disabled, `heartbeat_monitor_init()` returns immediately without configuring
+GPIO45 (VDD_SPI strapping pin). Prevents theoretical strapping conflict if TPS3813
+reset coincides with power_cycle_pi5() pulling GPIO45 low.
+
+`power_cycle_pi5()` function body also guarded by `#ifdef CONFIG_PI5_POWER_ENABLED`.
+Battery critical shutdown uses same guard for Pi5 power-off call.
+
+---
+
+## BOM Delta (Fixes 26-31)
+
+| Fix | Components | Cost Impact |
+|-----|-----------|-------------|
+| #26 | No new components (GND connections) | ¥0 |
+| #29 | SW1 dual NC (same button, specify 2×NC) | ¥0 |
+| #30 | R28/R29 connection change (no new parts) | ¥0 |
+| #31 | Firmware only | ¥0 |
+| #27 | Firmware only | ¥0 |
+
+Total additional cost: **¥0** (safety improvements at zero BOM cost).
+
+---
+
+## PCB Layout Impact (Fixes 26-31)
+
+| Fix | Layout Change Required | Severity |
+|-----|----------------------|----------|
+| #26 (xISEN) | Short traces from AISEN/BISEN pads to GND plane | Low |
+| #29 (E-stop coil) | Route SW1b pads to relay coil supply net | Medium |
+| #30 (nSLEEP) | Reroute R28/R29 pull-up from +3V3 to ESTOP net | Low |
+| #31 (battery) | None — firmware only | None |
+| #27 (SKU guard) | None — firmware only | None |
+
+---
+
 ## Sign-off Checklist
 
-- [ ] Schematic Rev 1.1d updated with all fixes (1–25)
+- [ ] Schematic Rev 1.1e updated with all fixes (1–31, excluding #28 deferred)
 - [ ] DRC clean (no ERC errors)
 - [ ] BOM regenerated from schematic
 - [ ] PCB layout updated, DRC clean
@@ -710,3 +800,7 @@ Total additional cost: ~¥3.10/board
 - [ ] I2C bus signal integrity confirmed with oscilloscope (rise time <1µs at 200pF load)
 - [ ] CAN bus operates cleanly with +5V_CAN isolated supply
 - [ ] Q8a/Q8b thermal confirmed <80°C at 5A continuous
+- [ ] E-stop hardware interlock: press E-stop → relay de-energizes without MCU (measure coil current = 0)
+- [ ] DRV8833 nSLEEP goes LOW when E-stop pressed (confirm with oscilloscope)
+- [ ] Battery critical shutdown: verify payload/Pi5/WiFi off within 5s of BATT_CRITICAL
+- [ ] Basic SKU build: confirm GPIO45 NOT configured as output (verify with debugger)

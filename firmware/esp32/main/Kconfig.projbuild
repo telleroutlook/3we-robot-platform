@@ -211,6 +211,16 @@ menu "Robot Platform Configuration"
             bool "Enable hardware E-stop monitoring"
             default y
 
+        config PI5_POWER_ENABLED
+            bool "Enable Pi 5 power management (GPIO45 relay control)"
+            default y if ROBOT_SKU_STANDARD || ROBOT_SKU_INDUSTRIAL
+            default n
+            help
+                Enable Pi 5 companion computer power switching via GPIO45.
+                Requires Q6a/Q6b/Q7 P-MOS switch circuit (DNP on Basic SKU).
+                When disabled, GPIO45 is not configured as output, avoiding
+                strapping pin conflicts on Basic SKU boards.
+
         config CMD_VEL_TIMEOUT_MS
             int "cmd_vel timeout (ms)"
             default 500

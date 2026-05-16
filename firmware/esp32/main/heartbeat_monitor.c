@@ -18,6 +18,11 @@ static int64_t s_first_reset_us = 0;
 
 esp_err_t heartbeat_monitor_init(void)
 {
+#ifndef CONFIG_PI5_POWER_ENABLED
+    ESP_LOGI(TAG, "Pi5 power management disabled (Basic SKU)");
+    s_state = HB_STATE_SAFE_MODE;
+    return ESP_OK;
+#else
     gpio_config_t io_cfg = {
         .pin_bit_mask = (1ULL << PI5_RELAY_GPIO),
         .mode = GPIO_MODE_OUTPUT,
@@ -36,6 +41,7 @@ esp_err_t heartbeat_monitor_init(void)
     ESP_LOGI(TAG, "Heartbeat monitor initialized (timeout=%dms, max_resets=%d)",
              HEARTBEAT_TIMEOUT_MS, HEARTBEAT_MAX_RESETS);
     return ESP_OK;
+#endif // CONFIG_PI5_POWER_ENABLED
 }
 
 void heartbeat_feed(void)
@@ -69,6 +75,7 @@ heartbeat_status_t heartbeat_get_status(void)
     return status;
 }
 
+#ifdef CONFIG_PI5_POWER_ENABLED
 static void power_cycle_pi5(void)
 {
     ESP_LOGW(TAG, "Power-cycling Pi 5 (reset #%d)", s_reset_count + 1);
@@ -101,6 +108,7 @@ static void power_cycle_pi5(void)
         s_last_heartbeat_us = esp_timer_get_time();
     }
 }
+#endif // CONFIG_PI5_POWER_ENABLED
 
 void heartbeat_monitor_task(void *params)
 {
@@ -131,7 +139,9 @@ void heartbeat_monitor_task(void *params)
             portENTER_CRITICAL(&hb_spinlock);
             s_state = HB_STATE_TIMEOUT;
             portEXIT_CRITICAL(&hb_spinlock);
+#ifdef CONFIG_PI5_POWER_ENABLED
             power_cycle_pi5();
+#endif
         }
     }
 }

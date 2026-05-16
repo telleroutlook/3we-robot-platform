@@ -7,11 +7,11 @@
   (title_block
     (title "Robot Platform Mainboard")
     (date "2026-05-16")
-    (rev "1.1d")
+    (rev "1.1e")
     (company "3WE Robotics")
     (comment 1 "SPDX-License-Identifier: CERN-OHL-P-2.0")
     (comment 2 "Universal Modular Mobile Platform")
-    (comment 3 "Rev 1.1d: L1/L2 Isat upgrade, I2C 2.2k pullups, CAN LC filter, WDT 200ms, Q8 dual P-MOS")
+    (comment 3 "Rev 1.1e: E-stop hardwire relay, DRV8833 xISEN GND, nSLEEP→ESTOP, safety architecture")
   )
   (lib_symbols
   )
@@ -681,6 +681,17 @@
       (uuid "a114e21b-b46d-42e2-a512-f3d2465fe00d")
     )
   )
+  (symbol
+    (lib_id "power:GND")
+    (at 300 50 0)
+    (uuid "a1b2c3d4-0026-0001-0001-000000000001")
+    (property "Reference" "#PWR43" (at 300 52 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 300 54 0) (effects (font (size 1.27 1.27))))
+    (property "Description" "U2a AISEN/BISEN tied to GND (disable hardware current limit, rely on INA219)" (at 300 56 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0026-0001-0001-000000000002")
+    )
+  )
   (label "MOT_FL_IN1" (at 285 30 0) (effects (font (size 1.27 1.27))) (uuid "f7b55ed5-c6ba-4121-928a-fa8a2300ef0b"))
   (label "MOT_FL_IN2" (at 285 33 0) (effects (font (size 1.27 1.27))) (uuid "2c56300a-6be7-4380-ae99-cdbf43d614e5"))
   (label "MOT_FR_IN1" (at 285 36 0) (effects (font (size 1.27 1.27))) (uuid "c75bd2ef-02ea-47c0-a3da-c521d08108b2"))
@@ -709,7 +720,7 @@
     (property "Reference" "R28" (at 325 20 0) (effects (font (size 1.27 1.27))))
     (property "Value" "10k" (at 325 30 0) (effects (font (size 1.27 1.27))))
     (property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 325 32 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Description" "DRV8833_Front nSLEEP external pull-up (EMI hardening)" (at 325 34 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "DRV8833_Front nSLEEP pull-up to ESTOP (E-stop disables drivers hardware-level)" (at 325 34 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1"
       (uuid "a1b2c3d4-0002-0001-0001-000000000002")
     )
@@ -717,7 +728,7 @@
       (uuid "a1b2c3d4-0002-0001-0001-000000000003")
     )
   )
-  (label "+3V3" (at 325 18 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0002-0001-0001-000000000004"))
+  (label "ESTOP" (at 325 18 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0002-0001-0001-000000000004"))
   (symbol
     (lib_id "Device:R")
     (at 325 65 0)
@@ -725,7 +736,7 @@
     (property "Reference" "R29" (at 325 60 0) (effects (font (size 1.27 1.27))))
     (property "Value" "10k" (at 325 70 0) (effects (font (size 1.27 1.27))))
     (property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 325 72 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Description" "DRV8833_Rear nSLEEP external pull-up (EMI hardening)" (at 325 74 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "DRV8833_Rear nSLEEP pull-up to ESTOP (E-stop disables drivers hardware-level)" (at 325 74 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1"
       (uuid "a1b2c3d4-0002-0002-0001-000000000002")
     )
@@ -733,7 +744,7 @@
       (uuid "a1b2c3d4-0002-0002-0001-000000000003")
     )
   )
-  (label "+3V3" (at 325 58 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0002-0002-0001-000000000004"))
+  (label "ESTOP" (at 325 58 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0002-0002-0001-000000000004"))
   (symbol
     (lib_id "Device:R")
     (at 335 32 0)
@@ -833,6 +844,17 @@
     )
     (pin "BISEN"
       (uuid "f51146d3-19a1-4f91-abe2-d55b67e11477")
+    )
+  )
+  (symbol
+    (lib_id "power:GND")
+    (at 300 90 0)
+    (uuid "a1b2c3d4-0026-0002-0001-000000000001")
+    (property "Reference" "#PWR44" (at 300 92 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 300 94 0) (effects (font (size 1.27 1.27))))
+    (property "Description" "U2b AISEN/BISEN tied to GND (disable hardware current limit, rely on INA219)" (at 300 96 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0026-0002-0001-000000000002")
     )
   )
   (label "MOT_RL_IN1" (at 285 70 0) (effects (font (size 1.27 1.27))) (uuid "d65d45d9-d9ac-4e49-ad55-ac33fed8644b"))
@@ -2347,7 +2369,7 @@
     (property "Reference" "R17" (at 135 103 0) (effects (font (size 1.27 1.27))))
     (property "Value" "10k" (at 135 113 0) (effects (font (size 1.27 1.27))))
     (property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 135 115 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Description" "Q5 gate pull-up (relay ON by default when E-stop released)" (at 135 117 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "Q5 gate pull-up to relay coil supply (E-stop cuts gate drive + coil simultaneously)" (at 135 117 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1"
       (uuid "a1b2c3d4-0003-0004-0001-000000000002")
     )
@@ -2355,7 +2377,7 @@
       (uuid "a1b2c3d4-0003-0004-0001-000000000003")
     )
   )
-  (label "+3V3" (at 135 100 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0003-0004-0001-000000000004"))
+  (label "+5V_ESTOP_COIL" (at 135 100 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0003-0004-0001-000000000004"))
   (symbol
     (lib_id "Device:R")
     (at 135 118 0)
@@ -2381,7 +2403,25 @@
       (uuid "a1b2c3d4-0003-0006-0001-000000000002")
     )
   )
-  (label "+5V_ESP" (at 155 100 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0003-0007-0001-000000000001"))
+  (label "+5V_ESTOP_COIL" (at 155 100 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0003-0007-0001-000000000001"))
+  (text "E-STOP COIL SUPPLY" (at 165 90 0) (effects (font (size 1.5 1.5) bold)) (uuid "a1b2c3d4-0029-0001-0001-000000000001"))
+  (symbol
+    (lib_id "Switch:SW_SPST")
+    (at 165 95 0)
+    (uuid "a1b2c3d4-0029-0002-0001-000000000001")
+    (property "Reference" "SW1b" (at 165 90 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "E-STOP_NC2" (at 165 100 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "" (at 165 95 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "E-stop 2nd NC contact pair — physically in relay coil +5V supply path (ISO 13850)" (at 165 102 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0029-0002-0001-000000000002")
+    )
+    (pin "2"
+      (uuid "a1b2c3d4-0029-0002-0001-000000000003")
+    )
+  )
+  (label "+5V_ESP" (at 160 95 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0029-0003-0001-000000000001"))
+  (label "+5V_ESTOP_COIL" (at 172 95 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0029-0004-0001-000000000001"))
   (symbol
     (lib_id "Device:R")
     (at 110 165 0)
@@ -3237,6 +3277,12 @@
       (value "E-STOP_NC")
       (footprint "")
     )
+    (path "/a1b2c3d4-0029-0002-0001-000000000001"
+      (reference "SW1b")
+      (unit 1)
+      (value "E-STOP_NC2")
+      (footprint "")
+    )
     (path "/a555945e-7196-46da-a6d9-93a0c9f02fc1"
       (reference "#PWR28")
       (unit 1)
@@ -3428,6 +3474,24 @@
       (unit 1)
       (value "10uF")
       (footprint "Capacitor_SMD:C_0805_2012Metric")
+    )
+    (path "/a1b2c3d4-0029-0002-0001-000000000001"
+      (reference "SW1b")
+      (unit 1)
+      (value "E-STOP_NC2")
+      (footprint "")
+    )
+    (path "/a1b2c3d4-0026-0001-0001-000000000001"
+      (reference "#PWR43")
+      (unit 1)
+      (value "GND")
+      (footprint "")
+    )
+    (path "/a1b2c3d4-0026-0002-0001-000000000001"
+      (reference "#PWR44")
+      (unit 1)
+      (value "GND")
+      (footprint "")
     )
   )
 )

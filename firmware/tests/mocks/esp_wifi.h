@@ -11,6 +11,7 @@ typedef struct {
 } wifi_ap_record_t;
 
 int esp_wifi_sta_get_ap_info(wifi_ap_record_t *ap_info);
+int esp_wifi_stop(void);
 void mock_set_wifi_rssi(int8_t rssi);
 void mock_set_wifi_connected(int connected);
 

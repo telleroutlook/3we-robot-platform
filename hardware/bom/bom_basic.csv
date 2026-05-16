@@ -11,7 +11,7 @@ W1-W4,48mm Mecanum Wheel,-,-,-,4,25.00,Taobao,Aluminum hub with PU rollers
 S1-S4,HC-SR04,Through-hole,-,HC-SR04,4,4.50,LCSC,Ultrasonic distance sensor
 IMU1,BNO055,Module,Bosch,BNO055,1,45.00,LCSC,9-DOF IMU with fusion
 BAT1,2S 18650 Holder + BMS,-,-,-,1,35.00,Taobao,7.4V 3000mAh per pack
-SW1,E-Stop Button φ30mm NC,-,-,-,1,8.00,Taobao,ISO 13850 mushroom head
+SW1,E-Stop Button φ30mm 2×NC,-,-,-,1,8.00,Taobao,ISO 13850 mushroom head (dual NC: NC1→ESTOP GPIO signal NC2→relay coil supply break)
 RLY1,Safety Relay Dual-CH NO,-,-,-,1,15.00,Taobao,Dual-channel normally-open (G2R-2-H DC5)
 Q5,AO3400A,SOT-23,AOS,AO3400A,1,0.30,LCSC,N-MOS relay low-side driver (Vgs_th=1V)
 D5,1N4148W,SOD-123,Various,-,1,0.05,LCSC,Relay coil flyback protection diode
@@ -34,7 +34,7 @@ R13,20kΩ,0603,Various,-,1,0.01,LCSC,Relay FB2 voltage divider upper
 R14,10kΩ,0603,Various,-,1,0.01,LCSC,Relay FB2 voltage divider lower
 R15,100kΩ,0402,Various,-,1,0.01,LCSC,Q3 (5V payload) P-MOS gate pull-up (default OFF)
 R16,100kΩ DNP,0402,Various,-,1,0.01,LCSC,Q4 (12V payload) P-MOS gate pull-up — DNP on Basic (no +12V_BOOST)
-R17,10kΩ,0402,Various,-,1,0.01,LCSC,Q5 gate pull-up (relay default ON)
+R17,10kΩ,0402,Various,-,1,0.01,LCSC,Q5 gate pull-up to +5V_ESTOP_COIL (E-stop cuts gate drive + coil simultaneously)
 R18,100kΩ,0402,Various,-,1,0.01,LCSC,Q5 gate ESD/discharge
 R20,10kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_FRONT series (5V→3.3V)
 R21,18kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_FRONT shunt to GND
@@ -44,7 +44,7 @@ R24,10kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_LEFT series (5V→3.3V)
 R25,18kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_LEFT shunt to GND
 R26,10kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_RIGHT series (5V→3.3V)
 R27,18kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_RIGHT shunt to GND
-R28-R29,10kΩ,0402,Various,-,2,0.01,LCSC,DRV8833 nSLEEP external pull-up
+R28-R29,10kΩ,0402,Various,-,2,0.01,LCSC,DRV8833 nSLEEP pull-up to ESTOP net (E-stop pressed → nSLEEP=LOW → drivers disabled)
 R32-R33,10kΩ,0402,Various,-,2,0.01,LCSC,DRV8833 nFAULT pull-up (to MCP23017 GPB4/GPB5)
 R30,44.2kΩ 1%,0402,Various,-,1,0.02,LCSC,MP2359 feedback divider upper
 R31,10kΩ 1%,0402,Various,-,1,0.02,LCSC,MP2359 feedback divider lower

@@ -176,9 +176,11 @@ void mock_set_adc_voltage_mv(int mv);
 
 // FreeRTOS stubs
 #define pdMS_TO_TICKS(x) (x)
+#define portTICK_PERIOD_MS 1
 #define pdTRUE  1
 #define pdFALSE 0
 typedef int TickType_t;
+static inline TickType_t xTaskGetTickCount(void) { return 0; }
 void vTaskDelay(int ticks);
 static inline void vTaskDelete(void *handle) { (void)handle; }
 

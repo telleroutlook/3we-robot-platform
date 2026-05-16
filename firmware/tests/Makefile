@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Makefile for firmware unit tests (alternative to CMake)
 CC = gcc
-CFLAGS = -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -g -std=c11 -DUNIT_TEST_BUILD -DCONFIG_CURRENT_SENSE_ENABLED -DCONFIG_ROBOT_DOCKING_ENABLED -DCONFIG_ROBOT_DOCKING_DIGITAL_DETECT -DCONFIG_CHARGE_DIGITAL_DETECT_GPIO=23 -DCONFIG_ROBOT_DUAL_BATTERY -DCONFIG_ENC_RR_B_ALT_GPIO=15 -include mocks/esp_stubs.h -include mocks/mbedtls_stubs.h -include mocks/mbedtls_ssl_stubs.h
+CFLAGS = -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -g -std=c11 -DUNIT_TEST_BUILD -DCONFIG_CURRENT_SENSE_ENABLED -DCONFIG_ROBOT_DOCKING_ENABLED -DCONFIG_ROBOT_DOCKING_DIGITAL_DETECT -DCONFIG_CHARGE_DIGITAL_DETECT_GPIO=23 -DCONFIG_ROBOT_DUAL_BATTERY -DCONFIG_ENC_RR_B_ALT_GPIO=15 -DCONFIG_PI5_POWER_ENABLED -include mocks/esp_stubs.h -include mocks/mbedtls_stubs.h -include mocks/mbedtls_ssl_stubs.h
 
 FIRMWARE_SRC = ../esp32/main
 FIRMWARE_CONFIG = ../config

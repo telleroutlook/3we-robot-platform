@@ -37,14 +37,14 @@ Battery Pack(s) ─── XT30 ──→ Q8 P-MOS ──→ VBAT Bus (7.4V)
                     ▼                          ▼                      ▼
               MP2359 Buck              MP1584EN Buck            [Safety Relay]
               5V / 1.2A                5V / 5A                       │
-              (ESP32, sensors)              │                         ▼
-                    │               ┌──────┼──────┐           Motor DRV8833
-                    ▼               │      │      │           (7.4V / 10A max)
-              AP2112K-3.3        Q6a/Q6b   Q3
-              3.3V / 600mA       P-MOS SW  P-MOS SW
-              (logic, I2C)          │         │
-                                    ▼         ▼
-                              +5V_PI_SW   +5V_PAYLOAD
+              (ESP32, sensors)              │                    Coil supply:
+                    │               ┌──────┼──────┐           +5V_ESP → SW1b NC
+                    ▼               │      │      │           → +5V_ESTOP_COIL
+              AP2112K-3.3        Q6a/Q6b   Q3                 → RLY1 coil
+              3.3V / 600mA       P-MOS SW  P-MOS SW                  │
+              (logic, I2C)          │         │                      ▼
+                                    ▼         ▼               Motor DRV8833
+                              +5V_PI_SW   +5V_PAYLOAD         (7.4V / 10A max)
                               (Pi5, 3A)   (Payload, 2A)
                               GPIO45 ctrl  MCP23017 ctrl
 ```
@@ -56,6 +56,12 @@ Battery Pack(s) ─── XT30 ──→ Q8 P-MOS ──→ VBAT Bus (7.4V)
 - **Pi5 Power Switch (Q6a/Q6b/Q7)**: Dual Si2301CDS P-MOS (parallel, 5A total) with
   AO3400A N-MOS driver. GPIO45 HIGH = Pi5 ON. Default OFF at boot (R34 pull-down).
   Standard/Industrial SKU only (DNP on Basic).
+- **E-stop Safety Path (SW1b → RLY1)**: The E-stop button has dual NC contact pairs.
+  NC2 (SW1b) is in series with the safety relay coil +5V supply. Pressing E-stop
+  physically breaks the coil circuit → relay de-energizes → motor power cut. This is
+  a pure hardware interlock — zero firmware dependency, compliant with ISO 13850.
+  R17 (Q5 gate pull-up) also connects to +5V_ESTOP_COIL so the N-MOS driver loses
+  gate drive simultaneously.
 
 ## PBC-34 Payload Bus Connector
 
