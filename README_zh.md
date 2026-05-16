@@ -230,6 +230,7 @@ sudo apt install ros-jazzy-desktop
 - [x] **Phase 1**: `threewe` Python API + Sim2Real 后端
 - [x] **Phase 1**: Gymnasium 环境 + VLM/VLA 集成
 - [x] **Phase 1**: 基准测试框架 + 示例脚本
+- [x] **Phase 2**: 机载状态显示面板（1.3" OLED SH1106，3键导航，5页状态，故障码）
 - [ ] **Phase 2**: Isaac Sim 后端
 - [ ] **Phase 2**: 硬件抽象层（支持第三方机器人）
 - [ ] **Phase 2**: 基础模型微调流水线

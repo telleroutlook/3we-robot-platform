@@ -303,8 +303,8 @@ Step-by-step tutorials in [`notebooks/`](notebooks/). Most require ROS2 + Gazebo
 - [x] **Phase 1**: Benchmark framework + Example scripts
 - [ ] **Phase 1**: Gazebo/Isaac Sim backends (interface done, integration testing in progress)
 - [ ] **Phase 1**: PyPI publishing (`pip install threewe`)
+- [x] **Phase 2**: On-robot status display panel (1.3" OLED SH1106, 3-key navigation, 5 pages, fault codes)
 - [ ] **Phase 2**: Hardware Abstraction Layer for 3rd-party robots
-- [ ] **Phase 2**: On-robot status display panel (1.3" OLED + 3-key navigation, fault codes, diagnostics)
 - [ ] **Phase 2**: Foundation model fine-tuning pipelines
 - [ ] **Phase 3**: 3we Hub (model/dataset sharing)
 - [ ] **Phase 3**: Multi-robot fleet management

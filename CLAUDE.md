@@ -143,7 +143,7 @@ Quick alias: `make all` runs lint + test + build from root.
 
 ```bash
 # 1. Firmware — host-side unit tests
-cd firmware/tests && make clean && make && ./test_runner
+cd firmware/tests && make clean && make && ./build/test_runner
 
 # 2. SDK web_control — TypeScript type-check
 cd sdk/web_control && npx tsc --noEmit

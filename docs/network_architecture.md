@@ -74,17 +74,22 @@ micro-ROS exposes all sensor data and motor control to the ROS2 ecosystem. The c
 
 Direct encrypted channel from a client app to the ESP32's Wi-Fi interface. Can send motor commands without the companion computer. Subject to the same safety limits as ROS2 commands.
 
+**Authority Model**: Only one DTLS session at a time can hold "authority" (permission to send motor commands). A session claims authority by being the first authenticated client to send a command. Authority is released after an idle timeout (configurable, default ~30s of no commands from the holder). Other connected sessions receive telemetry but cannot issue motor commands until authority is released or transferred. This prevents conflicting control inputs from multiple clients.
+
+**Operator Allowlist**: An optional NVS-stored operator list restricts which PSK identities can claim authority. If configured, only pre-approved operators can send motor commands.
+
 ### 3. UDP Telemetry (Plaintext Fallback)
 
 | Property | Value |
 |----------|-------|
 | Transport | UDP |
-| Port | 5685 |
+| Command Port | 8888 (receive) |
+| Telemetry Port | 9999 (send) |
 | Authentication | None |
-| Direction | Read-only (ESP32 → Client) |
+| Direction | Read-only (ESP32 → Client) by default |
 | Use case | Debugging, real-time visualization |
 
-Unencrypted telemetry stream. Cannot send motor commands. Useful for quick debugging without DTLS setup.
+Unencrypted telemetry stream. By default (`CONFIG_ROBOT_ALLOW_PLAINTEXT_CTRL` disabled), received UDP packets are dropped — no motor commands accepted over plaintext. Useful for quick debugging without DTLS setup.
 
 ### 4. Rosbridge WebSocket (Browser ↔ ROS2)
 
@@ -104,9 +109,9 @@ The `rosbridge_server` runs on the companion computer and exposes the full ROS2 
 | Port | Protocol | Service | Direction | Auth |
 |------|----------|---------|-----------|------|
 | 9090 | WebSocket | rosbridge (ROS2 ↔ browser) | Bidirectional | None |
-| 5684 | UDP/DTLS | Direct motor control | Bidirectional | PSK |
-| 5685 | UDP | Telemetry stream | ESP32 → Client | None |
-| 8888 | UDP | micro-ROS agent (debug mode) | Bidirectional | None |
+| 5684 | UDP/DTLS | Direct motor control (authority model) | Bidirectional | PSK |
+| 8888 | UDP | Command receive (plaintext, dropped by default) | Client → ESP32 | None |
+| 9999 | UDP | Telemetry stream | ESP32 → Client | None |
 | 921600 baud | Serial | micro-ROS primary transport | Bidirectional | Physical |
 
 ## Security Model
@@ -116,24 +121,27 @@ The `rosbridge_server` runs on the companion computer and exposes the full ROS2 
 | Channel | Motor Control | Requires |
 |---------|:------------:|----------|
 | micro-ROS (serial) | Yes | Physical UART connection |
-| DTLS (port 5684) | Yes | Valid PSK credential |
+| DTLS (port 5684) | Yes | Valid PSK + authority claim |
 | Rosbridge (port 9090) | Yes | Network access to companion |
-| UDP telemetry (5685) | **No** | — |
+| UDP plaintext (8888) | **No** (default) | `CONFIG_ROBOT_ALLOW_PLAINTEXT_CTRL` to enable |
 
 ### Safety Enforcement (All Channels)
 
 Regardless of which channel delivers a motor command, the firmware enforces:
 
-1. **Speed clamping** — velocity limited to `safety_get_speed_limit()` (configurable, default 1.0 m/s, hard cap 1.2 m/s)
+1. **Speed clamping** — velocity limited to `safety_get_speed_limit()` (configurable, NVS-persisted, default 1.0 m/s, hard cap 1.2 m/s)
 2. **E-stop priority** — hardware E-stop cuts power via relay; software cannot override
-3. **Watchdog timeout** — if no `/cmd_vel` received for 500ms, motors stop
-4. **System watchdog** — if control loop stalls for 1000ms, full E-stop triggered
+3. **cmd_vel timeout** — if no `/cmd_vel` received for 500ms, motors stop
+4. **System watchdog** — if control loop stalls for 1000ms, full E-stop triggered (armed-on-first-feed: only activates after first `safety_feed_watchdog()` call)
+5. **Relay self-test** — dual-channel relay feedback verified at boot and continuously monitored; 3 faults escalate to permanent RELAY_FAULT requiring physical service
+6. **DRV8833 nFAULT** — motor driver fault pins monitored via MCP23017; debounced 3-cycle detection triggers motor stop
+7. **Thermal protection** — INA219-based temperature monitoring can trigger motor shutdown at critical thresholds
 
 ### PSK Provisioning
 
 The DTLS PSK identity and key are stored in ESP32 NVS (non-volatile storage):
-- Identity: `robot_<MAC_LAST_4_BYTES>`
-- Key: 16-byte random, provisioned during initial setup
+- Identity: `robot-<MAC_HEX>` (full 6-byte MAC as 12 hex characters, e.g. `robot-AABBCCDDEEFF`)
+- Key: 16-byte minimum random, provisioned during initial setup via NVS namespace `security/dtls_psk`
 - Rotation: requires re-flashing NVS partition or OTA config update
 
 ## Data Flow Examples
@@ -158,17 +166,20 @@ ESP32 ultrasonic_get_last() → range_timer_callback()
 
 ```
 Physical button press → GPIO ISR (debounced 50ms)
-  → safety_set_state(SAFETY_ESTOPPED) → motor_stop_all()
+  → state = SAFETY_ESTOPPED → motor_stop_all()
   → micro-ROS publishes /emergency_stop_state
   → Web UI <robot-estop-button> shows active E-stop
 ```
+
+Recovery flow (two-step):
+1. Release physical button → `safety_reset()` → state = SAFETY_RECOVERY_PENDING
+2. Operator confirmation → `safety_confirm_reset()` → state = SAFETY_NORMAL
+3. If confirm not received within 10s → auto-revert to SAFETY_ESTOPPED
 
 ## Wi-Fi Configuration
 
 The firmware connects to Wi-Fi using credentials stored in NVS. Configuration methods:
 
-1. **Build-time** — Set `CONFIG_WIFI_SSID` / `CONFIG_WIFI_PASSWORD` in `sdkconfig`
-2. **NVS provisioning** — Write credentials to the `wifi` NVS namespace before first boot
-3. **Serial command** — During development, credentials can be set via serial console
-
-The robot creates its own AP network (`RobotPlatform_XXXX`) only as a future enhancement for captive portal provisioning (not yet implemented).
+1. **Captive portal** — On first boot (or if stored credentials fail), the ESP32 creates an AP (`RobotPlatform_XXXX`) and serves a captive portal page for credential entry. After receiving valid Wi-Fi credentials, the device restarts and connects to the configured network.
+2. **NVS provisioning** — Write credentials to the `wifi` NVS namespace before first boot via `provision-keys` tool
+3. **Build-time** — Set `CONFIG_WIFI_SSID` / `CONFIG_WIFI_PASSWORD` in `sdkconfig` (development only)

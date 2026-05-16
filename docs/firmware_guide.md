@@ -62,7 +62,7 @@ idf.py fullclean && idf.py build
 ```bash
 cd firmware/tests
 make clean && make
-./test_runner
+./build/test_runner
 ```
 
 ---
@@ -99,16 +99,22 @@ idf.py -p /dev/ttyUSB0 monitor
 Expected boot messages:
 ```
 I (xxx) main: Robot Platform Firmware starting...
-I (xxx) safety: Safety system initialized (E-stop GPIO=41)
+I (xxx) ext_wdt: External watchdog feeder started (500ms period)
+I (xxx) main: Wi-Fi connected
+I (xxx) safety: Safety system initialized (E-stop GPIO=41, speed_limit=1.00 m/s)
+I (xxx) safety: Relay self-test PASSED (CH1=1, CH2=1, relay energized)
 I (xxx) motor: Motor control initialized (20000 Hz PWM, 8-bit)
 I (xxx) encoder: Encoders initialized (PCNT, 1440 CPR)
 I (xxx) ultrasonic: Ultrasonic sensors initialized (trig=12)
+I (xxx) i2c_bus: I2C bus initialized (SDA=8, SCL=9, freq=400000 Hz)
 I (xxx) imu: BNO055 initialized (addr=0x28, NDOF mode)
 I (xxx) battery: Battery ADC initialized (2S, divider=3.0)
-I (xxx) charging: Charging detect initialized (threshold=2000mV)
 I (xxx) heartbeat: Heartbeat monitor initialized (timeout=5000ms)
-I (xxx) ext_wdt: External watchdog feeder started (500ms period)
+I (xxx) thermal: Thermal monitor initialized
+I (xxx) payload: Payload hot-plug initialized
 I (xxx) uros: micro-ROS initialized (UART 921600 baud)
+I (xxx) udp_xport: UDP transport initialized (cmd:5685, telem:5686)
+I (xxx) dtls: DTLS transport initialized (port 5684, max_sessions=4)
 I (xxx) main: All systems initialized. Robot ready.
 ```
 
@@ -133,10 +139,11 @@ Key options in `Robot Platform Configuration`:
 | Motor PID Kp | 1.20 | Proportional gain |
 | Motor PID Ki | 0.80 | Integral gain |
 | Motor PID Kd | 0.01 | Derivative gain |
-| Wi-Fi SSID | robot-platform | AP mode SSID |
 | micro-ROS baud | 921600 | UART communication speed |
 | cmd_vel timeout | 500ms | Motor stop timeout |
-| Safety distance | 5cm | Ultrasonic E-stop threshold |
+| Safety distance | 15cm | Ultrasonic E-stop threshold |
+| Display enabled | Yes | OLED status display (SH1106 128x64) |
+| Display refresh | 200ms | Display update interval |
 
 ---
 
@@ -194,9 +201,9 @@ Before an OTA update is accepted, the firmware runs an automated pre-flight vali
 |-------|-----------|-----------|
 | Battery | ≥ 50% | Prevent power loss during flash |
 | Wi-Fi RSSI | ≥ -70 dBm | Ensure stable download |
+| Safety state | NORMAL | E-stop must be cleared |
 | Motors | Idle | No active motion commands |
-| Thermal | < warning | Prevent overtemp during heavy CPU use |
-| Safety | Not triggered | E-stop must be cleared |
+| Thermal | Not CRITICAL or SHUTDOWN | Prevent overtemp during heavy CPU use |
 
 If any check fails, the OTA is rejected with a `fail_reason` string.
 
@@ -223,7 +230,7 @@ This ensures the robot stops if the companion computer crashes or the serial lin
 
 ## External Watchdog
 
-An external TPS3813 hardware watchdog IC provides a last-resort reset if the ESP32 firmware hangs. The `external_wdt.c` module toggles GPIO 46 at 1 Hz (500ms period). If toggling stops, the TPS3813 triggers a hardware reset.
+An external TPS3813 hardware watchdog IC provides a last-resort reset if the ESP32 firmware hangs. The `external_wdt.c` module toggles GPIO 46 every 200ms (providing ~8× margin against the TPS3813's 1.6s timeout). If toggling stops, the TPS3813 triggers a hardware reset via the RST/EN line.
 
 ---
 

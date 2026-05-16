@@ -60,9 +60,9 @@ After `generate`, two files are created:
 Each manifest JSON contains:
 ```json
 {
-  "device_id": "robot-AA:BB:CC:DD:EE:FF",
+  "device_id": "robot-AABBCCDDEEFF",
   "psk_hex": "...",
-  "psk_identity": "robot-AA:BB:CC:DD:EE:FF",
+  "psk_identity": "robot-AABBCCDDEEFF",
   "ota_public_key_der_hex": "...",
   "provisioned": true,
   "provisioned_at": "2025-01-15T10:30:00Z"

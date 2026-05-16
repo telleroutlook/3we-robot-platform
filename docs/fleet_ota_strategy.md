@@ -77,10 +77,10 @@ Automatically halt rollout and trigger rollback if any of:
 ### Boot Validation Flow
 
 1. New firmware boots from OTA partition
-2. Safety self-test runs (relay self-test, sensor check)
-3. If self-test passes: `esp_ota_mark_app_valid_cancel_rollback()`
-4. If self-test fails: reboot triggers automatic rollback to previous partition
-5. After 3 consecutive boot failures: revert to factory image
+2. 30-second validation window: safety self-test, relay check, sensor initialization
+3. If validation passes (safety NORMAL, motors idle, no boot fail escalation): `esp_ota_mark_app_valid_cancel_rollback()`
+4. If validation fails or firmware crashes: reboot triggers automatic rollback to previous partition
+5. After 3 consecutive boot failures (tracked in NVS): firmware refuses to self-confirm, watchdog resets to previous partition
 
 ## OTA Trigger Mechanisms
 

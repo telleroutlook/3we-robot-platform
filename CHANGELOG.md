@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Firmware — OTA Pre-flight Checks**: Battery ≥50%, Wi-Fi RSSI ≥-70 dBm, motors idle, thermal OK, safety not triggered. 30-second validation window after boot; auto-rollback after 3 consecutive boot failures (`ota_preflight.c`)
 - **Firmware — OTA Compatibility Matrix**: Protocol version gate prevents incompatible firmware from being applied (`ota_compat.c`)
 - **Firmware — Heartbeat Monitor**: 5-second timeout on Raspberry Pi heartbeat. Triggers graceful motor shutdown and safety relay pulse after 3 consecutive resets within 30 minutes (`heartbeat_monitor.c`)
-- **Firmware — External Watchdog**: TPS3813 hardware watchdog feeder task (1 Hz square wave on GPIO 46). Stops toggling = hardware reset (`external_wdt.c`)
+- **Firmware — External Watchdog**: TPS3813 hardware watchdog feeder task (200ms toggle on GPIO 46, 8× margin vs 1.6s timeout). Stops toggling = hardware reset (`external_wdt.c`)
 - **Firmware — Charging Contact Detection**: ADC-based pogo pin voltage sense on ADC1_CH8. Uses curve-fitting calibration for ESP32-S3. Threshold 2.0V for contact detection (`charging_detect.c`)
 - **Firmware — Multi-pack Battery Support**: Extended battery module with configurable cell count (2S–6S) and per-cell threshold lookup
 - **ROS2 — `robot_docking` package**: Autonomous docking controller with visual servo (ArUco marker), contact verification via charging ADC, and staged state machine (IDLE → APPROACH → VISUAL_SERVO → CONTACT_VERIFY → DOCKED)
@@ -56,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - OTA firmware signing (ECDSA P-256) with bootloader verification
 - Industrial SKU CAN bus support
 - micro-ROS DDS-XRCE communication layer (UART 921600 baud)
-- UDP plaintext telemetry fallback (port 5685)
+- UDP plaintext telemetry fallback (cmd port 8888, telemetry port 9999)
 - ROS2 workspace with 8 packages:
   - `robot_interfaces` — 4 messages (WheelSpeeds, EmergencyStopState, PayloadState, DockingState), 3 services (EmergencyStop, PayloadPower, UndockRobot), 1 action (Dock)
   - `robot_description` — URDF/Xacro for mecanum platform with 4 ultrasonic sensors, IMU, payload mount

@@ -176,14 +176,29 @@ Verify the button has actually been released. Check the GPIO level:
 If the relay welded shut or the feedback line is broken:
 ```
 # Serial output:
-"Relay feedback check FAILED — stuck at HIGH"
+"RELAY FAULT: relay energized while E-stopped - possible welded contact"
+"RELAY FAULT ESCALATED: welded contact confirmed - service required"
 ```
 
-Resolution: Replace the safety relay. The firmware persists relay faults to NVS and refuses to reset until power cycle.
+Resolution: After physical repair, use `safety_clear_relay_fault()` (exposed via ROS2 service or DTLS command) to clear the persistent fault flag in NVS. The system transitions to ESTOPPED, then requires normal reset flow.
 
-**3. Software E-stop (cannot reset from software)**
+**3. RECOVERY_PENDING state stuck**
 
-Software-triggered E-stops require physical button release + new power cycle or hardware acknowledgment. This is by design — software cannot override hardware safety.
+If reset was initiated but confirmation never arrived (10s timeout reverts to ESTOPPED):
+```
+# Serial output:
+"RECOVERY_PENDING timeout (10000ms) - reverting to ESTOPPED"
+```
+
+Resolution: Retry the reset flow. Ensure the client sending `safety_confirm_reset()` is connected and responsive.
+
+**4. Software E-stop recovery**
+
+Software-triggered E-stops follow a two-step recovery:
+1. Call `safety_reset()` — requires physical button released, transitions to RECOVERY_PENDING
+2. Call `safety_confirm_reset()` within 10 seconds — transitions to NORMAL
+
+No power cycle required. This is a deliberate two-step handshake to prevent accidental re-arming.
 
 **4. Watchdog fault latched**
 

@@ -42,7 +42,7 @@ idf.py -p /dev/ttyUSB0 flash monitor
 # Run unit tests on host (no hardware needed)
 cd firmware/tests
 make clean && make
-./test_runner
+./build/test_runner
 ```
 
 Available SKU variants: `basic`, `standard`, `industrial`
@@ -114,7 +114,7 @@ Before committing, run the full validation suite. These are the same checks CI r
 
 ```bash
 # 1. Firmware host-side unit tests
-cd firmware/tests && make clean && make && ./test_runner
+cd firmware/tests && make clean && make && ./build/test_runner
 
 # 2. TypeScript type check
 cd sdk/web_control && npx tsc --noEmit
