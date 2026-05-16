@@ -23,6 +23,7 @@ esp_err_t safety_confirm_reset(void);
 void safety_register_callback(safety_callback_t cb);
 void safety_feed_watchdog(void);
 void safety_check_watchdog(void);
+void safety_check_recovery_timeout(void);
 void safety_process_deferred_stop(void);
 void safety_task(void *params);
 

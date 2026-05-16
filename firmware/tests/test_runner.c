@@ -151,6 +151,8 @@ extern void test_safety_callback_invoked_on_trigger(void);
 extern void test_isr_deferred_stop_fires_in_safety_loop(void);
 extern void test_isr_deferred_stop_not_double_fired(void);
 extern void test_isr_deferred_stop_noop_when_not_pending(void);
+extern void test_safety_recovery_pending_timeout(void);
+extern void test_safety_recovery_pending_no_timeout_if_confirmed(void);
 
 // test_thermal_monitor.c
 extern void test_thermal_init_success(void);
@@ -513,6 +515,8 @@ int main(void)
     RUN_TEST(test_isr_deferred_stop_fires_in_safety_loop);
     RUN_TEST(test_isr_deferred_stop_not_double_fired);
     RUN_TEST(test_isr_deferred_stop_noop_when_not_pending);
+    RUN_TEST(test_safety_recovery_pending_timeout);
+    RUN_TEST(test_safety_recovery_pending_no_timeout_if_confirmed);
 
     // Thermal monitor (INA219)
     RUN_TEST(test_thermal_init_success);

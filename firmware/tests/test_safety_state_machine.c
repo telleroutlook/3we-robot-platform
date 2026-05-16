@@ -419,3 +419,52 @@ void test_isr_deferred_stop_noop_when_not_pending(void)
     TEST_ASSERT_EQUAL(0, motor_stop_all_calls);
     TEST_ASSERT_EQUAL(0, motor_clear_isr_stop_calls);
 }
+
+// --- Test 25: RECOVERY_PENDING times out to ESTOPPED ---
+void test_safety_recovery_pending_timeout(void)
+{
+    safety_test_setUp();
+    safety_register_callback(test_callback);
+    safety_trigger_estop();
+    mock_set_gpio_level(ESTOP_GPIO, 1);
+
+    // Enter RECOVERY_PENDING
+    mock_set_timer(1000000LL); // 1s
+    safety_reset();
+    TEST_ASSERT_EQUAL(SAFETY_RECOVERY_PENDING, safety_get_state());
+    callback_invoked = 0;
+
+    // Not yet timed out (9s later)
+    mock_set_timer(10000000LL); // 10s total
+    safety_check_recovery_timeout();
+    TEST_ASSERT_EQUAL(SAFETY_RECOVERY_PENDING, safety_get_state());
+
+    // Timed out (11s after entering RECOVERY_PENDING = 12s total)
+    mock_set_timer(12000000LL); // 12s total, 11s since transition at 1s
+    safety_check_recovery_timeout();
+    TEST_ASSERT_EQUAL(SAFETY_ESTOPPED, safety_get_state());
+    TEST_ASSERT_EQUAL(1, callback_invoked);
+    TEST_ASSERT_EQUAL(SAFETY_ESTOPPED, callback_last_state);
+}
+
+// --- Test 26: RECOVERY_PENDING timeout does not fire if confirmed in time ---
+void test_safety_recovery_pending_no_timeout_if_confirmed(void)
+{
+    safety_test_setUp();
+    safety_trigger_estop();
+    mock_set_gpio_level(ESTOP_GPIO, 1);
+
+    mock_set_timer(1000000LL);
+    safety_reset();
+    TEST_ASSERT_EQUAL(SAFETY_RECOVERY_PENDING, safety_get_state());
+
+    // Confirm within timeout window
+    mock_set_timer(5000000LL);
+    safety_confirm_reset();
+    TEST_ASSERT_EQUAL(SAFETY_NORMAL, safety_get_state());
+
+    // Even after timeout period, state remains NORMAL
+    mock_set_timer(15000000LL);
+    safety_check_recovery_timeout();
+    TEST_ASSERT_EQUAL(SAFETY_NORMAL, safety_get_state());
+}

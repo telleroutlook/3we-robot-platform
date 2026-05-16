@@ -50,6 +50,7 @@ static volatile int64_t last_state_transition_us = 0;
 #define RELAY_HEALTHY_THRESHOLD 10
 #define RELAY_MISMATCH_DEBOUNCE_THRESHOLD 3
 #define RELAY_RELEASE_GRACE_MS 100
+#define RECOVERY_PENDING_TIMEOUT_MS 10000
 
 static void persist_relay_fault(void);
 
@@ -200,6 +201,7 @@ esp_err_t safety_reset(void)
         return ESP_ERR_INVALID_STATE;
     }
     state = SAFETY_RECOVERY_PENDING;
+    last_state_transition_us = esp_timer_get_time();
     portEXIT_CRITICAL(&safety_spinlock);
     notify_state_change(SAFETY_RECOVERY_PENDING);
     ESP_LOGI(TAG, "Safety recovery pending - awaiting confirmation");
@@ -281,6 +283,29 @@ void safety_process_deferred_stop(void)
     }
 }
 
+TESTABLE_WEAK void safety_check_recovery_timeout(void)
+{
+    portENTER_CRITICAL(&safety_spinlock);
+    safety_state_t current = state;
+    int64_t transition_us = last_state_transition_us;
+    portEXIT_CRITICAL(&safety_spinlock);
+
+    if (current != SAFETY_RECOVERY_PENDING) return;
+
+    int64_t elapsed_ms = (esp_timer_get_time() - transition_us) / 1000;
+    if (elapsed_ms >= RECOVERY_PENDING_TIMEOUT_MS) {
+        portENTER_CRITICAL(&safety_spinlock);
+        if (state == SAFETY_RECOVERY_PENDING) {
+            state = SAFETY_ESTOPPED;
+            last_state_transition_us = esp_timer_get_time();
+        }
+        portEXIT_CRITICAL(&safety_spinlock);
+        notify_state_change(SAFETY_ESTOPPED);
+        ESP_LOGW(TAG, "RECOVERY_PENDING timeout (%dms) - reverting to ESTOPPED",
+                 RECOVERY_PENDING_TIMEOUT_MS);
+    }
+}
+
 void safety_task(void *params)
 {
     while (1) {
@@ -307,6 +332,9 @@ void safety_task(void *params)
                 ESP_LOGW(TAG, "Hardware E-stop detected");
             }
         }
+
+        // RECOVERY_PENDING timeout: revert to ESTOPPED if confirm never arrives
+        safety_check_recovery_timeout();
 
         // Continuous relay feedback monitoring (dual-channel for CE PL d Cat 3)
         int relay_fb = gpio_get_level(SAFETY_RELAY_FB);
