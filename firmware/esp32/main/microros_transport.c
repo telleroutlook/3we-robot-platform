@@ -9,6 +9,9 @@
 #include "payload_hotplug.h"
 #include "pin_definitions.h"
 #include "robot_params.h"
+#ifdef CONFIG_PI5_POWER_ENABLED
+#include "heartbeat_monitor.h"
+#endif
 #ifdef CONFIG_ROBOT_DOCKING_ENABLED
 #include "charging_detect.h"
 #endif
@@ -138,6 +141,9 @@ static void cmd_vel_callback(const void *msg_in)
     motor_mecanum_drive(&cmd);
     last_cmd_vel_time = esp_timer_get_time();
     safety_feed_watchdog();
+#ifdef CONFIG_PI5_POWER_ENABLED
+    heartbeat_feed();
+#endif
 }
 
 static void odom_timer_callback(rcl_timer_t *timer, int64_t last_call_time)
