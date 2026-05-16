@@ -166,8 +166,8 @@ esp_err_t display_init(void)
         ssd1306_contrast(&s_dev, 0xFF);
         ssd1306_clear_screen(&s_dev, false);
         i2c_bus_unlock();
+        s_hw_initialized = true;
     }
-    s_hw_initialized = true;
 #endif
 
     ESP_LOGI(TAG, "Display initialized (SH1106 128x64 @ 0x%02X)", DISPLAY_I2C_ADDR);
