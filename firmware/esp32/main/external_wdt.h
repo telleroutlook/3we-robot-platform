@@ -8,5 +8,6 @@
 
 esp_err_t external_wdt_init(void);
 void external_wdt_task(void *params);
+void external_wdt_confirm_alive(void);
 
 #endif // EXTERNAL_WDT_H

@@ -9,6 +9,7 @@
 
 static const char *TAG = "ext_wdt";
 static int s_wdt_level = 0;
+static volatile bool s_safety_alive = false;
 
 esp_err_t external_wdt_init(void)
 {
@@ -29,13 +30,21 @@ esp_err_t external_wdt_init(void)
     return ESP_OK;
 }
 
+void external_wdt_confirm_alive(void)
+{
+    s_safety_alive = true;
+}
+
 void external_wdt_task(void *params)
 {
     (void)params;
 
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(EXT_WDT_FEED_PERIOD_MS));
-        s_wdt_level = !s_wdt_level;
-        gpio_set_level(EXT_WDT_FEED_GPIO, s_wdt_level);
+        if (s_safety_alive) {
+            s_safety_alive = false;
+            s_wdt_level = !s_wdt_level;
+            gpio_set_level(EXT_WDT_FEED_GPIO, s_wdt_level);
+        }
     }
 }
