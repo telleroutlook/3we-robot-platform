@@ -1,0 +1,13 @@
+Reference,Value,Footprint,Qty,Notes
+U1,TB6612FNG,SSOP-24,2,Dual H-bridge motor driver (drives 2 motors each)
+M1-M4,JGA25-370-12V-534RPM,—,4,DC gear motor with Hall encoder (11PPR × 34 = 374 CPR)
+W1-W4,80mm-Mecanum,—,4,Mecanum wheel set (2L + 2R)
+J1,XT60-Male,Through-hole,1,Main power input connector
+C1,470uF-25V,Radial-10mm,1,Input bulk capacitor
+U2,MP2315,SOT-23-8,1,Step-down 12V → 5V/3A for logic rail
+R1-R4,0.1Ω-1W,2512,4,Low-side current sense shunt resistors
+J2-J5,JST-PH-6P,Through-hole,4,Motor + encoder connectors (PWR×2 + HALL_A + HALL_B + VCC + GND)
+BAT1,3S-2200mAh-LiPo,—,1,11.1V nominal power source
+L1,10uH-3A,SMD-1210,1,Buck converter inductor
+D1,SS34,SMA,1,Buck converter freewheeling diode
+C2,22uF-25V,0805,2,Buck converter output capacitors
