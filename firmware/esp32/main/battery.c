@@ -6,6 +6,10 @@
 #include "robot_params.h"
 #include "payload_hotplug.h"
 
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+#include "display.h"
+#endif
+
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
@@ -133,6 +137,9 @@ void battery_task(void *params)
 
             if (!shutdown_initiated) {
                 ESP_LOGE(TAG, "CRITICAL: Battery %.2fV - triggering safety stop", voltage_avg);
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+                display_log_fault(FAULT_SRC_BATTERY, 1, "BATT CRITICAL");
+#endif
                 safety_trigger_estop();
             }
 

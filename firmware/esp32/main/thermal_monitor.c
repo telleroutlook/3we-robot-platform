@@ -5,6 +5,10 @@
 #include "safety.h"
 #include "pin_definitions.h"
 
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+#include "display.h"
+#endif
+
 #ifdef CONFIG_THERMAL_NTC_ENABLED
 #include "adc_manager.h"
 #include "esp_adc/adc_oneshot.h"
@@ -183,10 +187,16 @@ static void update_thermal_state(thermal_reading_t *r)
         portEXIT_CRITICAL(&thermal_spinlock);
         if (state == THERMAL_SHUTDOWN) {
             safety_trigger_estop();
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+            display_log_fault(FAULT_SRC_THERMAL, 1, "THERM SHUTDOWN");
+#endif
             ESP_LOGE(TAG, "THERMAL SHUTDOWN: temp=%.1f°C — system must power off",
                      r->effective_temp_c);
         } else if (state == THERMAL_CRITICAL) {
             safety_trigger_estop();
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+            display_log_fault(FAULT_SRC_THERMAL, 2, "THERM CRITICAL");
+#endif
             ESP_LOGE(TAG, "THERMAL CRITICAL: temp=%.1f°C, current=%.0fmA — E-stop triggered",
                      r->estimated_temp_c, r->current_ma);
         } else if (state == THERMAL_WARNING) {

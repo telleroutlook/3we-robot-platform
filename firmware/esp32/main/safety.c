@@ -4,6 +4,10 @@
 #include "pin_definitions.h"
 #include "robot_params.h"
 
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+#include "display.h"
+#endif
+
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -157,6 +161,9 @@ TESTABLE_WEAK void safety_trigger_estop(void)
         portEXIT_CRITICAL(&safety_spinlock);
         motor_stop_all();
         notify_state_change(SAFETY_ESTOPPED);
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+        display_log_fault(FAULT_SRC_SAFETY, 1, "SW E-STOP");
+#endif
         ESP_LOGW(TAG, "Software E-stop triggered");
     } else {
         portEXIT_CRITICAL(&safety_spinlock);
@@ -245,6 +252,9 @@ TESTABLE_WEAK void safety_check_watchdog(void)
     if (should_estop) {
         motor_stop_all();
         notify_state_change(SAFETY_ESTOPPED);
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+        display_log_fault(FAULT_SRC_SAFETY, 2, "WDT timeout");
+#endif
         ESP_LOGW(TAG, "Watchdog timeout - control loop stalled");
     }
 }
@@ -277,6 +287,9 @@ void safety_task(void *params)
                 portEXIT_CRITICAL(&safety_spinlock);
                 motor_stop_all();
                 notify_state_change(SAFETY_ESTOPPED);
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+                display_log_fault(FAULT_SRC_SAFETY, 3, "HW E-STOP");
+#endif
                 ESP_LOGW(TAG, "Hardware E-stop detected");
             }
         }
@@ -307,6 +320,9 @@ void safety_task(void *params)
                 if (fault_count >= 3) {
                     notify_state_change(SAFETY_RELAY_FAULT);
                     persist_relay_fault();
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+                    display_log_fault(FAULT_SRC_SAFETY, 4, "RELAY FAULT");
+#endif
                     ESP_LOGE(TAG, "RELAY FAULT ESCALATED: channel inconsistency - service required");
                 } else {
                     notify_state_change(SAFETY_ESTOPPED);
@@ -339,6 +355,9 @@ void safety_task(void *params)
             if (fault_count >= 3) {
                 notify_state_change(SAFETY_RELAY_FAULT);
                 persist_relay_fault();
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+                display_log_fault(FAULT_SRC_SAFETY, 4, "RELAY FAULT");
+#endif
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: hardware damage suspected - service required");
             } else {
                 notify_state_change(SAFETY_ESTOPPED);
@@ -356,6 +375,9 @@ void safety_task(void *params)
             if (fault_count >= 3) {
                 notify_state_change(SAFETY_RELAY_FAULT);
                 persist_relay_fault();
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+                display_log_fault(FAULT_SRC_SAFETY, 4, "RELAY FAULT");
+#endif
                 ESP_LOGE(TAG, "RELAY FAULT ESCALATED: welded contact confirmed - service required");
             }
         } else if (current_state == SAFETY_RELAY_FAULT) {
