@@ -348,3 +348,11 @@ We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for develop
 - Always verify E-stop function before operation
 - Never bypass or modify the safety relay circuit
 - Follow battery handling guidelines in documentation
+
+---
+
+<div align="center">
+
+Copyright 2025-2026 [telleroutlook](https://github.com/telleroutlook) · [3we-robot-platform](https://github.com/telleroutlook/3we-robot-platform)
+
+</div>

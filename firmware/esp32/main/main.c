@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// Copyright 2025-2026 telleroutlook (https://github.com/telleroutlook/3we-robot-platform)
 #include "motor_control.h"
 #include "ultrasonic.h"
 #include "encoder.h"

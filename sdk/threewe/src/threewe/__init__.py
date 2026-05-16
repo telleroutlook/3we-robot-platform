@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# Copyright 2025-2026 telleroutlook (https://github.com/telleroutlook/3we-robot-platform)
 """threewe — AI-First Python API for embodied robotics research.
 
 Zero ROS2 learning cost. Same code runs in simulation and on real hardware.
