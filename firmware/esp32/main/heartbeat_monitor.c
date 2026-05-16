@@ -92,7 +92,8 @@ static void power_cycle_pi5(void)
 
     int64_t now = esp_timer_get_time();
 
-    // Check window expiry BEFORE incrementing to avoid off-by-one on boundary
+    portENTER_CRITICAL(&hb_spinlock);
+
     if (s_reset_count > 0) {
         int64_t elapsed_us = now - s_first_reset_us;
         if (elapsed_us > (int64_t)HEARTBEAT_RESET_WINDOW_MS * 1000) {
@@ -115,6 +116,8 @@ static void power_cycle_pi5(void)
         s_last_heartbeat_us = esp_timer_get_time();
         s_init_time_us = s_last_heartbeat_us;
     }
+
+    portEXIT_CRITICAL(&hb_spinlock);
 }
 #endif // CONFIG_PI5_POWER_ENABLED
 
