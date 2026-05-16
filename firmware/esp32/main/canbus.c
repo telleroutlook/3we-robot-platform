@@ -60,6 +60,11 @@ static const char *TAG = "canbus";
 #define CANINTE_TX0IE   0x04
 #define CANINTE_ERRIE   0x20
 
+// EFLG error flags
+#define MCP_EFLG        0x2D
+#define EFLG_TXBO       0x20
+#define MCP_TEC         0x1C
+
 static spi_device_handle_t spi_dev;
 static canbus_config_t current_config;
 static can_recv_callback_t recv_callback = NULL;
@@ -392,7 +397,16 @@ void canbus_task(void *params)
             }
 
             if (intf & CANINTF_ERRIF) {
-                ESP_LOGW(TAG, "CAN error interrupt");
+                uint8_t eflg = mcp2515_read_reg(MCP_EFLG);
+                if (eflg & EFLG_TXBO) {
+                    ESP_LOGE(TAG, "CAN bus-off detected — initiating recovery");
+                    mcp2515_set_mode(MODE_CONFIG);
+                    mcp2515_write_reg(MCP_EFLG, 0x00);
+                    mcp2515_write_reg(MCP_TEC, 0x00);
+                    mcp2515_set_mode(MODE_NORMAL);
+                } else {
+                    ESP_LOGW(TAG, "CAN error (EFLG=0x%02X)", eflg);
+                }
                 mcp2515_bit_modify(MCP_CANINTF, CANINTF_ERRIF, 0x00);
             }
         }

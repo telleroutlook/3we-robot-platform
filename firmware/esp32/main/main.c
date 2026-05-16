@@ -105,6 +105,16 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
     }
 
+    // External hardware watchdog must start feeding ASAP after power-on.
+    // TPS3813K33 begins timing (tD+tWD≈1.8s) at VDD ramp — if WDI is not
+    // toggled before timeout, RST pulls ESP32 EN low causing reset loop.
+    ESP_ERROR_CHECK(external_wdt_init());
+    BaseType_t rc = xTaskCreate(external_wdt_task, "ext_wdt", TASK_STACK_EXT_WDT, NULL, TASK_PRIO_EXT_WDT, NULL);
+    if (rc != pdPASS) {
+        ESP_LOGE(TAG, "FATAL: external_wdt_task creation failed - rebooting");
+        esp_restart();
+    }
+
     // Network: initialize event loop and try Wi-Fi STA, fall back to captive portal
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(esp_netif_init());
@@ -184,9 +194,6 @@ void app_main(void)
 
     // Heartbeat monitor (Pi 5 power watchdog)
     ESP_ERROR_CHECK(heartbeat_monitor_init());
-
-    // External hardware watchdog (TPS3813 toggle feed)
-    ESP_ERROR_CHECK(external_wdt_init());
 
     // Thermal monitoring (INA219)
     esp_err_t thermal_ret = thermal_monitor_init();
@@ -297,7 +304,6 @@ void app_main(void)
 #endif
 
     // Create FreeRTOS tasks (highest priority first)
-    BaseType_t rc;
     rc = xTaskCreate(safety_task, "safety", TASK_STACK_SAFETY, NULL, TASK_PRIO_SAFETY, NULL);
     if (rc != pdPASS) {
         ESP_LOGE(TAG, "FATAL: safety_task creation failed - rebooting");
@@ -352,13 +358,6 @@ void app_main(void)
     rc = xTaskCreate(heartbeat_monitor_task, "heartbeat", TASK_STACK_HEARTBEAT, NULL, TASK_PRIO_HEARTBEAT, NULL);
     if (rc != pdPASS) {
         ESP_LOGE(TAG, "FATAL: heartbeat_monitor_task creation failed - rebooting");
-        esp_restart();
-    }
-
-    // External watchdog feed task (highest priority — must never starve)
-    rc = xTaskCreate(external_wdt_task, "ext_wdt", TASK_STACK_EXT_WDT, NULL, TASK_PRIO_EXT_WDT, NULL);
-    if (rc != pdPASS) {
-        ESP_LOGE(TAG, "FATAL: external_wdt_task creation failed - rebooting");
         esp_restart();
     }
 

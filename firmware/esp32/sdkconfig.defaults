@@ -27,3 +27,6 @@ CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
 
 # HTTPS server for captive portal (self-signed cert, defense-in-depth)
 CONFIG_ESP_HTTPS_SERVER_ENABLE=y
+
+# Hardware stack overflow detection (zero performance cost on ESP32-S3)
+CONFIG_FREERTOS_WATCHPOINT_END_OF_STACK=y
