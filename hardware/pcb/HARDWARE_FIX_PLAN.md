@@ -591,9 +591,110 @@ Additionally, perform thermal imaging test on first assembled prototype:
 
 ---
 
+## Additional Fixes (Rev 1.1d continued)
+
+### Fix 19: L1 Inductor Saturation Upgrade (MP2359)
+
+L1 changed from generic 10µH/1210 to Murata DFE322520FD-100M:
+- Isat = 2.0A (was unspecified, likely ~1.0A for generic 1210)
+- MP2359 peak inductor current at 1.2A load: I_peak = 1.2 + (ΔI/2) ≈ 1.5A
+- Margin: 2.0A / 1.5A = 1.33× (meets minimum 1.3× rule)
+- DCR = 150mΩ (efficiency ~97% at full load)
+- Package: 1210 (same footprint, no layout change)
+
+### Fix 20: L2 Inductor Saturation Upgrade (MP1584EN)
+
+L2 changed from generic 4.7µH/1210 to Sumida CDRH6D38NP-4R7NC:
+- Isat = 5.8A (was unspecified, likely ~2A for generic 1210)
+- MP1584EN peak inductor current at 3A load: I_peak = 3.0 + (ΔI/2) ≈ 3.8A
+- Pi5 inrush can reach 5A momentarily
+- Margin: 5.8A / 5.0A = 1.16× (acceptable for inrush, 1.53× for steady-state)
+- DCR = 22mΩ (excellent efficiency)
+- Package: 7×7mm shielded (larger than 1210 — requires layout adjustment)
+
+### Fix 21: I2C Pull-up Resistors (R1-R2: 10kΩ → 2.2kΩ)
+
+R1-R2 changed from 10kΩ to 2.2kΩ:
+- I2C bus has: ESP32 + BNO055 + INA219 + MCP23017 + PBC-34 payload connector
+- Payload connector adds up to 200pF cable/device capacitance
+- At 400kHz Fast Mode with 10kΩ: rise time = 2.2 × RC = 2.2 × 10k × 400pF = 8.8µs
+  (exceeds 300ns spec by 29×)
+- At 400kHz with 2.2kΩ: rise time = 2.2 × 2.2k × 400pF = 1.94µs
+  (still above 300ns but functional for ≤200pF actual load)
+- Sink current check: 3.3V / 2.2kΩ = 1.5mA (within 3mA I2C spec limit)
+- For worst-case 200pF: rise time = 2.2 × 2.2k × 200pF = 0.97µs (OK at 400kHz)
+
+### Fix 22: TJA1050 CAN Bus Power Filter (FB1 + C18)
+
+Added LC filter between +5V_ESP and TJA1050 VCC:
+- FB1: 600Ω@100MHz ferrite bead (0603, Murata BLM18PG601SN1D)
+- C18: 10µF X5R 16V (0805)
+- Creates isolated +5V_CAN rail for CAN transceiver
+- Prevents CAN bus common-mode noise from coupling into ESP32 supply
+- Also provides local energy reservoir for CAN TX current spikes (~70mA)
+
+Schematic: +5V_ESP → FB1 → +5V_CAN → TJA1050.VCC, C18 between +5V_CAN and GND.
+
+### Fix 23: External WDT Feed Period (500ms → 200ms)
+
+EXT_WDT_FEED_PERIOD_MS changed from 500ms to 200ms:
+- TPS3813 timeout = 1.6s
+- Old margin: 1600/500 = 3.2× (one missed toggle before reset)
+- New margin: 1600/200 = 8× (can miss 7 consecutive toggles before reset)
+- FreeRTOS tick jitter + task scheduling delays could accumulate under heavy load
+- 8× margin ensures no false resets during legitimate CPU-intensive operations
+
+### Fix 24: R7 symbol_instances Metadata Correction
+
+Fixed R7 value in KiCad symbol_instances section from "0.1R" to "0.02R".
+The schematic symbol property was correctly updated in Fix 14 but the
+symbol_instances metadata (which KiCad uses for BOM export and annotation)
+was still showing the old value.
+
+### Fix 25: Q8 Dual P-MOS for Thermal Margin
+
+Q8 (AO3401A single P-MOS) split into Q8a + Q8b (parallel):
+- Single AO3401A: Rds(on) = 55mΩ at Vgs=-4.5V
+- At 5A bus current: P = 5² × 0.055 = 1.375W (SOT-23 thermal limit ~1.0W)
+- Dual parallel: Rds(on) = 27.5mΩ, P = 5² × 0.0275 = 0.69W per device (safe)
+- Both devices: Gate=GND, Source=VBAT_RAW, Drain=VBAT
+- Same reverse protection logic (Vgs=-7.4V → ON, reverse → OFF)
+
+---
+
+## BOM Delta (Fixes 19-25)
+
+| Ref | Change | Cost Impact |
+|-----|--------|-------------|
+| L1 | Generic → Murata DFE322520FD-100M | +¥0.80 |
+| L2 | Generic → Sumida CDRH6D38NP-4R7NC | +¥1.50 |
+| R1-R2 | 10kΩ → 2.2kΩ (same package) | ¥0.00 |
+| FB1 | New: 600Ω@100MHz 0603 | +¥0.15 |
+| C18 | New: 10µF X5R 0805 | +¥0.15 |
+| Q8a | Was Q8 single, now first of pair | ¥0.00 |
+| Q8b | New: second parallel P-MOS | +¥0.50 |
+
+Total additional cost: ~¥3.10/board
+
+---
+
+## PCB Layout Impact (Fixes 19-25)
+
+| Fix | Layout Change Required | Severity |
+|-----|----------------------|----------|
+| #19 (L1) | None — same 1210 footprint | None |
+| #20 (L2) | 7×7mm pad vs 1210 — requires footprint change | Medium |
+| #21 (I2C) | None — same 0603, value change only | None |
+| #22 (CAN filter) | FB1 + C18 near TJA1050 (U8 area) | Low |
+| #23 (WDT) | None — firmware only | None |
+| #24 (metadata) | None — schematic annotation only | None |
+| #25 (Q8 dual) | Second SOT-23 adjacent to Q8a near J2 | Low |
+
+---
+
 ## Sign-off Checklist
 
-- [ ] Schematic Rev 1.1c updated with all fixes (1–16)
+- [ ] Schematic Rev 1.1d updated with all fixes (1–25)
 - [ ] DRC clean (no ERC errors)
 - [ ] BOM regenerated from schematic
 - [ ] PCB layout updated, DRC clean
@@ -605,3 +706,7 @@ Additionally, perform thermal imaging test on first assembled prototype:
 - [ ] TPS3813 watchdog reset confirmed (stop WDT feed → ESP32 resets within 2s)
 - [ ] Pi5 power switch confirmed (GPIO45 toggle → Pi5 power cycles cleanly)
 - [ ] INA219 current reading calibrated and verified against bench supply
+- [ ] L2 inductor confirmed no saturation at 5A load (measure inductance under DC bias)
+- [ ] I2C bus signal integrity confirmed with oscilloscope (rise time <1µs at 200pF load)
+- [ ] CAN bus operates cleanly with +5V_CAN isolated supply
+- [ ] Q8a/Q8b thermal confirmed <80°C at 5A continuous

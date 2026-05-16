@@ -21,7 +21,7 @@ void test_ext_wdt_gpio_defined(void)
 // --- Test 3: Feed period constant is correct ---
 void test_ext_wdt_feed_period(void)
 {
-    TEST_ASSERT_EQUAL(500, EXT_WDT_FEED_PERIOD_MS);
+    TEST_ASSERT_EQUAL(200, EXT_WDT_FEED_PERIOD_MS);
 }
 
 // --- Test 4: Init returns ESP_OK ---

@@ -21,7 +21,7 @@ J3,USB-C Receptacle,-,-,-,1,1.50,LCSC,Programming port
 C1-C10,100nF,0402,Various,-,10,0.02,LCSC,Bypass capacitors
 C11-C14,22uF,0805,Various,-,4,0.15,LCSC,Bulk decoupling (X5R 16V)
 C15,100nF,0402,Various,-,1,0.02,LCSC,Relay FB2 RC filter
-R1-R2,10kΩ,0603,Various,-,2,0.01,LCSC,I2C pull-up
+R1-R2,2.2kΩ,0603,Various,-,2,0.01,LCSC,I2C pull-up (sized for 400kHz with payload bus capacitance up to 200pF)
 R3,20kΩ,0603,Various,-,1,0.01,LCSC,Battery ADC divider upper
 R4,10kΩ,0603,Various,-,1,0.01,LCSC,Battery ADC divider lower
 R5,10kΩ,0603,Various,-,1,0.01,LCSC,E-stop pull-up
@@ -50,8 +50,8 @@ R30,44.2kΩ 1%,0402,Various,-,1,0.02,LCSC,MP2359 feedback divider upper
 R31,10kΩ 1%,0402,Various,-,1,0.02,LCSC,MP2359 feedback divider lower
 D1-D4,PESD5V0S1BB,SOD-323,Nexperia,PESD5V0S1BB,4,0.30,LCSC,ESD protection (PBC-34)
 Q4,AO3401A DNP,SOT-23,AOS,AO3401A,1,0.00,LCSC,Payload 12V P-MOS switch — DNP on Basic (requires XL6009 from Standard BOM)
-L1,10uH,1210,Various,-,1,0.80,LCSC,Buck converter inductor (1.5A saturation)
-L2,4.7uH,1210,Various,-,1,0.50,LCSC,Inductor for MP1584EN
+L1,10uH,1210,Murata,DFE322520FD-100M,1,1.30,LCSC,Buck inductor (Isat=2.0A DCR=150mΩ for MP2359 peak load margin)
+L2,4.7uH,7×7mm,Sumida,CDRH6D38NP-4R7NC,1,2.00,LCSC,MP1584EN inductor (Isat=5.8A DCR=22mΩ for Pi5 inrush)
 U10,TPS3813K33DBVR,SOT-23-5,Texas Instruments,TPS3813K33DBVR,1,3.00,LCSC,External watchdog timer (1.6s timeout TD=GND RST→ESP32 EN)
 C16,100nF,0402,Various,-,1,0.02,LCSC,TPS3813 RST output pulse stretching cap
 C17,10uF X5R 10V,0805,Various,-,1,0.15,LCSC,BNO055 IMU bulk decoupling (per datasheet recommendation)
@@ -63,5 +63,8 @@ R35,100kΩ,0402,Various,-,1,0.01,LCSC,Q6 gate pull-up to +5V_PI (P-MOS default O
 R36,10kΩ,0402,Various,-,1,0.01,LCSC,MCP23017 INTA pull-up (open-drain active-low interrupt output)
 R37,52.3kΩ 1%,0402,Various,-,1,0.02,LCSC,MP1584EN feedback divider upper (Vout=0.8×(1+52.3k/10k)=4.98V)
 R38,10kΩ 1%,0402,Various,-,1,0.02,LCSC,MP1584EN feedback divider lower (GND side)
-Q8,AO3401A,SOT-23,AOS,AO3401A,1,0.50,LCSC,P-MOS reverse polarity protection (Gate=GND: blocks reverse battery)
+Q8a,AO3401A,SOT-23,AOS,AO3401A,1,0.50,LCSC,P-MOS reverse polarity protection (parallel with Q8b for 5A thermal margin)
+Q8b,AO3401A,SOT-23,AOS,AO3401A,1,0.50,LCSC,P-MOS reverse polarity protection (parallel with Q8a for 5A thermal margin)
+FB1,600Ω@100MHz,0603,Murata,BLM18PG601SN1D,1,0.15,LCSC,CAN bus VCC ferrite bead (isolates +5V_CAN from +5V_ESP)
+C18,10uF X5R 16V,0805,Various,-,1,0.15,LCSC,CAN bus +5V_CAN bulk decoupling (after FB1)
 TP1,Test Point 1mm,-,-,-,1,0.05,LCSC,MCP23017 INTA test pad (connect to spare GPIO for interrupt-driven operation)
