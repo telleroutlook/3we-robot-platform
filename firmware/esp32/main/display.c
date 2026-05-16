@@ -161,9 +161,12 @@ esp_err_t display_init(void)
 
 #ifndef UNIT_TEST_BUILD
     // Initialize SSD1306/SH1106 driver
-    ssd1306_init(&s_dev, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-    ssd1306_contrast(&s_dev, 0xFF);
-    ssd1306_clear_screen(&s_dev, false);
+    if (i2c_bus_lock()) {
+        ssd1306_init(&s_dev, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        ssd1306_contrast(&s_dev, 0xFF);
+        ssd1306_clear_screen(&s_dev, false);
+        i2c_bus_unlock();
+    }
     s_hw_initialized = true;
 #endif
 
@@ -206,11 +209,8 @@ static void buttons_read(uint32_t now_ms)
     uint8_t gpioa = 0xFF;
     uint8_t gpiob = 0xFF;
 
-    if (i2c_bus_lock()) {
-        mcp23017_read_register(MCP23017_ADDR, MCP_GPIOA, &gpioa);
-        mcp23017_read_register(MCP23017_ADDR, MCP_GPIOB, &gpiob);
-        i2c_bus_unlock();
-    }
+    mcp23017_read_register(MCP23017_ADDR, MCP_GPIOA, &gpioa);
+    mcp23017_read_register(MCP23017_ADDR, MCP_GPIOB, &gpiob);
 
     // Active-low: pressed when bit is 0
     s_btn_ok.raw   = !(gpioa & (1 << DISPLAY_BTN_OK_BIT));
