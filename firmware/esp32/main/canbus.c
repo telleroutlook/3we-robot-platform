@@ -68,6 +68,7 @@ static const char *TAG = "canbus";
 static spi_device_handle_t spi_dev;
 static canbus_config_t current_config;
 static can_recv_callback_t recv_callback = NULL;
+static portMUX_TYPE cb_spinlock = portMUX_INITIALIZER_UNLOCKED;
 static SemaphoreHandle_t spi_mutex;
 static bool ready = false;
 
@@ -119,6 +120,16 @@ static void mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t value)
     xSemaphoreTake(spi_mutex, portMAX_DELAY);
     spi_device_polling_transmit(spi_dev, &t);
     xSemaphoreGive(spi_mutex);
+}
+
+static void mcp2515_bit_modify_unlocked(uint8_t reg, uint8_t mask, uint8_t value)
+{
+    uint8_t tx[4] = { MCP_BIT_MODIFY, reg, mask, value };
+    spi_transaction_t t = {
+        .length = 32,
+        .tx_buffer = tx,
+    };
+    spi_device_polling_transmit(spi_dev, &t);
 }
 
 static void mcp2515_reset(void)
@@ -315,7 +326,9 @@ esp_err_t canbus_send(const can_frame_t *frame)
 
 void canbus_set_recv_callback(can_recv_callback_t cb)
 {
+    portENTER_CRITICAL(&cb_spinlock);
     recv_callback = cb;
+    portEXIT_CRITICAL(&cb_spinlock);
 }
 
 esp_err_t canbus_set_filter(uint32_t mask, uint32_t filter)
@@ -391,8 +404,12 @@ void canbus_task(void *params)
                 // Clear RX flag
                 mcp2515_bit_modify(MCP_CANINTF, CANINTF_RX0IF, 0x00);
 
-                if (recv_callback) {
-                    recv_callback(&frame);
+                can_recv_callback_t cb;
+                portENTER_CRITICAL(&cb_spinlock);
+                cb = recv_callback;
+                portEXIT_CRITICAL(&cb_spinlock);
+                if (cb) {
+                    cb(&frame);
                 }
             }
 
@@ -400,10 +417,14 @@ void canbus_task(void *params)
                 uint8_t eflg = mcp2515_read_reg(MCP_EFLG);
                 if (eflg & EFLG_TXBO) {
                     ESP_LOGE(TAG, "CAN bus-off detected — initiating recovery");
-                    mcp2515_set_mode(MODE_CONFIG);
-                    mcp2515_write_reg(MCP_EFLG, 0x00);
-                    mcp2515_write_reg(MCP_TEC, 0x00);
-                    mcp2515_set_mode(MODE_NORMAL);
+                    xSemaphoreTake(spi_mutex, portMAX_DELAY);
+                    mcp2515_bit_modify_unlocked(MCP_CANCTRL, MODE_MASK, MODE_CONFIG);
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                    mcp2515_write_reg_unlocked(MCP_EFLG, 0x00);
+                    mcp2515_write_reg_unlocked(MCP_TEC, 0x00);
+                    mcp2515_bit_modify_unlocked(MCP_CANCTRL, MODE_MASK, MODE_NORMAL);
+                    xSemaphoreGive(spi_mutex);
+                    vTaskDelay(pdMS_TO_TICKS(10));
                 } else {
                     ESP_LOGW(TAG, "CAN error (EFLG=0x%02X)", eflg);
                 }
