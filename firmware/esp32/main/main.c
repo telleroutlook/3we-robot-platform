@@ -28,6 +28,10 @@
 #include "canbus.h"
 #endif
 
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+#include "display.h"
+#endif
+
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_wifi.h"
@@ -57,6 +61,7 @@ static const char *TAG = "main";
 #define TASK_STACK_OTA       8192
 #define TASK_STACK_HEARTBEAT 2048
 #define TASK_STACK_EXT_WDT   1024
+#define TASK_STACK_DISPLAY   3072
 
 #define TASK_PRIO_SAFETY     (configMAX_PRIORITIES - 1)
 #define TASK_PRIO_MICROROS   5
@@ -70,6 +75,7 @@ static const char *TAG = "main";
 #define TASK_PRIO_OTA        2
 #define TASK_PRIO_HEARTBEAT  (configMAX_PRIORITIES - 2)
 #define TASK_PRIO_EXT_WDT    (configMAX_PRIORITIES - 1)
+#define TASK_PRIO_DISPLAY    1
 
 #define WIFI_CONNECT_TIMEOUT_MS  10000
 
@@ -360,6 +366,18 @@ void app_main(void)
         ESP_LOGE(TAG, "FATAL: heartbeat_monitor_task creation failed - rebooting");
         esp_restart();
     }
+
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+    esp_err_t disp_ret = display_init();
+    if (disp_ret == ESP_OK) {
+        rc = xTaskCreate(display_task, "display", TASK_STACK_DISPLAY, NULL, TASK_PRIO_DISPLAY, NULL);
+        if (rc != pdPASS) {
+            ESP_LOGW(TAG, "display_task creation failed");
+        }
+    } else {
+        ESP_LOGW(TAG, "Display init failed (0x%x)", disp_ret);
+    }
+#endif
 
     ESP_LOGI(TAG, "All systems initialized. Robot ready.");
 

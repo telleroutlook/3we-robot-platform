@@ -351,6 +351,14 @@ extern void test_power_enable_disabled_rail_returns_error(void);
 extern void test_power_get_status_returns_current_state(void);
 extern void test_power_get_status_null_returns_error(void);
 
+// test_display.c
+extern void test_display_init_success(void);
+extern void test_display_init_no_device(void);
+extern void test_display_initial_page_is_home(void);
+extern void test_display_fault_log_empty_initially(void);
+extern void test_display_fault_log_single_entry(void);
+extern void test_display_fault_log_wraps_at_3(void);
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -705,6 +713,14 @@ int main(void)
     RUN_POWER_TEST(test_power_get_status_returns_current_state);
     RUN_POWER_TEST(test_power_get_status_null_returns_error);
 #undef RUN_POWER_TEST
+
+    // Display
+    RUN_TEST(test_display_init_success);
+    RUN_TEST(test_display_init_no_device);
+    RUN_TEST(test_display_initial_page_is_home);
+    RUN_TEST(test_display_fault_log_empty_initially);
+    RUN_TEST(test_display_fault_log_single_entry);
+    RUN_TEST(test_display_fault_log_wraps_at_3);
 
     return UNITY_END();
 }

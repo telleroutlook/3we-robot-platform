@@ -233,3 +233,7 @@ int esp_wifi_sta_get_ap_info(wifi_ap_record_t *ap_info) {
 void mock_set_wifi_rssi(int8_t rssi) { mock_wifi_rssi_val = rssi; }
 void mock_set_wifi_connected(int connected) { mock_wifi_connected_val = connected; }
 int esp_wifi_stop(void) { return 0; }
+
+// --- System info stubs ---
+uint32_t esp_get_free_heap_size(void) { return 128000; }
+uint32_t esp_get_minimum_free_heap_size(void) { return 96000; }

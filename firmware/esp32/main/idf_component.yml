@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+dependencies:
+  nopnop2002/ssd1306:
+    version: "*"
+    rules:
+      - if: "idf_version >= 5.0"

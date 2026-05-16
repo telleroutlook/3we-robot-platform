@@ -182,7 +182,13 @@ void mock_set_adc_voltage_mv(int mv);
 typedef int TickType_t;
 static inline TickType_t xTaskGetTickCount(void) { return 0; }
 void vTaskDelay(int ticks);
+static inline void vTaskDelayUntil(TickType_t *prev, TickType_t incr) { (void)prev; (void)incr; }
 static inline void vTaskDelete(void *handle) { (void)handle; }
+
+// System info stubs
+uint32_t esp_get_free_heap_size(void);
+uint32_t esp_get_minimum_free_heap_size(void);
+void esp_restart(void);
 
 // FreeRTOS spinlock stubs
 typedef int portMUX_TYPE;

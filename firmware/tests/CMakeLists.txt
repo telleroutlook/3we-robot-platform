@@ -65,6 +65,7 @@ add_executable(test_runner
     test_thermal_monitor.c
     test_i2c_bus.c
     test_udp_transport.c
+    test_display.c
     ${FIRMWARE_SRC}/motor_control.c
     ${FIRMWARE_SRC}/safety.c
     ${FIRMWARE_SRC}/encoder.c
@@ -77,6 +78,7 @@ add_executable(test_runner
     ${FIRMWARE_SRC}/thermal_monitor.c
     ${FIRMWARE_SRC}/i2c_bus.c
     ${FIRMWARE_SRC}/udp_transport.c
+    ${FIRMWARE_SRC}/display.c
 )
 
 target_include_directories(test_runner PRIVATE
@@ -88,6 +90,7 @@ target_include_directories(test_runner PRIVATE
 
 target_compile_definitions(test_runner PRIVATE
     UNIT_TEST_BUILD
+    CONFIG_ROBOT_DISPLAY_ENABLED=1
 )
 
 # Force-include stubs so firmware sees ESP-IDF types without modification

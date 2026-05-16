@@ -301,6 +301,26 @@ menu "Robot Platform Configuration"
                 Retains PID motor control, ultrasonic safety, and battery monitoring.
     endmenu
 
+    menu "Display"
+        config ROBOT_DISPLAY_ENABLED
+            bool "Enable OLED status display (SH1106 128x64)"
+            default y
+            help
+                Enable the optional 1.3" OLED display panel connected via I2C
+                at address 0x3C. Shows robot status across 5 pages navigable
+                with UP/DOWN/OK buttons on MCP23017 GPIO expander.
+                Runs at lowest task priority and never blocks safety.
+
+        config DISPLAY_REFRESH_MS
+            int "Display refresh interval (ms)"
+            default 200
+            depends on ROBOT_DISPLAY_ENABLED
+            range 100 1000
+            help
+                Time between display frame updates. Lower values give smoother
+                updates but consume more CPU. 200ms (5 FPS) recommended.
+    endmenu
+
     menu "Current Sensing"
         config CURRENT_SENSE_ENABLED
             bool "Enable ACS712 motor current sensing"
