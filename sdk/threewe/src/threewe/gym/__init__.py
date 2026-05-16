@@ -11,10 +11,17 @@ Register environments so they can be created with:
 
 from __future__ import annotations
 
-from threewe.gym.envs import ExplorationEnv, NavigationEnv, ObjectNavEnv, VLNEnv
+from threewe.gym.envs import ActionLevel, ExplorationEnv, NavigationEnv, ObjectNavEnv, VLNEnv
 from threewe.gym.multiagent import MultiAgentEnv
 
-__all__ = ["NavigationEnv", "ExplorationEnv", "ObjectNavEnv", "VLNEnv", "MultiAgentEnv"]
+__all__ = [
+    "ActionLevel",
+    "NavigationEnv",
+    "ExplorationEnv",
+    "ObjectNavEnv",
+    "VLNEnv",
+    "MultiAgentEnv",
+]
 
 try:
     import gymnasium

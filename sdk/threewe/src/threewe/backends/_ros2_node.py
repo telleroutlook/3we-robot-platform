@@ -56,6 +56,8 @@ class ROS2Node:
         self._latest_imu: IMUData | None = None
         self._latest_battery: BatteryState = BatteryState()
         self._latest_map: OccupancyGrid | None = None
+        self._latest_wheel_speeds: np.ndarray = np.zeros(4, dtype=np.float32)
+        self._latest_motor_current: np.ndarray = np.zeros(4, dtype=np.float32)
         self._state_lock = threading.Lock()
 
         self._cmd_vel_pub = None
@@ -107,6 +109,18 @@ class ROS2Node:
         self._node.create_subscription(
             BatteryStateMsg, "/battery_state", self._battery_callback, sensor_qos
         )
+
+        try:
+            from std_msgs.msg import Float32MultiArray
+
+            self._node.create_subscription(
+                Float32MultiArray, "/wheel_speeds", self._wheel_speeds_callback, sensor_qos
+            )
+            self._node.create_subscription(
+                Float32MultiArray, "/motor_current", self._motor_current_callback, sensor_qos
+            )
+        except ImportError:
+            pass
 
         self._cmd_vel_pub = self._node.create_publisher(Twist, "/cmd_vel", reliable_qos)
 
@@ -239,6 +253,18 @@ class ROS2Node:
         with self._state_lock:
             self._latest_map = grid
 
+    def _wheel_speeds_callback(self, msg) -> None:
+        data = np.array(msg.data, dtype=np.float32)
+        if data.shape[0] >= 4:
+            with self._state_lock:
+                self._latest_wheel_speeds = data[:4]
+
+    def _motor_current_callback(self, msg) -> None:
+        data = np.array(msg.data, dtype=np.float32)
+        if data.shape[0] >= 4:
+            with self._state_lock:
+                self._latest_motor_current = data[:4]
+
     def get_camera_image(self) -> np.ndarray:
         with self._state_lock:
             image = self._latest_image
@@ -310,6 +336,14 @@ class ROS2Node:
         if grid is not None:
             return grid
         return OccupancyGrid(data=np.full((100, 100), -1, dtype=np.int8))
+
+    def get_wheel_speeds(self) -> np.ndarray:
+        with self._state_lock:
+            return self._latest_wheel_speeds.copy()
+
+    def get_motor_current(self) -> np.ndarray:
+        with self._state_lock:
+            return self._latest_motor_current.copy()
 
     def set_velocity(self, vx: float, vy: float, omega: float) -> None:
         if self._cmd_vel_pub is None:

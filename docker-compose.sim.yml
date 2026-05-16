@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Docker Compose — One-click simulation environment for threewe SDK
-# Usage: docker compose -f docker-compose.sim.yml up -d
+#
+# Usage:
+#   Headless (default):  docker compose -f docker-compose.sim.yml up -d
+#   With browser GUI:    docker compose -f docker-compose.sim.yml --profile gui up -d
+#                        Then open http://localhost:8080 in your browser.
 
 services:
   sim:
@@ -9,7 +13,7 @@ services:
       dockerfile: docker/Dockerfile.sim
     container_name: threewe-sim
     environment:
-      - DISPLAY=${DISPLAY:-:0}
+      - DISPLAY=${DISPLAY:-:99}
       - ROS_DOMAIN_ID=42
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -17,8 +21,30 @@ services:
     networks:
       - threewe-net
     command: >
-      bash -c "ros2 launch robot_simulation simulation.launch.py"
+      bash -c "
+        Xvfb :99 -screen 0 1280x720x24 &
+        export DISPLAY=:99 &&
+        ros2 launch robot_simulation simulation.launch.py
+      "
     restart: unless-stopped
+
+  novnc:
+    image: theasp/novnc:latest
+    container_name: threewe-novnc
+    profiles:
+      - gui
+    environment:
+      - DISPLAY_WIDTH=1280
+      - DISPLAY_HEIGHT=720
+      - RUN_XTERM=no
+    ports:
+      - "8080:8080"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+    networks:
+      - threewe-net
+    depends_on:
+      - sim
 
   jupyter:
     build:

@@ -52,6 +52,22 @@ class OdometryNoise:
 
 
 @dataclass(frozen=True)
+class EncoderNoise:
+    """Noise model for wheel encoder readings (N20 quadrature, 7 PPR × gear ratio)."""
+
+    speed_stddev: float = 2.0  # RPM noise standard deviation
+    quantization_step: float = 1.0  # Minimum resolvable RPM change
+
+
+@dataclass(frozen=True)
+class CurrentSenseNoise:
+    """Noise model for motor current sensing (INA219 / ACS712)."""
+
+    current_stddev: float = 0.015  # Amps noise std (INA219 LSB ≈ 10mA)
+    offset_bias: float = 0.005  # Constant offset bias in Amps
+
+
+@dataclass(frozen=True)
 class SensorNoiseModel:
     """Complete sensor noise model for sim-to-real transfer.
 
@@ -68,6 +84,8 @@ class SensorNoiseModel:
     imu: IMUNoise = field(default_factory=IMUNoise)
     camera: CameraNoise = field(default_factory=CameraNoise)
     odometry: OdometryNoise = field(default_factory=OdometryNoise)
+    encoder: EncoderNoise = field(default_factory=EncoderNoise)
+    current_sense: CurrentSenseNoise = field(default_factory=CurrentSenseNoise)
     seed: int | None = None
 
     def _rng(self) -> np.random.Generator:
@@ -142,3 +160,25 @@ class SensorNoiseModel:
         noisy[2] += rng.normal(0.0, self.odometry.heading_stddev)
 
         return noisy
+
+    def apply_encoder(
+        self, wheel_speeds: np.ndarray, rng: np.random.Generator | None = None
+    ) -> np.ndarray:
+        """Apply noise to wheel encoder speed readings (4,) RPM."""
+        rng = rng or self._rng()
+        noisy = wheel_speeds.copy().astype(np.float32)
+        noisy += rng.normal(0.0, self.encoder.speed_stddev, size=noisy.shape).astype(np.float32)
+        noisy = (noisy / self.encoder.quantization_step).round() * self.encoder.quantization_step
+        return noisy
+
+    def apply_current(
+        self, motor_current: np.ndarray, rng: np.random.Generator | None = None
+    ) -> np.ndarray:
+        """Apply noise to motor current readings (4,) Amps."""
+        rng = rng or self._rng()
+        noisy = motor_current.copy().astype(np.float32)
+        noisy += rng.normal(0.0, self.current_sense.current_stddev, size=noisy.shape).astype(
+            np.float32
+        )
+        noisy += self.current_sense.offset_bias
+        return np.maximum(noisy, 0.0)

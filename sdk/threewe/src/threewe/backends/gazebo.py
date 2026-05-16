@@ -124,6 +124,16 @@ class GazeboBackend(BackendBase):
             return self._ros2_node.get_map()
         return OccupancyGrid(data=np.full((100, 100), -1, dtype=np.int8))
 
+    def get_wheel_speeds(self) -> np.ndarray:
+        if self._ros2_node is not None:
+            return self._ros2_node.get_wheel_speeds()
+        return np.zeros(4, dtype=np.float32)
+
+    def get_motor_current(self) -> np.ndarray:
+        if self._ros2_node is not None:
+            return self._ros2_node.get_motor_current()
+        return np.zeros(4, dtype=np.float32)
+
     def set_velocity(self, vx: float, vy: float, omega: float) -> None:
         if self._ros2_node is not None:
             self._ros2_node.set_velocity(vx, vy, omega)

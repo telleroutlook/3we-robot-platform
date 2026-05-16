@@ -253,6 +253,32 @@ class MockBackend(BackendBase):
     def get_battery_state(self) -> BatteryState:
         return BatteryState(voltage=7.4, percentage=0.95, is_charging=False)
 
+    def get_wheel_speeds(self) -> np.ndarray:
+        wheel_radius = 0.0325  # 65mm mecanum wheel
+        wheel_base_x = 0.08
+        wheel_base_y = 0.09
+        k = wheel_base_x + wheel_base_y
+        speeds_rad = np.array(
+            [
+                (self._vx - self._vy - k * self._omega) / wheel_radius,
+                (self._vx + self._vy + k * self._omega) / wheel_radius,
+                (self._vx + self._vy - k * self._omega) / wheel_radius,
+                (self._vx - self._vy + k * self._omega) / wheel_radius,
+            ],
+            dtype=np.float32,
+        )
+        speeds_rpm = speeds_rad * 60.0 / (2.0 * np.pi)
+        noise = self._rng.normal(0.0, 2.0, size=(4,)).astype(np.float32)
+        return speeds_rpm + noise
+
+    def get_motor_current(self) -> np.ndarray:
+        base_current = 0.05  # Amps idle per motor
+        speed_factor = 0.003  # Amps per RPM load
+        wheel_speeds = self.get_wheel_speeds()
+        current = base_current + np.abs(wheel_speeds) * speed_factor
+        noise = self._rng.normal(0.0, 0.015, size=(4,)).astype(np.float32)
+        return np.maximum(current + noise, 0.0).astype(np.float32)
+
     def get_map(self) -> OccupancyGrid:
         res = 0.1
         w_cells = int(self._scene.width / res)

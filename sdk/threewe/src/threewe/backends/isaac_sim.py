@@ -123,6 +123,14 @@ class IsaacSimBackend(BackendBase):
             origin=Pose2D(x=-2.5, y=-2.5, theta=0.0),
         )
 
+    def get_wheel_speeds(self) -> np.ndarray:
+        self._check_connected()
+        return np.zeros(4, dtype=np.float32)
+
+    def get_motor_current(self) -> np.ndarray:
+        self._check_connected()
+        return np.zeros(4, dtype=np.float32)
+
     def set_velocity(self, vx: float, vy: float, omega: float) -> None:
         self._check_connected()
 

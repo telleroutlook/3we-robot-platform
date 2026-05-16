@@ -45,6 +45,8 @@ class SensorRandomization:
     imu_noise_scale_range: tuple[float, float] = (0.5, 2.0)
     camera_noise_scale_range: tuple[float, float] = (0.5, 2.0)
     odometry_slip_scale_range: tuple[float, float] = (0.5, 2.0)
+    encoder_noise_scale_range: tuple[float, float] = (0.5, 2.0)
+    current_sense_noise_scale_range: tuple[float, float] = (0.5, 2.0)
 
 
 @dataclass
@@ -102,6 +104,12 @@ class DomainRandomization:
             odometry_slip_scale_range=tuple(
                 sensor_data.get("odometry_slip_scale_range", [0.5, 2.0])
             ),
+            encoder_noise_scale_range=tuple(
+                sensor_data.get("encoder_noise_scale_range", [0.5, 2.0])
+            ),
+            current_sense_noise_scale_range=tuple(
+                sensor_data.get("current_sense_noise_scale_range", [0.5, 2.0])
+            ),
         )
 
         return cls(
@@ -129,4 +137,8 @@ class DomainRandomization:
             "imu_noise_scale": float(rng.uniform(*self.sensor.imu_noise_scale_range)),
             "camera_noise_scale": float(rng.uniform(*self.sensor.camera_noise_scale_range)),
             "odometry_slip_scale": float(rng.uniform(*self.sensor.odometry_slip_scale_range)),
+            "encoder_noise_scale": float(rng.uniform(*self.sensor.encoder_noise_scale_range)),
+            "current_sense_noise_scale": float(
+                rng.uniform(*self.sensor.current_sense_noise_scale_range)
+            ),
         }

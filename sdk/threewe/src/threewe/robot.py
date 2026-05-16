@@ -95,6 +95,16 @@ class Robot:
     def is_connected(self) -> bool:
         return self._backend.is_connected
 
+    @property
+    def ros2_node(self):
+        """Advanced: access the underlying ROS2 node for custom subscriptions.
+
+        Returns None for backends without ROS2 (mock, isaac_sim).
+        """
+        if hasattr(self._backend, "_ros2_node"):
+            return self._backend._ros2_node
+        return None
+
     def connect(self) -> None:
         """Connect to the robot or simulator."""
         self._backend.connect()
@@ -148,6 +158,16 @@ class Robot:
         self._ensure_connected()
         return self._backend.get_map()
 
+    def get_wheel_speeds(self) -> np.ndarray:
+        """Get wheel encoder speeds. Returns (4,) float32 in RPM."""
+        self._ensure_connected()
+        return self._backend.get_wheel_speeds()
+
+    def get_motor_current(self) -> np.ndarray:
+        """Get motor current draw. Returns (4,) float32 in Amps."""
+        self._ensure_connected()
+        return self._backend.get_motor_current()
+
     _DEFAULT_MODALITIES: tuple[str, ...] = ("image", "lidar", "pose", "velocity")
 
     def get_observation(self, modalities: list[str] | None = None) -> dict[str, np.ndarray]:
@@ -200,6 +220,23 @@ class Robot:
         self._ensure_connected()
         self._clamp_and_send(vx, vy, omega)
 
+    def set_wheel_velocities(self, speeds: list[float]) -> None:
+        """Command individual wheel speeds via inverse kinematics.
+
+        Args:
+            speeds: (4,) target wheel speeds in RPM [FL, FR, RL, RR].
+                Converted to body velocity via mecanum forward kinematics
+                and sent as cmd_vel.
+        """
+        self._ensure_connected()
+        wheel_radius = 0.0325  # 65mm diameter
+        k = 0.17  # wheel_base_x + wheel_base_y
+        rad_s = [s * (2.0 * np.pi) / 60.0 for s in speeds]
+        vx = wheel_radius * (rad_s[0] + rad_s[1] + rad_s[2] + rad_s[3]) / 4.0
+        vy = wheel_radius * (-rad_s[0] + rad_s[1] + rad_s[2] - rad_s[3]) / 4.0
+        omega = wheel_radius * (-rad_s[0] + rad_s[1] - rad_s[2] + rad_s[3]) / (4.0 * k)
+        self._clamp_and_send(vx, vy, omega)
+
     def stop(self) -> None:
         """Immediately stop all motion."""
         self._ensure_connected()
@@ -247,12 +284,24 @@ class Robot:
         omega = float(action[2]) * limits.max_angular_velocity
         self._clamp_and_send(vx, vy, omega)
 
-    async def execute_instruction(self, instruction: str) -> ExecutionResult:
+    async def execute_instruction(
+        self, instruction: str, mode: str = "blocking"
+    ) -> ExecutionResult:
         """Execute a natural language instruction using VLM reasoning.
+
+        Args:
+            instruction: Natural language task description.
+            mode: "blocking" for sequential perception-action loop,
+                  "async" for decoupled VLM inference + 20Hz control loop.
 
         Requires the `ai` extra: pip install threewe[ai]
         """
         self._ensure_connected()
+        if mode == "async":
+            from threewe.ai.vlm_runner import execute_vlm_instruction_async
+
+            return await execute_vlm_instruction_async(self, instruction)
+
         from threewe.ai.vlm_runner import execute_vlm_instruction
 
         return await execute_vlm_instruction(self, instruction)

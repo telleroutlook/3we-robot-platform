@@ -83,6 +83,14 @@ class BackendBase(ABC):
         """Get current occupancy grid map."""
 
     @abstractmethod
+    def get_wheel_speeds(self) -> np.ndarray:
+        """Get wheel encoder speeds. Returns (4,) float32, RPM."""
+
+    @abstractmethod
+    def get_motor_current(self) -> np.ndarray:
+        """Get motor current draw. Returns (4,) float32, Amps."""
+
+    @abstractmethod
     def set_velocity(self, vx: float, vy: float, omega: float) -> None:
         """Command body velocity. Must be called continuously or timeout stops motors."""
 

@@ -158,6 +158,23 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 
 ---
 
+## Capabilities
+
+| Capability | Status | Details |
+|------------|--------|---------|
+| Sim2Real Zero-Code Switch | ✅ Ready | 4 backends (mock/gazebo/isaac_sim/real), identical Python API |
+| Imitation Learning Data | ✅ Ready | `save_lerobot()` export + HuggingFace Hub push/pull |
+| VLM/LLM Control | ✅ Ready | GPT-4o / Qwen-VL, async API decoupled from 50Hz control loop |
+| Hardware Safety | ✅ Ready | 3-tier watchdog: 500ms cmd_vel timeout, 1s software WDT, 1.6s hardware WDT (TPS3813) |
+| RL Gymnasium Envs | ✅ Ready | 5 standard envs (PointNav, Exploration, ObjectNav, VLN, Patrol) + multi-agent |
+| Edge AI Inference | ✅ Ready | Hailo-8L M.2 accelerator (13 TOPS) on Raspberry Pi 5 |
+| VLA Model Deploy | ✅ Ready | ONNX / PyTorch / Hailo HEF, `from_pretrained()` from Hub |
+| Domain Randomization | ✅ Ready | Physics, visual, and sensor noise — configurable per-episode |
+| RGB-D Depth Camera | ✅ Ready | `get_rgbd_image()` API, native depth in Isaac Sim |
+| Modular Install | ✅ Ready | `threewe` / `threewe[sim]` / `threewe[ai]` / `threewe[all]` |
+
+---
+
 ## Architecture
 
 ```

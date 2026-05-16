@@ -9,9 +9,11 @@ Supports pluggable VLM backends:
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import io
 import os
+import threading
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -228,3 +230,135 @@ async def execute_vlm_instruction(
         description=f"max steps ({max_steps}) reached without completion",
         images=images_collected,
     )
+
+
+class AsyncVLMExecutor:
+    """Decoupled VLM executor: background inference + foreground 20Hz control.
+
+    The VLM runs at ~1-2Hz producing waypoint targets, while a control loop
+    at 20Hz tracks the latest target with smooth velocity commands.
+    The robot never stops moving while waiting for VLM inference.
+    """
+
+    _CONTROL_HZ = 20.0
+    _VLM_TIMEOUT = 5.0  # seconds without new target → stop
+
+    def __init__(
+        self,
+        robot: Robot,
+        runner: VLMRunner,
+        instruction: str,
+        max_steps: int = 20,
+        on_step: StepCallback | None = None,
+    ) -> None:
+        self._robot = robot
+        self._runner = runner
+        self._instruction = instruction
+        self._max_steps = max_steps
+        self._on_step = on_step
+
+        self._current_action: dict | None = None
+        self._action_lock = threading.Lock()
+        self._done = False
+        self._success = False
+        self._description = ""
+        self._images: list = []
+        self._step_count = 0
+
+    async def execute(self) -> ExecutionResult:
+        """Run the decoupled VLM execution loop."""
+        import json
+
+        inference_task = asyncio.create_task(self._inference_loop(json))
+        control_task = asyncio.create_task(self._control_loop())
+
+        await inference_task
+        self._done = True
+        await control_task
+
+        return ExecutionResult(
+            success=self._success,
+            description=self._description,
+            images=self._images,
+        )
+
+    async def _inference_loop(self, json_module) -> None:
+        """Background loop: capture image → VLM inference → update target action."""
+        for step in range(self._max_steps):
+            if self._done:
+                break
+
+            image = self._robot.get_image()
+            self._images.append(image)
+            self._step_count = step
+
+            try:
+                response_text = await asyncio.to_thread(self._runner.plan, image, self._instruction)
+                action = json_module.loads(response_text)
+            except Exception:
+                await asyncio.sleep(0.1)
+                continue
+
+            if self._on_step:
+                self._on_step(step, response_text, action)
+
+            cmd = action.get("action", "stop")
+            if cmd == "done":
+                self._success = True
+                self._description = action.get("reason", "instruction completed")
+                return
+
+            with self._action_lock:
+                self._current_action = action
+
+        self._description = f"max steps ({self._max_steps}) reached without completion"
+
+    async def _control_loop(self) -> None:
+        """Foreground 20Hz loop: execute the latest VLM action smoothly."""
+        dt = 1.0 / self._CONTROL_HZ
+        time_since_action = 0.0
+
+        while not self._done:
+            with self._action_lock:
+                action = self._current_action
+
+            if action is None or time_since_action > self._VLM_TIMEOUT:
+                self._robot.stop()
+            else:
+                cmd = action.get("action", "stop")
+                if cmd == "move_forward":
+                    speed = min(float(action.get("distance", 0.3)) / 1.0, 0.5)
+                    self._robot.set_velocity(speed, 0.0, 0.0)
+                elif cmd == "rotate_left":
+                    omega = min(float(action.get("angle", 0.5)) / 1.0, 1.0)
+                    self._robot.set_velocity(0.0, 0.0, omega)
+                elif cmd == "rotate_right":
+                    omega = min(float(action.get("angle", 0.5)) / 1.0, 1.0)
+                    self._robot.set_velocity(0.0, 0.0, -omega)
+                elif cmd == "stop":
+                    self._robot.stop()
+
+            time_since_action += dt
+            if action is not None:
+                with self._action_lock:
+                    if self._current_action is not action:
+                        time_since_action = 0.0
+
+            await asyncio.sleep(dt)
+
+        self._robot.stop()
+
+
+async def execute_vlm_instruction_async(
+    robot: Robot,
+    instruction: str,
+    model: str = "gpt-4o",
+    api_key: str | None = None,
+    base_url: str | None = None,
+    max_steps: int = 20,
+    on_step: StepCallback | None = None,
+) -> ExecutionResult:
+    """Execute instruction with decoupled VLM inference and 20Hz control loop."""
+    runner = VLMRunner(model=model, api_key=api_key, base_url=base_url, max_steps=max_steps)
+    executor = AsyncVLMExecutor(robot, runner, instruction, max_steps, on_step)
+    return await executor.execute()
