@@ -37,6 +37,10 @@
 #define PWM_FREQUENCY_HZ        20000
 #endif
 
+#if !defined(ENCODER_CPR) || ENCODER_CPR == 0
+#error "ENCODER_CPR must be > 0 (check CONFIG_MOTOR_ENCODER_PPR)"
+#endif
+
 // Motor limits (derived from configurable parameters)
 #define MAX_LINEAR_VEL          (2.0f * 3.14159265358979f * WHEEL_RADIUS * (float)MAX_MOTOR_RPM / 60.0f)
 #define MAX_ANGULAR_VEL         3.0f    // rad/s
