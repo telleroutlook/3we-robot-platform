@@ -61,4 +61,7 @@ Q7,AO3400A,SOT-23,AOS,AO3400A,1,0.30,LCSC,N-MOS gate driver for Pi5 P-MOS pair �
 R34,100kΩ,0402,Various,-,1,0.01,LCSC,Q7 gate pull-down (Pi5 default OFF at boot) — DNP on Basic
 R35,100kΩ,0402,Various,-,1,0.01,LCSC,Q6 gate pull-up to +5V_PI (P-MOS default OFF) — DNP on Basic
 R36,10kΩ,0402,Various,-,1,0.01,LCSC,MCP23017 INTA pull-up (open-drain active-low interrupt output)
+R37,52.3kΩ 1%,0402,Various,-,1,0.02,LCSC,MP1584EN feedback divider upper (Vout=0.8×(1+52.3k/10k)=4.98V)
+R38,10kΩ 1%,0402,Various,-,1,0.02,LCSC,MP1584EN feedback divider lower (GND side)
+Q8,AO3401A,SOT-23,AOS,AO3401A,1,0.50,LCSC,P-MOS reverse polarity protection (Gate=GND: blocks reverse battery)
 TP1,Test Point 1mm,-,-,-,1,0.05,LCSC,MCP23017 INTA test pad (connect to spare GPIO for interrupt-driven operation)

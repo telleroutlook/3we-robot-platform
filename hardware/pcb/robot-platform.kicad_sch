@@ -29,7 +29,7 @@
       (uuid "1097e1ad-82cc-4a10-b1b4-ae6aaf72ad0e")
     )
   )
-  (label "VBAT" (at 45 30 0) (effects (font (size 1.27 1.27))) (uuid "82e1d24c-fd10-42e2-983e-cbc6fff1f6a4"))
+  (label "VBAT_RAW" (at 45 30 0) (effects (font (size 1.27 1.27))) (uuid "82e1d24c-fd10-42e2-983e-cbc6fff1f6a4"))
   (symbol
     (lib_id "power:GND")
     (at 45 40 0)
@@ -38,6 +38,37 @@
     (property "Value" "GND" (at 45 42 0) (effects (font (size 1.27 1.27))))
     (pin "1"
       (uuid "1af47c85-ead1-4c2d-8675-93b65de1ab2a")
+    )
+  )
+  (text "REVERSE POLARITY PROTECTION" (at 50 22 0) (effects (font (size 2 2) bold)) (uuid "c1d2e3f4-0017-0001-0001-000000000001"))
+  (symbol
+    (lib_id "Transistor_FET:AO3401A")
+    (at 55 30 0)
+    (uuid "c1d2e3f4-0017-0002-0001-000000000001")
+    (property "Reference" "Q8" (at 55 25 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "AO3401A" (at 55 35 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Package_TO_SOT_SMD:SOT-23" (at 55 37 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "P-MOS reverse polarity protection (Vds=-30V, Id=-4A, Rds=55mΩ). Gate=GND: ON when battery correct, OFF when reversed." (at 55 39 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "G"
+      (uuid "c1d2e3f4-0017-0002-0001-000000000002")
+    )
+    (pin "S"
+      (uuid "c1d2e3f4-0017-0002-0001-000000000003")
+    )
+    (pin "D"
+      (uuid "c1d2e3f4-0017-0002-0001-000000000004")
+    )
+  )
+  (label "VBAT_RAW" (at 50 27 0) (effects (font (size 1.27 1.27))) (uuid "c1d2e3f4-0017-0003-0001-000000000001"))
+  (label "VBAT" (at 60 27 0) (effects (font (size 1.27 1.27))) (uuid "c1d2e3f4-0017-0003-0001-000000000002"))
+  (symbol
+    (lib_id "power:GND")
+    (at 55 37 0)
+    (uuid "c1d2e3f4-0017-0004-0001-000000000001")
+    (property "Reference" "#PWR41" (at 55 35 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 55 39 0) (effects (font (size 1.27 1.27))))
+    (pin "1"
+      (uuid "c1d2e3f4-0017-0004-0001-000000000002")
     )
   )
   (symbol
@@ -183,6 +214,7 @@
   )
   (label "VBAT" (at 38 85 0) (effects (font (size 1.27 1.27))) (uuid "96e09ef4-aaf4-41d2-a76d-c7cabb38d7ef"))
   (label "+5V_PI" (at 65 85 0) (effects (font (size 1.27 1.27))) (uuid "647cd0c7-423c-4968-8dcc-79423c43e01e"))
+  (label "PI_FB" (at 65 93 0) (effects (font (size 1.27 1.27))) (uuid "c1d2e3f4-0018-0005-0001-000000000001"))
   (symbol
     (lib_id "power:GND")
     (at 50 102 0)
@@ -191,6 +223,48 @@
     (property "Value" "GND" (at 50 104 0) (effects (font (size 1.27 1.27))))
     (pin "1"
       (uuid "4ad67818-08fe-45e3-9674-a8cb86815164")
+    )
+  )
+  (symbol
+    (lib_id "Device:R")
+    (at 70 93 0)
+    (uuid "c1d2e3f4-0018-0001-0001-000000000001")
+    (property "Reference" "R37" (at 70 88 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "52.3k 1%" (at 70 98 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 70 100 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "MP1584EN feedback divider upper (Vout = 0.8V × (1 + 52.3k/10k) = 4.98V)" (at 70 102 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "c1d2e3f4-0018-0001-0001-000000000002")
+    )
+    (pin "2"
+      (uuid "c1d2e3f4-0018-0001-0001-000000000003")
+    )
+  )
+  (symbol
+    (lib_id "Device:R")
+    (at 70 103 0)
+    (uuid "c1d2e3f4-0018-0002-0001-000000000001")
+    (property "Reference" "R38" (at 70 98 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "10k 1%" (at 70 108 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 70 110 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "MP1584EN feedback divider lower (GND side)" (at 70 112 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "c1d2e3f4-0018-0002-0001-000000000002")
+    )
+    (pin "2"
+      (uuid "c1d2e3f4-0018-0002-0001-000000000003")
+    )
+  )
+  (label "+5V_PI" (at 70 88 0) (effects (font (size 1.27 1.27))) (uuid "c1d2e3f4-0018-0003-0001-000000000001"))
+  (label "PI_FB" (at 70 98 0) (effects (font (size 1.27 1.27))) (uuid "c1d2e3f4-0018-0003-0001-000000000002"))
+  (symbol
+    (lib_id "power:GND")
+    (at 70 112 0)
+    (uuid "c1d2e3f4-0018-0004-0001-000000000001")
+    (property "Reference" "#PWR42" (at 70 110 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 70 114 0) (effects (font (size 1.27 1.27))))
+    (pin "1"
+      (uuid "c1d2e3f4-0018-0004-0001-000000000002")
     )
   )
   (symbol
@@ -3256,6 +3330,36 @@
       (unit 1)
       (value "MCP_INTA")
       (footprint "TestPoint:TestPoint_Pad_1.0x1.0mm")
+    )
+    (path "/c1d2e3f4-0017-0002-0001-000000000001"
+      (reference "Q8")
+      (unit 1)
+      (value "AO3401A")
+      (footprint "Package_TO_SOT_SMD:SOT-23")
+    )
+    (path "/c1d2e3f4-0017-0004-0001-000000000001"
+      (reference "#PWR41")
+      (unit 1)
+      (value "GND")
+      (footprint "")
+    )
+    (path "/c1d2e3f4-0018-0001-0001-000000000001"
+      (reference "R37")
+      (unit 1)
+      (value "52.3k 1%")
+      (footprint "Resistor_SMD:R_0402_1005Metric")
+    )
+    (path "/c1d2e3f4-0018-0002-0001-000000000001"
+      (reference "R38")
+      (unit 1)
+      (value "10k 1%")
+      (footprint "Resistor_SMD:R_0402_1005Metric")
+    )
+    (path "/c1d2e3f4-0018-0004-0001-000000000001"
+      (reference "#PWR42")
+      (unit 1)
+      (value "GND")
+      (footprint "")
     )
   )
 )

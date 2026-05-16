@@ -29,8 +29,9 @@ The robot-platform mainboard integrates the ESP32-S3 MCU, motor drivers, power m
 ## Power Architecture
 
 ```
-Battery Pack(s) ─── XT30 ──→ P-MOS OR ──→ VBAT Bus (7.4V)
-                                              │
+Battery Pack(s) ─── XT30 ──→ Q8 P-MOS ──→ VBAT Bus (7.4V)
+                              (reverse      │
+                              protection)   │
                     ┌──────────────────────────┼──────────────────────┐
                     │                          │                      │
                     ▼                          ▼                      ▼

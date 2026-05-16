@@ -529,6 +529,50 @@ Total additional cost: ~¥4.15/board
 
 ---
 
+## Additional Fixes (Rev 1.1d)
+
+### Fix 17: P-MOS Reverse Polarity Protection (Q8)
+
+Added AO3401A P-MOS between XT30 connector (J2) and VBAT bus:
+- Q8 Source = VBAT_RAW (directly from J2 pin1)
+- Q8 Drain = VBAT (to all downstream circuits)
+- Q8 Gate = GND
+
+When battery correctly connected: Vgs = 0 - 7.4V = -7.4V → P-MOS fully ON (Rds=55mΩ).
+Voltage drop at 3A: 3 × 0.055 = 0.165V (negligible).
+When reversed: Vgs = 0 - (-7.4V) = +7.4V → P-MOS OFF, blocks reverse current.
+
+Previously README stated "P-MOS OR" but no circuit existed. Now implemented.
+
+### Fix 18: MP1584EN Feedback Divider (R37/R38)
+
+MP1584EN (U5) is a bare IC (SOIC-8), not a module — requires external feedback
+network to set output voltage. Previously missing from schematic.
+
+- R37 = 52.3kΩ 1% (upper, connected between +5V_PI and FB)
+- R38 = 10kΩ 1% (lower, connected between FB and GND)
+- Vout = Vref × (1 + R37/R38) = 0.8 × (1 + 52.3/10) = 4.98V ≈ 5.0V
+- PI_FB net connects R37/R38 midpoint to U5 pin 5 (FB)
+
+### BOM Delta (Rev 1.1d)
+
+| Ref | Value | Qty | Unit ¥ | Purpose |
+|-----|-------|-----|--------|---------|
+| Q8 | AO3401A | 1 | 0.50 | Reverse polarity protection |
+| R37 | 52.3kΩ 1% | 1 | 0.02 | MP1584EN FB upper |
+| R38 | 10kΩ 1% | 1 | 0.02 | MP1584EN FB lower |
+
+Additional cost: ~¥0.54/board
+
+### Non-Fix: BMS Brown-out (Informational)
+
+BMS cutoff → VBAT=0V → all rails collapse. ESP32-S3 internal BOD handles this
+correctly (resets MCU before undefined behavior). TPS3813 releases RST when
+VDD < 2.31V. No hardware change needed — document in firmware BOD configuration
+that brownout threshold should be set at 3.0V (CONFIG_ESP_BROWNOUT_DET_LVL=7).
+
+---
+
 ## Validation After Fix
 
 After implementing these changes, re-run:
