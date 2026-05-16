@@ -124,6 +124,12 @@ static void cmd_vel_callback(const void *msg_in)
 
     if (safety_is_estopped()) return;
 
+    if (!isfinite(msg->linear.x) || !isfinite(msg->linear.y) ||
+        !isfinite(msg->angular.z)) {
+        ESP_LOGW(TAG, "cmd_vel rejected: non-finite value");
+        return;
+    }
+
     cmd_vel_t cmd = {
         .vx = safety_clamp_speed((float)msg->linear.x),
         .vy = safety_clamp_speed((float)msg->linear.y),

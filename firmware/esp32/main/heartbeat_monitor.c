@@ -12,6 +12,7 @@ static const char *TAG = "heartbeat";
 
 static portMUX_TYPE hb_spinlock = portMUX_INITIALIZER_UNLOCKED;
 static volatile int64_t s_last_heartbeat_us = 0;
+static volatile int64_t s_init_time_us = 0;
 static volatile heartbeat_state_t s_state = HB_STATE_WAITING;
 static uint8_t s_reset_count = 0;
 static int64_t s_first_reset_us = 0;
@@ -35,6 +36,7 @@ esp_err_t heartbeat_monitor_init(void)
 
     gpio_set_level(PI5_RELAY_GPIO, 1); // Relay ON (Pi5 powered)
     s_last_heartbeat_us = esp_timer_get_time();
+    s_init_time_us = s_last_heartbeat_us;
     s_state = HB_STATE_WAITING;
     s_reset_count = 0;
 
@@ -48,8 +50,13 @@ void heartbeat_feed(void)
 {
     portENTER_CRITICAL(&hb_spinlock);
     s_last_heartbeat_us = esp_timer_get_time();
-    if (s_state == HB_STATE_WAITING || s_state == HB_STATE_TIMEOUT) {
+    if (s_state == HB_STATE_TIMEOUT) {
         s_state = HB_STATE_ACTIVE;
+    } else if (s_state == HB_STATE_WAITING) {
+        int64_t since_init = s_last_heartbeat_us - s_init_time_us;
+        if (since_init >= (int64_t)HEARTBEAT_BOOT_GRACE_MS * 1000) {
+            s_state = HB_STATE_ACTIVE;
+        }
     }
     portEXIT_CRITICAL(&hb_spinlock);
 }
@@ -106,6 +113,7 @@ static void power_cycle_pi5(void)
     } else {
         s_state = HB_STATE_WAITING;
         s_last_heartbeat_us = esp_timer_get_time();
+        s_init_time_us = s_last_heartbeat_us;
     }
 }
 #endif // CONFIG_PI5_POWER_ENABLED

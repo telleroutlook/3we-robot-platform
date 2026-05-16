@@ -13,12 +13,15 @@ void test_heartbeat_init_relay_on(void)
     TEST_ASSERT_EQUAL(HB_STATE_WAITING, heartbeat_get_state());
 }
 
-// --- Test 2: Feed transitions from WAITING to ACTIVE ---
+// --- Test 2: Feed transitions from WAITING to ACTIVE after boot grace ---
 void test_heartbeat_feed_transitions_to_active(void)
 {
+    mock_set_timer(0);
     heartbeat_monitor_init();
     TEST_ASSERT_EQUAL(HB_STATE_WAITING, heartbeat_get_state());
 
+    // Advance time past boot grace period
+    mock_set_timer((int64_t)HEARTBEAT_BOOT_GRACE_MS * 1000 + 1000);
     heartbeat_feed();
 
     TEST_ASSERT_EQUAL(HB_STATE_ACTIVE, heartbeat_get_state());
@@ -63,7 +66,10 @@ void test_heartbeat_relay_gpio_defined(void)
 // --- Test 7: Feed from TIMEOUT state transitions to ACTIVE ---
 void test_heartbeat_feed_from_timeout_to_active(void)
 {
+    mock_set_timer(0);
     heartbeat_monitor_init();
+    // Advance past boot grace period
+    mock_set_timer((int64_t)HEARTBEAT_BOOT_GRACE_MS * 1000 + 1000);
     heartbeat_feed();
     TEST_ASSERT_EQUAL(HB_STATE_ACTIVE, heartbeat_get_state());
 

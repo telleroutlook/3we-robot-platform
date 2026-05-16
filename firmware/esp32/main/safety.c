@@ -30,8 +30,10 @@ static float speed_limit_mps = DEFAULT_SPEED_LIMIT;
 static volatile uint8_t relay_fault_count = 0;
 static volatile uint8_t relay_healthy_count = 0;
 static volatile uint8_t relay_mismatch_debounce = 0;
+static volatile int64_t last_state_transition_us = 0;
 #define RELAY_HEALTHY_THRESHOLD 10
 #define RELAY_MISMATCH_DEBOUNCE_THRESHOLD 3
+#define RELAY_RELEASE_GRACE_MS 100
 
 static void persist_relay_fault(void);
 
@@ -45,6 +47,7 @@ static void IRAM_ATTR estop_isr(void *arg)
 {
     portENTER_CRITICAL_ISR(&safety_spinlock);
     state = SAFETY_ESTOPPED;
+    last_state_transition_us = esp_timer_get_time();
     portEXIT_CRITICAL_ISR(&safety_spinlock);
     motor_stop_all_isr();
 }
@@ -203,6 +206,7 @@ esp_err_t safety_confirm_reset(void)
     }
     state = SAFETY_NORMAL;
     last_watchdog_feed = now;
+    last_state_transition_us = now;
     portEXIT_CRITICAL(&safety_spinlock);
     notify_state_change(SAFETY_NORMAL);
     ESP_LOGI(TAG, "Safety reset confirmed - returning to normal operation");
@@ -269,6 +273,7 @@ void safety_task(void *params)
             if (gpio_get_level(ESTOP_GPIO) == 0) {
                 portENTER_CRITICAL(&safety_spinlock);
                 state = SAFETY_ESTOPPED;
+                last_state_transition_us = esp_timer_get_time();
                 portEXIT_CRITICAL(&safety_spinlock);
                 motor_stop_all();
                 notify_state_change(SAFETY_ESTOPPED);
@@ -279,6 +284,8 @@ void safety_task(void *params)
         // Continuous relay feedback monitoring (dual-channel for CE PL d Cat 3)
         int relay_fb = gpio_get_level(SAFETY_RELAY_FB);
         int relay_fb2 = gpio_get_level(SAFETY_RELAY_FB2);
+        int64_t relay_check_now = esp_timer_get_time();
+        int64_t since_transition_ms = (relay_check_now - last_state_transition_us) / 1000;
 
         // Dual-channel consistency check: both channels must agree
         // Debounce to filter switching transients during relay state changes
@@ -316,7 +323,9 @@ void safety_task(void *params)
 
         portENTER_CRITICAL(&safety_spinlock);
         current_state = state;
-        if (current_state == SAFETY_NORMAL && relay_fb == 0) {
+        if (since_transition_ms < RELAY_RELEASE_GRACE_MS) {
+            portEXIT_CRITICAL(&safety_spinlock);
+        } else if (current_state == SAFETY_NORMAL && relay_fb == 0) {
             relay_healthy_count = 0;
             if (relay_fault_count < UINT8_MAX) relay_fault_count++;
             uint8_t fault_count = relay_fault_count;

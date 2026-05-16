@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 #define HEARTBEAT_TIMEOUT_MS        5000
+#define HEARTBEAT_BOOT_GRACE_MS     90000              // Pi5 boot: 30-60s typical
 #define HEARTBEAT_MAX_RESETS        3
 #define HEARTBEAT_RESET_WINDOW_MS   (30 * 60 * 1000)  // 30 minutes
 #define HEARTBEAT_RELAY_PULSE_MS    3000               // Hold relay off for 3s

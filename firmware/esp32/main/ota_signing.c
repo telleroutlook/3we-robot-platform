@@ -280,7 +280,7 @@ esp_err_t ota_check_version_policy(uint32_t incoming_version)
         ESP_LOGW(TAG, "Cannot determine current version - allowing update");
         return ESP_OK;
     }
-    if (incoming_version <= current) {
+    if (incoming_version < current) {
         ESP_LOGE(TAG, "Version rollback rejected: incoming=0x%08lX, current=0x%08lX",
                  (unsigned long)incoming_version, (unsigned long)current);
         return ESP_ERR_INVALID_VERSION;

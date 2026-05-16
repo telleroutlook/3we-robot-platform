@@ -17,6 +17,7 @@ static const char *TAG = "charging";
 static adc_cali_handle_t s_cali_handle = NULL;
 static int s_last_voltage_mv = 0;
 static bool s_initialized = false;
+static bool s_connected = false;
 
 #ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
 static bool digital_detect_asserted(void)
@@ -63,6 +64,7 @@ esp_err_t charging_detect_init(void)
 #endif
 
     s_initialized = true;
+    s_connected = false;
     ESP_LOGI(TAG, "Charging detect initialized (threshold=%dmV)", CHARGE_CONTACT_THRESHOLD_MV);
     return ESP_OK;
 }
@@ -89,7 +91,14 @@ int charging_detect_get_voltage_mv(void)
 
 bool charging_detect_is_connected(void)
 {
-    bool analog = charging_detect_get_voltage_mv() >= CHARGE_CONTACT_THRESHOLD_MV;
+    int mv = charging_detect_get_voltage_mv();
+    if (s_connected) {
+        if (mv < CHARGE_CONTACT_RELEASE_MV) s_connected = false;
+    } else {
+        if (mv >= CHARGE_CONTACT_THRESHOLD_MV) s_connected = true;
+    }
+
+    bool analog = s_connected;
 
 #ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
     return analog || digital_detect_asserted();

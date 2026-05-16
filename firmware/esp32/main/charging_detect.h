@@ -5,7 +5,8 @@
 #include "esp_err.h"
 #include <stdbool.h>
 
-#define CHARGE_CONTACT_THRESHOLD_MV  2000  // 2.0V = contact detected
+#define CHARGE_CONTACT_THRESHOLD_MV  2000  // 2.0V = contact detected (rising)
+#define CHARGE_CONTACT_RELEASE_MV   1700  // 1.7V = contact lost (falling, hysteresis)
 
 typedef enum {
     CHARGE_DETECT_NONE = 0,

@@ -155,7 +155,7 @@ void test_ota_apply_rejects_same_version(void) {
     setUp_ota();
     ota_signing_init(test_pubkey);
 
-    // Current is v1.0.0, try to apply v1.0.0 (same = rejected)
+    // Current is v1.0.0, try to apply v1.0.0 (same version = allowed for recovery)
     size_t total = sizeof(ota_image_header_t) + sizeof(test_firmware);
     uint8_t *image = (uint8_t *)malloc(total);
     memset(image, 0, total);
@@ -166,7 +166,7 @@ void test_ota_apply_rejects_same_version(void) {
     hdr->image_size = sizeof(test_firmware);
 
     esp_err_t err = ota_apply_update(image, total);
-    TEST_ASSERT_EQUAL(ESP_ERR_INVALID_VERSION, err);
+    TEST_ASSERT_TRUE(err != ESP_ERR_INVALID_VERSION);
 
     free(image);
 }
@@ -246,9 +246,9 @@ void test_ota_version_policy_rejects_rollback(void) {
 
 void test_ota_version_policy_rejects_same_version(void) {
     setUp_ota();
-    // Current is v1.0.0, incoming is v1.0.0
+    // Current is v1.0.0, incoming is v1.0.0 — same version allowed for recovery
     esp_err_t err = ota_check_version_policy((1 << 16) | (0 << 8) | 0);
-    TEST_ASSERT_EQUAL(ESP_ERR_INVALID_VERSION, err);
+    TEST_ASSERT_EQUAL(ESP_OK, err);
 }
 
 void test_ota_version_policy_allows_when_current_unparseable(void) {

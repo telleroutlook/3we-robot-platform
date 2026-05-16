@@ -48,10 +48,20 @@ esp_err_t battery_init(void)
     };
     adc_cali_create_scheme_curve_fitting(&cali_cfg, &cali_handle);
 
-    for (int i = 0; i < BATT_ADC_SAMPLES; i++) {
-        readings[i] = BATT_CELLS_SERIES * BATT_CELL_NOMINAL_V;
+    // Prefill moving average with first real ADC reading (not nominal)
+    int raw_init = 0;
+    adc_oneshot_read(adc_manager_get_handle(), BATT_ADC_CHANNEL, &raw_init);
+    int mv_init = 0;
+    adc_cali_raw_to_voltage(cali_handle, raw_init, &mv_init);
+    float first_reading = ((float)mv_init / 1000.0f) * BATT_VOLTAGE_DIVIDER;
+    if (first_reading < 1.0f) {
+        first_reading = BATT_CELLS_SERIES * BATT_CELL_NOMINAL_V;
     }
-    voltage_avg = BATT_CELLS_SERIES * BATT_CELL_NOMINAL_V;
+
+    for (int i = 0; i < BATT_ADC_SAMPLES; i++) {
+        readings[i] = first_reading;
+    }
+    voltage_avg = first_reading;
     initialized = true;
 
     ESP_LOGI(TAG, "Battery ADC initialized (%dS, divider=%.1f)",
