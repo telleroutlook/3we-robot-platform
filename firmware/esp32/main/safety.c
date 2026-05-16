@@ -14,6 +14,10 @@
 #include "current_sense.h"
 #endif
 
+#ifdef MICROROS_DISABLED
+#include "encoder.h"
+#endif
+
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -434,6 +438,10 @@ void safety_task(void *params)
         }
 
         safety_check_watchdog();
+
+#ifdef MICROROS_DISABLED
+        encoder_update();
+#endif
 
 #ifdef CONFIG_CURRENT_SENSE_ENABLED
         current_sense_update();
