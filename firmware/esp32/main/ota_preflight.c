@@ -109,8 +109,14 @@ void ota_preflight_increment_boot_fail(void)
         uint8_t count = 0;
         nvs_get_u8(nvs, NVS_KEY_BOOT_FAILS, &count);
         count++;
-        nvs_set_u8(nvs, NVS_KEY_BOOT_FAILS, count);
-        nvs_commit(nvs);
+        esp_err_t err = nvs_set_u8(nvs, NVS_KEY_BOOT_FAILS, count);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "NVS write boot_fails failed: %s", esp_err_to_name(err));
+        }
+        err = nvs_commit(nvs);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "NVS commit failed: %s", esp_err_to_name(err));
+        }
         nvs_close(nvs);
         ESP_LOGW(TAG, "Boot failure count incremented to %d", count);
     }
@@ -120,8 +126,14 @@ void ota_preflight_clear_boot_fail(void)
 {
     nvs_handle_t nvs;
     if (nvs_open(NVS_NAMESPACE_OTA, NVS_READWRITE, &nvs) == ESP_OK) {
-        nvs_set_u8(nvs, NVS_KEY_BOOT_FAILS, 0);
-        nvs_commit(nvs);
+        esp_err_t err = nvs_set_u8(nvs, NVS_KEY_BOOT_FAILS, 0);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "NVS write boot_fails clear failed: %s", esp_err_to_name(err));
+        }
+        err = nvs_commit(nvs);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "NVS commit failed: %s", esp_err_to_name(err));
+        }
         nvs_close(nvs);
     }
 }
