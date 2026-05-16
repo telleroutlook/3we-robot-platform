@@ -12,7 +12,7 @@
 | D2 | WS2812B | RGB LED | 5050 | 2 | Status indicators |
 | R1-R4 | — | 10kΩ | 0402 | 4 | Pull-ups, dividers |
 | R5 | — | 0.1Ω 1% | 2512 | 1 | Current sense resistor |
-| R6 | — | 1.2kΩ | 0402 | 1 | TP5100 charge current set (2A) |
+| R6 | — | 1.5kΩ | 0402 | 1 | TP5100 charge current set (1.5A — reduced from 2A for thermal safety) |
 | C1-C3 | — | 10µF | 0805 | 3 | Bulk decoupling |
 | C4-C6 | — | 100nF | 0402 | 3 | Local decoupling |
 | C7 | — | 22µF | 1206 | 1 | TP5100 output capacitor |
@@ -38,12 +38,14 @@
 | Rail | Voltage | Max Current | Source |
 |------|---------|-------------|--------|
 | Input | 12V DC | 3A | Barrel jack / USB-C PD |
-| Charge | 8.4V | 2A | TP5100 output |
+| Charge | 8.4V | 1.5A | TP5100 output |
 | Logic | 3.3V | 50mA | AMS1117 |
 
 ## Design Notes
 
-- TP5100 configured for 2S (8.4V) charging at 2A max
+- TP5100 configured for 2S (8.4V) charging at 1.5A max (R6=1.5kΩ)
+- Thermal dissipation at 12V input: (12-8.4)×1.5 = 5.4W — requires 2cm² copper pour
+- For cooler operation, prefer 9V USB-C PD input: (9-8.4)×1.5 = 0.9W
 - Current sense on low-side (R5) feeds ATtiny85 ADC for charge monitoring
 - Dock communicates charge status to robot via pogo pin data line (UART 9600)
 - AprilTag ID 0 is reserved for the primary docking station

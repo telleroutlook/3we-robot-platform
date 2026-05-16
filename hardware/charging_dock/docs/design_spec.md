@@ -39,7 +39,7 @@ marker, then makes contact via mechanical guide rails that funnel into alignment
 |-----------|-------|-------|
 | Input voltage | 12V ±10% | DC barrel jack or USB-C |
 | Charge voltage | 8.4V (2S) | TP5100 auto-detect |
-| Max charge current | 2.0A | Set by R6=1.2kΩ |
+| Max charge current | 1.5A | Set by R6=1.5kΩ (reduced from 2A for thermal margin) |
 | Trickle current | 100mA | Below 6.0V threshold |
 | Termination current | 100mA (C/20) | Charge complete |
 | Logic voltage | 3.3V | AMS1117 LDO |

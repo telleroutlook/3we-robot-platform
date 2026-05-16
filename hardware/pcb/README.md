@@ -34,13 +34,13 @@ Battery Pack(s) ─── XT30 ──→ P-MOS OR ──→ VBAT Bus (7.4V)
                     ┌──────────────────────────┼──────────────────────┐
                     │                          │                      │
                     ▼                          ▼                      ▼
-              MT3608 Boost              MP1584EN Buck            [Safety Relay]
-              5V / 2A                   5V / 5A (Pi5)                 │
+              MP2359 Buck              MP1584EN Buck            [Safety Relay]
+              5V / 1.2A                5V / 5A (Pi5)                 │
               (ESP32, sensors)          (compute)                     ▼
                     │                                           Motor DRV8833
                     ▼                                           (7.4V / 10A max)
-              AMS1117-3.3
-              3.3V / 800mA
+              AP2112K-3.3
+              3.3V / 600mA
               (logic, I2C)
 ```
 
