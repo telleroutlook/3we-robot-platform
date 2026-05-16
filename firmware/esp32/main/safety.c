@@ -3,6 +3,7 @@
 #include "motor_control.h"
 #include "pin_definitions.h"
 #include "robot_params.h"
+#include "i2c_bus.h"
 
 #ifdef CONFIG_ROBOT_DISPLAY_ENABLED
 #include "display.h"
@@ -25,10 +26,12 @@ static const char *TAG = "safety";
 #define NVS_KEY_SPEED_LIM   "spd_lim"
 #define NVS_KEY_RELAY_FAULT "relay_flt"
 #define DEFAULT_SPEED_LIMIT 1.0f
+#define MCP_GPIOB           0x13
 
 static portMUX_TYPE safety_spinlock = portMUX_INITIALIZER_UNLOCKED;
 static volatile safety_state_t state = SAFETY_NORMAL;
 static volatile int64_t last_watchdog_feed = 0;
+static volatile bool watchdog_armed = false;
 static safety_callback_t user_callback = NULL;
 static float speed_limit_mps = DEFAULT_SPEED_LIMIT;
 static volatile uint8_t relay_fault_count = 0;
@@ -233,12 +236,14 @@ void safety_feed_watchdog(void)
     portENTER_CRITICAL(&safety_spinlock);
     if (state == SAFETY_NORMAL) {
         last_watchdog_feed = now;
+        watchdog_armed = true;
     }
     portEXIT_CRITICAL(&safety_spinlock);
 }
 
 TESTABLE_WEAK void safety_check_watchdog(void)
 {
+    if (!watchdog_armed) return;
     bool should_estop = false;
     portENTER_CRITICAL(&safety_spinlock);
     if (state == SAFETY_NORMAL) {
@@ -390,6 +395,21 @@ void safety_task(void *params)
                 relay_healthy_count = 0;
             }
             portEXIT_CRITICAL(&safety_spinlock);
+        }
+
+        // DRV8833 nFAULT monitoring (active-low via MCP23017 GPB4/GPB5)
+        uint8_t drv_gpiob = 0xFF;
+        mcp23017_read_register(MCP23017_ADDR, MCP_GPIOB, &drv_gpiob);
+        bool drv_front_fault = !(drv_gpiob & (1 << MCP23017_DRV_FAULT_FRONT_BIT));
+        bool drv_rear_fault  = !(drv_gpiob & (1 << MCP23017_DRV_FAULT_REAR_BIT));
+        if (drv_front_fault || drv_rear_fault) {
+            motor_stop_all();
+#ifdef CONFIG_ROBOT_DISPLAY_ENABLED
+            display_log_fault(drv_front_fault ? FAULT_SRC_DRV_FRONT : FAULT_SRC_DRV_REAR,
+                              1, drv_front_fault ? "DRV FRONT FAULT" : "DRV REAR FAULT");
+#endif
+            ESP_LOGE(TAG, "DRV8833 nFAULT asserted: front=%d rear=%d",
+                     drv_front_fault, drv_rear_fault);
         }
 
         safety_check_watchdog();
