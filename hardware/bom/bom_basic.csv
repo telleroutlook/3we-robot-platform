@@ -26,13 +26,14 @@ R3,20kΩ,0603,Various,-,1,0.01,LCSC,Battery ADC divider upper
 R4,10kΩ,0603,Various,-,1,0.01,LCSC,Battery ADC divider lower
 R5,10kΩ,0603,Various,-,1,0.01,LCSC,E-stop pull-up
 R6,10kΩ,0603,Various,-,1,0.01,LCSC,EN pull-up (ESP32)
-R7,0.1Ω 1%,2512,Various,-,1,0.20,LCSC,INA219 shunt resistor
+R7,0.02Ω 1%,2512,Various,-,1,0.20,LCSC,INA219 shunt resistor (PGA=÷8: 16A range at 0.5mA resolution)
 R8,10kΩ,0603,Various,-,1,0.01,LCSC,MCP23017 reset pull-up
 R9,120Ω DNP,0603,Various,-,1,0.01,LCSC,CAN bus termination (DNP for Basic/Standard)
 R10-R11,5.1kΩ,0402,Various,-,2,0.01,LCSC,USB-C CC pull-down
 R13,20kΩ,0603,Various,-,1,0.01,LCSC,Relay FB2 voltage divider upper
 R14,10kΩ,0603,Various,-,1,0.01,LCSC,Relay FB2 voltage divider lower
-R15-R16,100kΩ,0402,Various,-,2,0.01,LCSC,Payload P-MOS gate pull-up (default OFF)
+R15,100kΩ,0402,Various,-,1,0.01,LCSC,Q3 (5V payload) P-MOS gate pull-up (default OFF)
+R16,100kΩ DNP,0402,Various,-,1,0.01,LCSC,Q4 (12V payload) P-MOS gate pull-up — DNP on Basic (no +12V_BOOST)
 R17,10kΩ,0402,Various,-,1,0.01,LCSC,Q5 gate pull-up (relay default ON)
 R18,100kΩ,0402,Various,-,1,0.01,LCSC,Q5 gate ESD/discharge
 R20,10kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_FRONT series (5V→3.3V)
@@ -48,5 +49,16 @@ R32-R33,10kΩ,0402,Various,-,2,0.01,LCSC,DRV8833 nFAULT pull-up (to MCP23017 GPB
 R30,44.2kΩ 1%,0402,Various,-,1,0.02,LCSC,MP2359 feedback divider upper
 R31,10kΩ 1%,0402,Various,-,1,0.02,LCSC,MP2359 feedback divider lower
 D1-D4,PESD5V0S1BB,SOD-323,Nexperia,PESD5V0S1BB,4,0.30,LCSC,ESD protection (PBC-34)
+Q4,AO3401A DNP,SOT-23,AOS,AO3401A,1,0.00,LCSC,Payload 12V P-MOS switch — DNP on Basic (requires XL6009 from Standard BOM)
 L1,10uH,1210,Various,-,1,0.80,LCSC,Buck converter inductor (1.5A saturation)
 L2,4.7uH,1210,Various,-,1,0.50,LCSC,Inductor for MP1584EN
+U10,TPS3813K33DBVR,SOT-23-5,Texas Instruments,TPS3813K33DBVR,1,3.00,LCSC,External watchdog timer (1.6s timeout TD=GND RST→ESP32 EN)
+C16,100nF,0402,Various,-,1,0.02,LCSC,TPS3813 RST output pulse stretching cap
+C17,10uF X5R 10V,0805,Various,-,1,0.15,LCSC,BNO055 IMU bulk decoupling (per datasheet recommendation)
+Q6a,Si2301CDS,SOT-23,AOS,Si2301CDS,1,0.30,LCSC,P-MOS Pi5 high-side switch (parallel with Q6b for 5A) — DNP on Basic
+Q6b,Si2301CDS,SOT-23,AOS,Si2301CDS,1,0.30,LCSC,P-MOS Pi5 high-side switch (parallel with Q6a for 5A) — DNP on Basic
+Q7,AO3400A,SOT-23,AOS,AO3400A,1,0.30,LCSC,N-MOS gate driver for Pi5 P-MOS pair — DNP on Basic
+R34,100kΩ,0402,Various,-,1,0.01,LCSC,Q7 gate pull-down (Pi5 default OFF at boot) — DNP on Basic
+R35,100kΩ,0402,Various,-,1,0.01,LCSC,Q6 gate pull-up to +5V_PI (P-MOS default OFF) — DNP on Basic
+R36,10kΩ,0402,Various,-,1,0.01,LCSC,MCP23017 INTA pull-up (open-drain active-low interrupt output)
+TP1,Test Point 1mm,-,-,-,1,0.05,LCSC,MCP23017 INTA test pad (connect to spare GPIO for interrupt-driven operation)

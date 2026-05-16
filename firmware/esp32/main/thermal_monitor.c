@@ -33,9 +33,9 @@ static const char *TAG = "thermal";
 // INA219 config: 32V range, 320mV shunt, 12-bit, continuous
 #define INA219_CONFIG       0x399F
 
-// Calibration for 0.1 ohm shunt resistor, 3.2A max
-#define INA219_CALIBRATION  4096
-#define SHUNT_RESISTANCE    0.1f
+// Calibration for 0.02 ohm shunt resistor, 16A max (PGA=÷8, ±320mV)
+#define INA219_CALIBRATION  20480
+#define SHUNT_RESISTANCE    0.02f
 
 // Thermal model: estimate temperature from power dissipation
 // Rth_ja ~= 40°C/W for typical motor driver package + PCB

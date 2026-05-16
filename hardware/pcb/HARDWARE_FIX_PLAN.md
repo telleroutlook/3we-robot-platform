@@ -434,8 +434,98 @@ rules based on bus topology.
 | #6 (LDO) | Footprint change SOT-223→SOT-23-5 | High — requires new pad layout |
 | #7 (Payload 5V) | One trace reroute (Q3 source: +5V_ESP → +5V_PI) | Low — single net change |
 | #8 (nFAULT) | 2 resistors near U2a/U2b + trace to MCP23017 | Low |
+| #11 (DNP) | None (annotation only) | None |
+| #12 (Watchdog) | U10 SOT-23-5 + C16 near ESP32 EN pin | Low — small footprint |
+| #13 (Pi5 switch) | 3× SOT-23 + 2× 0402 near MP1584EN output | Medium — 5 new components |
+| #14 (Shunt) | None (same footprint, value change only) | None |
+| #15 (IMU cap) | 1× 0805 adjacent to BNO055 | Low — space available |
+| #16 (INT pullup) | 1× 0402 + test pad near MCP23017 | Low |
 
-**Recommendation**: All fixes incorporated into Rev 1.1. No deferred items.
+**Recommendation**: All fixes incorporated into Rev 1.1c. No deferred items.
+
+---
+
+## Additional Fixes (Rev 1.1c)
+
+### Fix 11: Q4/R16 DNP Annotation (Basic SKU)
+
+Q4 (AO3401A) and R16 (100kΩ gate pull-up) are the 12V payload power switch. On Basic
+SKU there is no +12V_BOOST source (XL6009 only in Standard BOM). Marked DNP in BOM
+and schematic description. No functional impact — gate pull-up keeps Q4 OFF regardless.
+
+### Fix 12: TPS3813 External Watchdog (U10)
+
+Added TPS3813K33DBVR (SOT-23-5) watchdog timer:
+- VDD = +3V3, GND = GND
+- WDI (watchdog input) = GPIO46 (EXT_WDT_FEED label)
+- RST (active-low output) = ESP32 EN pin via ESP32_EN label
+- TD = GND (1.6 second timeout)
+- C16 (100nF) on RST output for pulse stretching (~100ms reset pulse)
+- MR (manual reset) tied to VDD (disabled)
+
+Safety function: If firmware stops toggling GPIO46 for >1.6s, TPS3813 asserts RST
+→ ESP32 EN pulled low → hardware reset. Independent of software watchdog.
+
+### Fix 13: Pi5 Power MOSFET Switch (Q6a, Q6b, Q7)
+
+Added high-side P-MOS switch for Pi5 5V rail, controlled by GPIO45 (PI5_RELAY):
+
+```
++5V_PI (MP1584EN) ─── [Q6a+Q6b Source] (Si2301CDS × 2, parallel = 5A)
+                            │
+                       [Q6a+Q6b Gate] ←── R35 (100k to +5V_PI, pull-up = OFF)
+                            │                    │
+                            │              [Q7 Drain] (AO3400A N-MOS)
+                            │              [Q7 Gate] ← GPIO45 (PI5_RELAY)
+                            │                    │
+                            │              [R34 100k] to GND (default OFF)
+                            │              [Q7 Source] ── GND
+                            │
+                       [Q6a+Q6b Drain] ─── +5V_PI_SW (to Pi5 connector)
+```
+
+Logic: GPIO45 HIGH → Q7 ON → Q6 gate=GND → Vgs=-5V → P-MOS ON → Pi5 powered.
+Standard/Industrial SKU only (DNP on Basic).
+
+### Fix 14: INA219 Shunt Resistor (R7: 0.1Ω → 0.02Ω)
+
+R7 changed from 0.1Ω to 0.02Ω (2512, 1% tolerance):
+- Old: 5A load → 2.5W (exceeded 1W 2512 rating)
+- New: 5A load → 0.5W (within rating with 50% margin)
+- INA219 PGA=÷8 (unchanged): ±320mV / 0.02Ω = 16A measurement range
+- Resolution: 10µV LSB / 0.02Ω = 0.5mA
+- Firmware updated: SHUNT_RESISTANCE=0.02f, INA219_CALIBRATION=20480
+
+### Fix 15: BNO055 Bulk Decoupling (C17)
+
+Added C17 (10µF, X5R 10V, 0805) on BNO055 VDD, parallel with existing C4 (100nF).
+Per BNO055 datasheet §5.2.1: VDD requires 100nF + min 1µF bulk cap. Critical for
+stable operation in high-vibration robot environment.
+
+### Fix 16: MCP23017 INTA Pull-up (R36) + Test Pad (TP1)
+
+Added R36 (10kΩ to +3V3) on MCP23017 INTA open-drain output. Routed to test pad
+TP1 (1mm pad). No ESP32 GPIO allocated. Firmware polls at 100ms intervals.
+
+---
+
+## BOM Delta (Rev 1.1c)
+
+| Ref | Value | Qty | Unit ¥ | Purpose |
+|-----|-------|-----|--------|---------|
+| U10 | TPS3813K33DBVR | 1 | 3.00 | External watchdog |
+| C16 | 100nF | 1 | 0.02 | WDT RST cap |
+| C17 | 10µF X5R | 1 | 0.15 | BNO055 bulk |
+| Q6a | Si2301CDS | 1 | 0.30 | Pi5 P-MOS (DNP Basic) |
+| Q6b | Si2301CDS | 1 | 0.30 | Pi5 P-MOS (DNP Basic) |
+| Q7 | AO3400A | 1 | 0.30 | Pi5 N-MOS driver (DNP Basic) |
+| R34 | 100kΩ | 1 | 0.01 | Q7 gate pull-down (DNP Basic) |
+| R35 | 100kΩ | 1 | 0.01 | Q6 gate pull-up (DNP Basic) |
+| R36 | 10kΩ | 1 | 0.01 | MCP INTA pull-up |
+| TP1 | Test Point | 1 | 0.05 | MCP INTA access |
+| R7 | 0.02Ω→value change | 0 | 0.00 | Same part, new value |
+
+Total additional cost: ~¥4.15/board
 
 ---
 
@@ -459,7 +549,7 @@ Additionally, perform thermal imaging test on first assembled prototype:
 
 ## Sign-off Checklist
 
-- [ ] Schematic Rev 1.1 updated with all fixes
+- [ ] Schematic Rev 1.1c updated with all fixes (1–16)
 - [ ] DRC clean (no ERC errors)
 - [ ] BOM regenerated from schematic
 - [ ] PCB layout updated, DRC clean
@@ -468,3 +558,6 @@ Additionally, perform thermal imaging test on first assembled prototype:
 - [ ] Thermal validation passed
 - [ ] Safety relay self-test passes on prototype
 - [ ] HC-SR04 echo voltage confirmed < 3.3V with oscilloscope
+- [ ] TPS3813 watchdog reset confirmed (stop WDT feed → ESP32 resets within 2s)
+- [ ] Pi5 power switch confirmed (GPIO45 toggle → Pi5 power cycles cleanly)
+- [ ] INA219 current reading calibrated and verified against bench supply

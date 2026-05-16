@@ -119,6 +119,11 @@
 #define PAYLOAD_12V_EN_BIT  1   // GPA1 on MCP23017
 #define PAYLOAD_VBAT_EN_BIT 2   // GPA2 on MCP23017
 #define PAYLOAD_DETECT_BIT  3   // GPA3 on MCP23017 (input)
+// MCP23017 INTA routed to test pad TP1 on PCB (active-low, open-drain with 10k pull-up).
+// If connected to a spare GPIO in future rev, enable interrupt-driven payload/fault detection.
+// Current firmware polls MCP23017 at 100ms intervals via I2C (sufficient for hotplug/fault).
+#define MCP23017_DRV_FAULT_FRONT_BIT  4  // GPB4: DRV8833 front nFAULT (active-low)
+#define MCP23017_DRV_FAULT_REAR_BIT   5  // GPB5: DRV8833 rear nFAULT (active-low)
 
 // CAN bus (MCP2515 + TJA1050, Industrial SKU only)
 // GPIO 33–37 are occupied by PSRAM on ESP32-S3-WROOM-1-N8R8 — must avoid.
