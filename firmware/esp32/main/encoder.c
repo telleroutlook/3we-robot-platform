@@ -107,7 +107,9 @@ int32_t encoder_get_count(motor_id_t id)
 {
     if (id >= MOTOR_COUNT) return 0;
     int count = 0;
+    portENTER_CRITICAL(&encoder_spinlock);
     pcnt_unit_get_count(pcnt_units[id], &count);
+    portEXIT_CRITICAL(&encoder_spinlock);
     return (int32_t)count;
 }
 
