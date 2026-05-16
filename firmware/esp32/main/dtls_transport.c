@@ -543,6 +543,9 @@ static void handle_session_io(int idx)
             uint8_t resp;
             xSemaphoreTake(ssl_mutex, portMAX_DELAY);
             if (ar == AUTHORITY_RESULT_GRANTED || ar == AUTHORITY_RESULT_PREEMPTED) {
+                if (ar == AUTHORITY_RESULT_PREEMPTED) {
+                    motor_stop_all();
+                }
                 resp = DTLS_CMD_CTRL_GRANTED;
                 mbedtls_ssl_write(&sessions[idx].ssl, &resp, 1);
                 if (preempted >= 0 && preempted < max_sessions &&

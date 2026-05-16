@@ -161,14 +161,27 @@ void payload_register_callback(payload_event_callback_t cb)
 
 esp_err_t payload_power_off(void)
 {
-    payload_mcp_write_bit(PAYLOAD_VBAT_EN_BIT, false);
-    payload_mcp_write_bit(PAYLOAD_12V_EN_BIT, false);
-    payload_mcp_write_bit(PAYLOAD_5V_EN_BIT, false);
+    esp_err_t err;
+    const uint8_t rails[] = { PAYLOAD_VBAT_EN_BIT, PAYLOAD_12V_EN_BIT, PAYLOAD_5V_EN_BIT };
+    bool recovered = false;
+
+    for (int i = 0; i < 3; i++) {
+        err = payload_mcp_write_bit(rails[i], false);
+        if (err != ESP_OK && !recovered) {
+            ESP_LOGW("payload", "I2C write failed during power-off — attempting recovery");
+            i2c_bus_recover();
+            recovered = true;
+            err = payload_mcp_write_bit(rails[i], false);
+        }
+        if (err != ESP_OK) {
+            ESP_LOGE("payload", "Failed to disable rail bit %d", rails[i]);
+        }
+    }
 
     state = PAYLOAD_STATE_ABSENT;
     notify_event();
     ESP_LOGI(TAG, "Payload power disabled");
-    return ESP_OK;
+    return err;
 }
 
 void payload_hotplug_task(void *params)

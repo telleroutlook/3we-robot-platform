@@ -168,4 +168,13 @@
 #define CURRENT_SENSE_ADC_ATTEN     ADC_ATTEN_DB_11
 #endif
 
+// =============================================================================
+// Compile-time GPIO conflict guards
+// =============================================================================
+// GPIO 9 is shared between US_ECHO_LEFT, CHARGE_ADC_GPIO (docking), and CAN_INT
+// (Industrial). These are mutually exclusive by SKU — enforce at compile time.
+#if defined(CONFIG_ROBOT_DOCKING_ENABLED) && defined(CONFIG_ROBOT_SKU_INDUSTRIAL)
+#error "GPIO 9 conflict: docking (CHARGE_ADC) and Industrial (CAN_INT) cannot coexist"
+#endif
+
 #endif // PIN_DEFINITIONS_H

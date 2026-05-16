@@ -249,12 +249,10 @@ void test_hotplug_power_off_with_i2c_error(void)
     // Make read fail — mcp23017_write_bit will fail on read-modify-write
     mock_i2c_set_read_error(MCP23017_ADDR, ESP_FAIL);
 
-    // power_off calls mcp23017_write_bit 3 times; each will fail on read,
-    // but the function still sets state to ABSENT and notifies
+    // power_off attempts I2C recovery on first failure, retries once.
+    // If still failing, returns error but still transitions state to ABSENT.
     esp_err_t err = payload_power_off();
-    // The function returns ESP_OK regardless of individual bit-write failures
-    // because it always transitions state
-    TEST_ASSERT_EQUAL(ESP_OK, err);
+    TEST_ASSERT_NOT_EQUAL(ESP_OK, err);
     TEST_ASSERT_EQUAL(PAYLOAD_STATE_ABSENT, payload_get_state());
     TEST_ASSERT_EQUAL(PAYLOAD_STATE_ABSENT, last_cb_state);
 }

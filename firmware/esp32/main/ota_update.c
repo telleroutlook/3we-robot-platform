@@ -17,6 +17,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "esp_task_wdt.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -101,6 +102,11 @@ static esp_err_t perform_ota_from_url(const char *url)
         esp_http_client_cleanup(client);
         return ESP_ERR_NOT_FOUND;
     }
+    if ((size_t)content_length > update_part->size) {
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Image exceeds partition size");
+        esp_http_client_cleanup(client);
+        return ESP_ERR_INVALID_SIZE;
+    }
 
     // Read header first
     uint8_t header_buf[sizeof(ota_image_header_t)];
@@ -171,6 +177,7 @@ static esp_err_t perform_ota_from_url(const char *url)
         int to_read = (int)((firmware_size - firmware_written) < OTA_BUF_SIZE ?
                             (firmware_size - firmware_written) : OTA_BUF_SIZE);
         int read_len = esp_http_client_read(client, (char *)buf, to_read);
+        esp_task_wdt_reset();
         if (read_len <= 0) {
             download_ok = false;
             break;
@@ -247,6 +254,7 @@ static esp_err_t perform_ota_from_url(const char *url)
         }
         mbedtls_sha256_update(&verify_ctx, vbuf, to_read);
         offset += to_read;
+        esp_task_wdt_reset();
     }
     free(vbuf);
 
@@ -360,6 +368,11 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
     if (!update_part) {
         free(buf);
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "No OTA partition");
+        return ESP_FAIL;
+    }
+    if (firmware_size > update_part->size) {
+        free(buf);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Image exceeds partition size");
         return ESP_FAIL;
     }
 

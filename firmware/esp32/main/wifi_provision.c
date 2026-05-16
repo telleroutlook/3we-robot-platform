@@ -11,6 +11,7 @@
 static const char *TAG = "wifi_prov";
 
 #define NVS_NAMESPACE   "wifi"
+#define NVS_KEY_CREDS   "creds"
 #define NVS_KEY_SSID    "ssid"
 #define NVS_KEY_PASS    "password"
 
@@ -24,13 +25,18 @@ esp_err_t wifi_provision_get_credentials(wifi_credentials_t *creds)
     bool from_nvs = false;
 
     if (nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvs) == ESP_OK) {
-        size_t ssid_len = WIFI_CRED_MAX_LEN;
-        size_t pass_len = WIFI_CRED_MAX_LEN;
-
-        if (nvs_get_str(nvs, NVS_KEY_SSID, creds->ssid, &ssid_len) == ESP_OK &&
+        size_t blob_len = sizeof(wifi_credentials_t);
+        if (nvs_get_blob(nvs, NVS_KEY_CREDS, creds, &blob_len) == ESP_OK &&
             strlen(creds->ssid) > 0) {
-            nvs_get_str(nvs, NVS_KEY_PASS, creds->password, &pass_len);
             from_nvs = true;
+        } else {
+            size_t ssid_len = WIFI_CRED_MAX_LEN;
+            size_t pass_len = WIFI_CRED_MAX_LEN;
+            if (nvs_get_str(nvs, NVS_KEY_SSID, creds->ssid, &ssid_len) == ESP_OK &&
+                strlen(creds->ssid) > 0) {
+                nvs_get_str(nvs, NVS_KEY_PASS, creds->password, &pass_len);
+                from_nvs = true;
+            }
         }
         nvs_close(nvs);
     }
@@ -59,21 +65,25 @@ esp_err_t wifi_provision_store_credentials(const char *ssid, const char *passwor
 {
     if (!ssid || strlen(ssid) == 0) return ESP_ERR_INVALID_ARG;
 
+    wifi_credentials_t blob = {0};
+    strncpy(blob.ssid, ssid, WIFI_CRED_MAX_LEN - 1); // nosemgrep
+    if (password) {
+        strncpy(blob.password, password, WIFI_CRED_MAX_LEN - 1); // nosemgrep
+    }
+
     nvs_handle_t nvs;
     esp_err_t ret = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs);
     if (ret != ESP_OK) return ret;
 
-    ret = nvs_set_str(nvs, NVS_KEY_SSID, ssid);
+    ret = nvs_set_blob(nvs, NVS_KEY_CREDS, &blob, sizeof(blob));
     if (ret != ESP_OK) {
         nvs_close(nvs);
         return ret;
     }
 
-    ret = nvs_set_str(nvs, NVS_KEY_PASS, password ? password : "");
-    if (ret != ESP_OK) {
-        nvs_close(nvs);
-        return ret;
-    }
+    // Remove legacy keys if present
+    nvs_erase_key(nvs, NVS_KEY_SSID);
+    nvs_erase_key(nvs, NVS_KEY_PASS);
 
     ret = nvs_commit(nvs);
     nvs_close(nvs);
