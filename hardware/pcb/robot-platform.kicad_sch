@@ -640,6 +640,40 @@
   )
   (label "+3V3" (at 325 58 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0002-0002-0001-000000000004"))
   (symbol
+    (lib_id "Device:R")
+    (at 335 32 0)
+    (uuid "a1b2c3d4-0006-0001-0001-000000000001")
+    (property "Reference" "R32" (at 335 27 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "10k" (at 335 37 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 335 39 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "DRV8833_Front nFAULT pull-up (open-drain output)" (at 335 41 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0006-0001-0001-000000000002")
+    )
+    (pin "2"
+      (uuid "a1b2c3d4-0006-0001-0001-000000000003")
+    )
+  )
+  (label "+3V3" (at 335 25 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0006-0001-0001-000000000004"))
+  (label "DRV_FAULT_FRONT" (at 340 37 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0006-0001-0001-000000000005"))
+  (symbol
+    (lib_id "Device:R")
+    (at 335 72 0)
+    (uuid "a1b2c3d4-0006-0002-0001-000000000001")
+    (property "Reference" "R33" (at 335 67 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "10k" (at 335 77 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 335 79 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "DRV8833_Rear nFAULT pull-up (open-drain output)" (at 335 81 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0006-0002-0001-000000000002")
+    )
+    (pin "2"
+      (uuid "a1b2c3d4-0006-0002-0001-000000000003")
+    )
+  )
+  (label "+3V3" (at 335 65 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0006-0002-0001-000000000004"))
+  (label "DRV_FAULT_REAR" (at 340 77 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0006-0002-0001-000000000005"))
+  (symbol
     (lib_id "Device:C")
     (at 295 22 0)
     (uuid "671c1d2d-e81f-4a86-bf18-757a992a0324")
@@ -1388,6 +1422,8 @@
   (label "PBC_GPIO5" (at 225 195 0) (effects (font (size 1.27 1.27))) (uuid "4fc6cb08-d25e-4ef7-a8ff-f392dedb74e0"))
   (label "PBC_GPIO6" (at 225 198 0) (effects (font (size 1.27 1.27))) (uuid "2f968bc0-3f84-43e4-bba2-753bd8e7c047"))
   (label "PBC_GPIO7" (at 225 201 0) (effects (font (size 1.27 1.27))) (uuid "e1f1b91d-e514-46d9-93fb-83af93e6eb9e"))
+  (label "DRV_FAULT_FRONT" (at 225 204 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0006-0003-0001-000000000001"))
+  (label "DRV_FAULT_REAR" (at 225 207 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0006-0003-0001-000000000002"))
   (symbol
     (lib_id "Device:C")
     (at 215 162 0)
@@ -2075,7 +2111,7 @@
       (uuid "33445566-7788-99aa-bbcc-ddeeff001122")
     )
   )
-  (label "+5V_ESP" (at 285 162 0) (effects (font (size 1.27 1.27))) (uuid "44556677-8899-aabb-ccdd-eeff00112233"))
+  (label "+5V_PI" (at 285 162 0) (effects (font (size 1.27 1.27))) (uuid "44556677-8899-aabb-ccdd-eeff00112233"))
   (label "+5V_PAYLOAD" (at 295 162 0) (effects (font (size 1.27 1.27))) (uuid "55667788-99aa-bbcc-ddee-ff0011223344"))
   (label "PBC_5V_EN" (at 290 172 0) (effects (font (size 1.27 1.27))) (uuid "66778899-aabb-ccdd-eeff-001122334455"))
   (symbol
@@ -2093,7 +2129,7 @@
       (uuid "99aabbcc-ddee-ff00-1122-334455667788")
     )
   )
-  (label "+5V_ESP" (at 290 179 0) (effects (font (size 1.27 1.27))) (uuid "aabbccdd-eeff-0011-2233-445566778899"))
+  (label "+5V_PI" (at 290 179 0) (effects (font (size 1.27 1.27))) (uuid "aabbccdd-eeff-0011-2233-445566778899"))
   (symbol
     (lib_id "Transistor_FET:AO3401A")
     (at 310 165 0)

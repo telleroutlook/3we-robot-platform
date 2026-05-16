@@ -5,6 +5,7 @@ LORA1,SX1276 LoRa Module,DIP,Semtech,SX1276,1,28.00,LCSC,868/915MHz long-range
 ANT3,LoRa Antenna SMA,-,-,-,1,8.00,Taobao,868/915MHz whip
 CAN1,MCP2515-I/SO,SOIC-18,Microchip,MCP2515-I/SO,1,12.00,LCSC,CAN bus controller
 CAN2,TJA1050T,SOIC-8,NXP,TJA1050T,1,4.50,LCSC,CAN transceiver
+R9,120Ω,0603,Various,-,1,0.01,LCSC,CAN termination (populate on mainboard — see PCB README for bus topology rules)
 MOT1-4,550 Gear Motor 1:30,-,-,-,4,45.00,Taobao,12V rated (replaces N20)
 DRV1-2,BTS7960,Module,-,BTS7960,2,18.00,Taobao,43A H-bridge (replaces DRV8833)
 WHL1-4,97mm Mecanum Wheel,-,-,-,4,65.00,Taobao,Aluminum hub + PU rollers (replaces 48mm)

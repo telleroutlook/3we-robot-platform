@@ -44,6 +44,7 @@ R25,18kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_LEFT shunt to GND
 R26,10kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_RIGHT series (5V→3.3V)
 R27,18kΩ,0402,Various,-,1,0.01,LCSC,US_ECHO_RIGHT shunt to GND
 R28-R29,10kΩ,0402,Various,-,2,0.01,LCSC,DRV8833 nSLEEP external pull-up
+R32-R33,10kΩ,0402,Various,-,2,0.01,LCSC,DRV8833 nFAULT pull-up (to MCP23017 GPB4/GPB5)
 R30,44.2kΩ 1%,0402,Various,-,1,0.02,LCSC,MP2359 feedback divider upper
 R31,10kΩ 1%,0402,Various,-,1,0.02,LCSC,MP2359 feedback divider lower
 D1-D4,PESD5V0S1BB,SOD-323,Nexperia,PESD5V0S1BB,4,0.30,LCSC,ESD protection (PBC-34)

@@ -3,7 +3,7 @@
 
 Status: DRAFT — requires review before PCB re-spin
 Date: 2026-05-16
-Affects: robot-platform.kicad_sch Rev 1.0, bom_basic.csv
+Affects: robot-platform.kicad_sch Rev 1.1, bom_basic.csv, bom_industrial.csv
 
 ---
 
@@ -387,7 +387,38 @@ rules: minimum 2cm² exposed copper connected to Tab/GND pin.
 
 ### Total BOM Cost Impact
 
-Additional cost per board: **< ¥2.00** (within rounding error of current ~¥680 total)
+Additional cost per board: **< ¥2.50** (within rounding error of current ~¥680 total)
+
+---
+
+## Additional Fixes (Rev 1.1b)
+
+### Fix 7: Payload 5V Source — Move from ESP Rail to Pi5 Rail
+
+Q3 (Si2301CDS) source changed from +5V_ESP (MP2359, 1.2A) to +5V_PI (MP1584EN, 5A).
+This prevents payload current from overloading the ESP32 supply rail.
+
+- MP2359 now serves only: ESP32 (~500mA peak) + board sensors (~60mA) = max ~700mA
+- MP1584EN serves: Pi5 (~3A) + Payload 5V (up to ~2A via Q3) = within 5A rating
+- R15 gate pull-up also moved to +5V_PI (P-MOS gate must match source for OFF state)
+
+### Fix 8: DRV8833 nFAULT Monitoring
+
+Added R32/R33 (10k pull-up to 3.3V) on both DRV8833 nFAULT open-drain outputs.
+Routed to MCP23017 GPB4 (front) and GPB5 (rear) for firmware overcurrent/thermal
+fault detection. Cost: 2× 0402 resistors.
+
+### Fix 9: TP5100 Charge Current → 1.0A
+
+Further reduced from 1.5A to 1.0A (R6=2.4kΩ):
+- 12V input dissipation: 3.6W (manageable with 1.5cm² copper pour)
+- 9V PD input dissipation: 0.6W (cool, no heatsink)
+- Charge time: ~3 hours for 3000mAh (acceptable)
+
+### Fix 10: CAN Termination Documentation
+
+Added explicit guidance in PCB README and Industrial BOM for R9 (120Ω) population
+rules based on bus topology.
 
 ---
 
@@ -400,11 +431,11 @@ Additional cost per board: **< ¥2.00** (within rounding error of current ~¥680
 | #3 (Relay driver) | Q5 + D5 + R17/R18 near RLY1 | Medium — new components in safety area |
 | #4 (nSLEEP) | 2 resistors near U2a/U2b | Low — 0402 fits adjacent to DRV8833 |
 | #5 (TP5100) | Charging dock PCB only (separate board) | None on mainboard |
-| #6 (LDO) | Footprint change SOT-223→SOT-23-5 | High if changing, None if keeping AMS1117 |
+| #6 (LDO) | Footprint change SOT-223→SOT-23-5 | High — requires new pad layout |
+| #7 (Payload 5V) | One trace reroute (Q3 source: +5V_ESP → +5V_PI) | Low — single net change |
+| #8 (nFAULT) | 2 resistors near U2a/U2b + trace to MCP23017 | Low |
 
-**Recommendation**: Fixes #1-#4 can be incorporated into the current Rev 1.0 → Rev 1.1
-PCB spin with minimal routing impact. Fix #6 can be deferred to Rev 2.0 if thermal
-testing of AMS1117 with copper pour passes validation.
+**Recommendation**: All fixes incorporated into Rev 1.1. No deferred items.
 
 ---
 

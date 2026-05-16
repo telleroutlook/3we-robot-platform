@@ -50,7 +50,7 @@ Battery Pack(s) ─── XT30 ──→ P-MOS OR ──→ VBAT Bus (7.4V)
 
 | Pin | Function | Rating | Notes |
 |-----|----------|--------|-------|
-| 1-2 | +5V Power | 3A max | P-MOS soft-start, switched from +5V_ESP via MCP23017 GPA0 |
+| 1-2 | +5V Power | 3A max | P-MOS soft-start, switched from +5V_PI (MP1584EN 5A rail) via MCP23017 GPA0 |
 | 3-4 | +12V Power | 3A max | MOSFET soft-start |
 | 5-6 | GND (Power) | — | Wide traces (1mm) |
 | 7 | I2C SDA | 3.3V | Direct (shared bus with IMU, INA219, MCP23017) |
@@ -92,6 +92,23 @@ Battery Pack(s) ─── XT30 ──→ P-MOS OR ──→ VBAT Bus (7.4V)
 The mainboard PCB uses DRV8833 (dual H-bridge, 1.2A/ch) for Basic and Standard SKUs. The Industrial SKU requires BTS7960 (43A half-bridge) for 550 motors at 12V.
 
 ### Approach A: External Module (Initial Batch)
+
+#### CAN Bus Termination (R9, 120Ω)
+
+R9 is a 120Ω CAN bus termination resistor, **shipped as DNP (Do Not Populate)** on
+Basic and Standard SKUs (which have no CAN bus).
+
+**For Industrial SKU:** R9 MUST be populated (soldered) when:
+- The robot is at one end of the CAN bus (most single-robot setups)
+- The Payload device does NOT provide its own termination
+
+**Do NOT populate R9 when:**
+- The robot sits in the middle of a multi-node CAN chain
+- Both ends of the bus are already terminated by other nodes
+
+CAN bus requires exactly two 120Ω terminations — one at each physical end of the
+bus. Measure 60Ω between CAN-H and CAN-L (bus powered off) to confirm correct
+termination.
 
 Recommended for first production run (< 100 units):
 
