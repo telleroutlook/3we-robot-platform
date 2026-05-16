@@ -5,6 +5,10 @@
 #include "safety.h"
 #include "robot_params.h"
 
+#ifdef CONFIG_PI5_POWER_ENABLED
+#include "heartbeat_monitor.h"
+#endif
+
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
@@ -536,6 +540,10 @@ static void handle_session_io(int idx)
         }
 
         sessions[idx].last_recv_us = esp_timer_get_time();
+
+#ifdef CONFIG_PI5_POWER_ENABLED
+        heartbeat_feed();
+#endif
 
         if ((size_t)ret >= 1 && buf[0] == DTLS_CMD_CTRL_REQUEST) {
             int8_t preempted = -1;
