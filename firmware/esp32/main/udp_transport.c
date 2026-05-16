@@ -13,6 +13,7 @@
 
 static const char *TAG = "udp_xport";
 
+static portMUX_TYPE udp_spinlock = portMUX_INITIALIZER_UNLOCKED;
 static int cmd_sock = -1;
 static int telem_sock = -1;
 static udp_transport_config_t cfg;
@@ -69,9 +70,14 @@ esp_err_t udp_transport_init(const udp_transport_config_t *config)
 
 esp_err_t udp_transport_send_telemetry(const uint8_t *data, size_t len)
 {
-    if (!client_known || telem_sock < 0) return ESP_ERR_INVALID_STATE;
-
+    portENTER_CRITICAL(&udp_spinlock);
+    if (!client_known || telem_sock < 0) {
+        portEXIT_CRITICAL(&udp_spinlock);
+        return ESP_ERR_INVALID_STATE;
+    }
     struct sockaddr_in dest = last_client_addr;
+    portEXIT_CRITICAL(&udp_spinlock);
+
     dest.sin_port = htons(cfg.telemetry_port);
 
     int sent = sendto(telem_sock, data, len, 0,
@@ -82,14 +88,22 @@ esp_err_t udp_transport_send_telemetry(const uint8_t *data, size_t len)
 
 void udp_transport_set_recv_callback(udp_recv_callback_t cb)
 {
+    portENTER_CRITICAL(&udp_spinlock);
     recv_callback = cb;
+    portEXIT_CRITICAL(&udp_spinlock);
 }
 
 bool udp_transport_has_client(void)
 {
-    if (!client_known) return false;
+    portENTER_CRITICAL(&udp_spinlock);
+    if (!client_known) {
+        portEXIT_CRITICAL(&udp_spinlock);
+        return false;
+    }
+    int64_t t = last_recv_time;
+    portEXIT_CRITICAL(&udp_spinlock);
     int64_t now = esp_timer_get_time();
-    return (now - last_recv_time) < (cfg.timeout_ms * 1000LL);
+    return (now - t) < (cfg.timeout_ms * 1000LL);
 }
 
 void udp_transport_task(void *params)
@@ -103,9 +117,11 @@ void udp_transport_task(void *params)
                            (struct sockaddr *)&src_addr, &addr_len);
 
         if (len > 0) {
+            portENTER_CRITICAL(&udp_spinlock);
             last_client_addr = src_addr;
             client_known = true;
             last_recv_time = esp_timer_get_time();
+            portEXIT_CRITICAL(&udp_spinlock);
 
             char ip_str[INET_ADDRSTRLEN];
             inet_ntoa_r(src_addr.sin_addr, ip_str, sizeof(ip_str));
@@ -115,8 +131,12 @@ void udp_transport_task(void *params)
             // Drop all received data to prevent unauthenticated command dispatch.
             ESP_LOGD(TAG, "UDP rx %d bytes from %s (dropped: plaintext ctrl disabled)", len, ip_str);
 #else
-            if (recv_callback) {
-                recv_callback(buf, (size_t)len, ip_str, ntohs(src_addr.sin_port));
+            udp_recv_callback_t cb;
+            portENTER_CRITICAL(&udp_spinlock);
+            cb = recv_callback;
+            portEXIT_CRITICAL(&udp_spinlock);
+            if (cb) {
+                cb(buf, (size_t)len, ip_str, ntohs(src_addr.sin_port));
             }
 #endif
         }
