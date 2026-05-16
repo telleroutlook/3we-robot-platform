@@ -334,12 +334,13 @@ menu "Robot Platform Configuration"
 
         config THERMAL_NTC_ENABLED
             bool "Enable NTC thermistor temperature measurement"
-            default y if ROBOT_SKU_INDUSTRIAL
+            depends on !CURRENT_SENSE_ENABLED
             default n
             help
                 Read motor driver temperature from NTC thermistor via ADC.
                 Supplements INA219 power-based thermal estimation.
                 Safety system uses the higher of both readings.
+                Cannot coexist with current sensing (shared ADC channel).
     endmenu
 
 endmenu

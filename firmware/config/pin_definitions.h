@@ -74,7 +74,7 @@
 // Battery ADC (dedicated pin, ADC1)
 #define BATT_ADC_GPIO       3
 #define BATT_ADC_CHANNEL    ADC_CHANNEL_2   // ESP32-S3: GPIO 3 = ADC1_CH2
-#define BATT_ADC_ATTEN      ADC_ATTEN_DB_11
+#define BATT_ADC_ATTEN      ADC_ATTEN_DB_12
 
 // Battery pack 2 ADC (extended battery SKU)
 // GPIO 4 is shared with ENC_RR_B. Dual-battery mode reroutes ENC_RR_B
@@ -106,7 +106,7 @@
 #ifdef CONFIG_ROBOT_DOCKING_ENABLED
 #define CHARGE_ADC_GPIO     9   // ADC1_CH8 on ESP32-S3
 #define CHARGE_ADC_CHANNEL  ADC_CHANNEL_8
-#define CHARGE_ADC_ATTEN    ADC_ATTEN_DB_11  // ESP-IDF 5.x (was ADC_ATTEN_DB_12 in 4.x)
+#define CHARGE_ADC_ATTEN    ADC_ATTEN_DB_12
 
 #ifdef CONFIG_ROBOT_DOCKING_DIGITAL_DETECT
 #define CHARGE_DIGITAL_DETECT_GPIO  CONFIG_CHARGE_DIGITAL_DETECT_GPIO
@@ -173,7 +173,7 @@
 #define CURRENT_SENSE_FR_GPIO       6   // ADC1_CH5 (Industrial PCB: ACS712 motor FR)
 #define CURRENT_SENSE_RL_GPIO       7   // ADC1_CH6 (Industrial PCB: ACS712 motor RL)
 #define CURRENT_SENSE_RR_GPIO       8   // ADC1_CH7 (Industrial PCB: ACS712 motor RR)
-#define CURRENT_SENSE_ADC_ATTEN     ADC_ATTEN_DB_11
+#define CURRENT_SENSE_ADC_ATTEN     ADC_ATTEN_DB_12
 #endif
 
 // =============================================================================

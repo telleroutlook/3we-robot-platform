@@ -45,7 +45,6 @@ static portMUX_TYPE payload_spinlock = portMUX_INITIALIZER_UNLOCKED;
 static payload_state_t state = PAYLOAD_STATE_ABSENT;
 static payload_descriptor_t descriptor;
 static payload_event_callback_t event_callback = NULL;
-static bool detect_pin_low = false;
 
 static esp_err_t payload_mcp_write_bit(uint8_t bit, bool value)
 {

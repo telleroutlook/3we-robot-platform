@@ -55,7 +55,7 @@ static const char *TAG = "thermal";
 #define NTC_BETA            3950.0f  // B-value
 #define NTC_SERIES_R        10000.0f // Series resistor in voltage divider
 #define NTC_ADC_CHANNEL     ADC_CHANNEL_5  // Placeholder — confirm with PCB
-#define NTC_ADC_ATTEN       ADC_ATTEN_DB_11
+#define NTC_ADC_ATTEN       ADC_ATTEN_DB_12
 static adc_cali_handle_t ntc_cali_handle;
 #endif
 
