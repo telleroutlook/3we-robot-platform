@@ -4,6 +4,7 @@
 #include "pin_definitions.h"
 #include "battery.h"
 #include "safety.h"
+#include "motor_control.h"
 #include "encoder.h"
 #include "imu.h"
 #include "thermal_monitor.h"
@@ -502,6 +503,7 @@ void display_log_fault(display_fault_source_t source, uint8_t code, const char *
 static void trigger_wifi_reset(void)
 {
     ESP_LOGW(TAG, "WiFi reset triggered via display button long-press");
+    motor_stop_all();
 
 #ifndef UNIT_TEST_BUILD
     nvs_handle_t nvs;
