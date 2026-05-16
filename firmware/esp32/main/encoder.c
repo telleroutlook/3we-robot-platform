@@ -5,6 +5,7 @@
 
 #include "driver/pulse_cnt.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 
 #include <stdlib.h>
 
@@ -24,6 +25,7 @@ static const encoder_pins_t enc_pins[MOTOR_COUNT] = {
 
 static pcnt_unit_handle_t pcnt_units[MOTOR_COUNT];
 static float speed_rps[MOTOR_COUNT];
+static int64_t last_update_us;
 static portMUX_TYPE encoder_spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 static void encoder_validate_config(void);
@@ -118,13 +120,17 @@ float encoder_get_speed_rps(motor_id_t id)
 
 void encoder_update(void)
 {
+    int64_t now = esp_timer_get_time();
+    float dt = (float)(now - last_update_us) / 1000000.0f;
+    if (dt <= 0.0f) dt = 1.0f / (float)CONTROL_FREQ_HZ;
+    last_update_us = now;
+
     for (int i = 0; i < MOTOR_COUNT; i++) {
         int count = 0;
         portENTER_CRITICAL(&encoder_spinlock);
         pcnt_unit_get_count(pcnt_units[i], &count);
         pcnt_unit_clear_count(pcnt_units[i]);
-        int32_t delta = (int32_t)count;
-        speed_rps[i] = ((float)delta / (float)ENCODER_CPR) * (float)CONTROL_FREQ_HZ;
+        speed_rps[i] = ((float)count / (float)ENCODER_CPR) / dt;
         portEXIT_CRITICAL(&encoder_spinlock);
     }
 }
