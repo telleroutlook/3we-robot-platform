@@ -170,6 +170,7 @@ esp_err_t adc_cali_raw_to_voltage(adc_cali_handle_t handle, int raw, int *mv);
 // ADC manager stubs
 esp_err_t adc_manager_init(void);
 adc_oneshot_unit_handle_t adc_manager_get_handle(void);
+esp_err_t adc_manager_read(int channel, int *out_raw);
 
 void mock_set_adc_raw(int raw_value);
 void mock_set_adc_voltage_mv(int mv);

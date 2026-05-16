@@ -194,6 +194,11 @@ esp_err_t adc_manager_init(void) {
 adc_oneshot_unit_handle_t adc_manager_get_handle(void) {
     return (void*)(intptr_t)1;
 }
+esp_err_t adc_manager_read(int channel, int *out_raw) {
+    (void)channel;
+    *out_raw = mock_adc_raw;
+    return ESP_OK;
+}
 esp_err_t adc_oneshot_config_channel(adc_oneshot_unit_handle_t handle, int channel, const adc_oneshot_chan_cfg_t *cfg) {
     (void)handle; (void)channel; (void)cfg; return ESP_OK;
 }

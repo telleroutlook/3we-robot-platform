@@ -74,7 +74,7 @@ int charging_detect_get_voltage_mv(void)
     if (!s_initialized) return 0;
 
     int raw = 0;
-    esp_err_t err = adc_oneshot_read(adc_manager_get_handle(), CHARGE_ADC_CHANNEL, &raw);
+    esp_err_t err = adc_manager_read(CHARGE_ADC_CHANNEL, &raw);
     if (err != ESP_OK) return s_last_voltage_mv;
 
     if (s_cali_handle != NULL) {

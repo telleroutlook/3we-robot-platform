@@ -277,7 +277,7 @@ void thermal_monitor_task(void *params)
         adc_oneshot_unit_handle_t adc_handle = adc_manager_get_handle();
         if (adc_handle && ntc_cali_handle) {
             int adc_raw = 0;
-            if (adc_oneshot_read(adc_handle, NTC_ADC_CHANNEL, &adc_raw) == ESP_OK) {
+            if (adc_manager_read(NTC_ADC_CHANNEL, &adc_raw) == ESP_OK) {
                 int voltage_mv = 0;
                 adc_cali_raw_to_voltage(ntc_cali_handle, adc_raw, &voltage_mv);
                 float v = (float)voltage_mv / 1000.0f;

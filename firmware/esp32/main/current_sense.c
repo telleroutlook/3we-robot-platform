@@ -87,7 +87,7 @@ void current_sense_update(void)
 
     for (int i = 0; i < CURRENT_SENSE_CHANNELS; i++) {
         int raw = 0;
-        adc_oneshot_read(adc_handle, adc_channels[i], &raw);
+        adc_manager_read(adc_channels[i], &raw);
 
         int voltage_mv = 0;
         adc_cali_raw_to_voltage(cali_handle, raw, &voltage_mv);
