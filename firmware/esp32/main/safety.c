@@ -4,6 +4,7 @@
 #include "pin_definitions.h"
 #include "robot_params.h"
 #include "i2c_bus.h"
+#include "external_wdt.h"
 
 #ifdef CONFIG_ROBOT_DISPLAY_ENABLED
 #include "display.h"
@@ -398,21 +399,39 @@ void safety_task(void *params)
         }
 
         // DRV8833 nFAULT monitoring (active-low via MCP23017 GPB4/GPB5)
-        uint8_t drv_gpiob = 0xFF;
-        mcp23017_read_register(MCP23017_ADDR, MCP_GPIOB, &drv_gpiob);
-        bool drv_front_fault = !(drv_gpiob & (1 << MCP23017_DRV_FAULT_FRONT_BIT));
-        bool drv_rear_fault  = !(drv_gpiob & (1 << MCP23017_DRV_FAULT_REAR_BIT));
-        if (drv_front_fault || drv_rear_fault) {
-            motor_stop_all();
+        // Rate-limited to every 5th iteration (~100ms) to avoid I2C blocking relay/watchdog checks
+        static uint8_t drv_check_counter = 0;
+        static uint8_t drv_fault_debounce = 0;
+#define DRV_FAULT_DEBOUNCE_THRESHOLD 3
+        if (++drv_check_counter >= 5) {
+            drv_check_counter = 0;
+            uint8_t drv_gpiob = 0xFF;
+            mcp23017_read_register(MCP23017_ADDR, MCP_GPIOB, &drv_gpiob);
+            bool drv_front_fault = !(drv_gpiob & (1 << MCP23017_DRV_FAULT_FRONT_BIT));
+            bool drv_rear_fault  = !(drv_gpiob & (1 << MCP23017_DRV_FAULT_REAR_BIT));
+            if (drv_front_fault || drv_rear_fault) {
+                if (++drv_fault_debounce >= DRV_FAULT_DEBOUNCE_THRESHOLD) {
+                    drv_fault_debounce = 0;
+                    motor_stop_all();
 #ifdef CONFIG_ROBOT_DISPLAY_ENABLED
-            display_log_fault(drv_front_fault ? FAULT_SRC_DRV_FRONT : FAULT_SRC_DRV_REAR,
-                              1, drv_front_fault ? "DRV FRONT FAULT" : "DRV REAR FAULT");
+                    if (drv_front_fault) {
+                        display_log_fault(FAULT_SRC_DRV_FRONT, 1, "DRV FRONT FAULT");
+                    }
+                    if (drv_rear_fault) {
+                        display_log_fault(FAULT_SRC_DRV_REAR, 1, "DRV REAR FAULT");
+                    }
 #endif
-            ESP_LOGE(TAG, "DRV8833 nFAULT asserted: front=%d rear=%d",
-                     drv_front_fault, drv_rear_fault);
+                    ESP_LOGE(TAG, "DRV8833 nFAULT asserted: front=%d rear=%d",
+                             drv_front_fault, drv_rear_fault);
+                }
+            } else {
+                drv_fault_debounce = 0;
+            }
         }
 
         safety_check_watchdog();
+
+        external_wdt_confirm_alive();
 
         vTaskDelay(pdMS_TO_TICKS(20));
     }
