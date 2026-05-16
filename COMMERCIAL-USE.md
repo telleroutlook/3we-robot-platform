@@ -35,7 +35,7 @@ We offer an optional commercial license for organizations that prefer:
 Commercial licenses are priced per unit and are suitable for organizations deploying
 at scale that need additional assurances beyond what the open-source license provides.
 
-Contact: commercial@robot-platform.org
+Contact: teller.lin@outlook.com
 
 ## Sustainability Model
 
