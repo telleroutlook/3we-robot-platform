@@ -81,7 +81,12 @@ float battery_read_voltage(void)
     if (!initialized) return 0.0f;
 
     int raw = 0;
-    adc_manager_read(BATT_ADC_CHANNEL, &raw);
+    if (adc_manager_read(BATT_ADC_CHANNEL, &raw) != ESP_OK) {
+        portENTER_CRITICAL(&batt_spinlock);
+        float v = voltage_avg;
+        portEXIT_CRITICAL(&batt_spinlock);
+        return v;
+    }
 
     int mv = 0;
     adc_cali_raw_to_voltage(cali_handle, raw, &mv);
