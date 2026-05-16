@@ -332,6 +332,15 @@ Engineering deep-dives at [3we.org/blog](https://3we.org/blog/overview/):
 | Hardware Designs | CERN-OHL-P v2 | [`LICENSE-HARDWARE`](LICENSE-HARDWARE) |
 | Documentation | CC BY-SA 4.0 | [`LICENSE-DOCS`](LICENSE-DOCS) |
 
+### Attribution
+
+Commercial use is welcome and free of charge. The licenses require that derivative
+works include attribution to this project. Recommended format:
+
+> This product is based on the open-source [3we Robot Platform](https://github.com/telleroutlook/3we-robot-platform).
+
+For academic citations, see [`CITATION.cff`](CITATION.cff).
+
 ---
 
 ## Contributing

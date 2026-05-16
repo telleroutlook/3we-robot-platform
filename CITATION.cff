@@ -5,9 +5,10 @@ message: "If you use this software, please cite it as below."
 type: software
 authors:
   - name: "3we Contributors"
+    alias: "telleroutlook"
 license: Apache-2.0
-repository-code: "https://github.com/3we-org/3we-robot-platform"
-url: "https://github.com/3we-org/3we-robot-platform"
+repository-code: "https://github.com/telleroutlook/3we-robot-platform"
+url: "https://github.com/telleroutlook/3we-robot-platform"
 keywords:
   - robotics
   - embodied-ai
