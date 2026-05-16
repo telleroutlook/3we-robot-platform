@@ -81,7 +81,7 @@ static int find_empty_slot(void)
     return -1;
 }
 
-static void cleanup_session(int idx)
+static void cleanup_session_locked(int idx)
 {
     if (idx < 0 || idx >= max_sessions) return;
 
@@ -96,6 +96,14 @@ static void cleanup_session(int idx)
     memset(&sessions[idx], 0, sizeof(dtls_session_internal_t));
     sessions[idx].state = DTLS_SESSION_EMPTY;
     sessions[idx].client_fd.fd = -1;
+}
+
+static void cleanup_session(int idx)
+{
+    if (idx < 0 || idx >= max_sessions) return;
+    xSemaphoreTake(ssl_mutex, portMAX_DELAY);
+    cleanup_session_locked(idx);
+    xSemaphoreGive(ssl_mutex);
 }
 
 static int dtls_psk_callback(void *parameter, mbedtls_ssl_context *ssl_ctx,
@@ -278,9 +286,14 @@ esp_err_t dtls_send(const uint8_t *data, size_t len)
 esp_err_t dtls_send_to_session(uint8_t session_id, const uint8_t *data, size_t len)
 {
     if (session_id >= max_sessions) return ESP_ERR_INVALID_ARG;
-    if (sessions[session_id].state != DTLS_SESSION_ACTIVE) return ESP_ERR_INVALID_STATE;
 
     xSemaphoreTake(ssl_mutex, portMAX_DELAY);
+
+    if (sessions[session_id].state != DTLS_SESSION_ACTIVE) {
+        xSemaphoreGive(ssl_mutex);
+        return ESP_ERR_INVALID_STATE;
+    }
+
     int ret = mbedtls_ssl_write(&sessions[session_id].ssl, data, len);
     xSemaphoreGive(ssl_mutex);
 
@@ -572,8 +585,12 @@ static void handle_session_io(int idx)
         }
 
         if (recv_callback) {
-            recv_callback(buf, (size_t)ret, (uint8_t)idx,
-                         sessions[idx].peer_ip, 0);
+            if (!authority_is_holder(&authority, (uint8_t)idx)) {
+                ESP_LOGW(TAG, "Session %d sent command without authority - rejected", idx);
+            } else {
+                recv_callback(buf, (size_t)ret, (uint8_t)idx,
+                             sessions[idx].peer_ip, 0);
+            }
         }
     }
 }

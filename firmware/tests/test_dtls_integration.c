@@ -98,9 +98,12 @@ void test_dtls_recv_callback_dispatches_data(void) {
     mock_ssl_set_psk_cb_capture(1);
     mock_ssl_set_accept_max_calls(1);
 
-    // Simulate incoming motor command data (type 0x10 = APPLICATION), then peer disconnect
+    // First read: CTRL_REQUEST grants authority to this session
+    const unsigned char ctrl_req[] = {DTLS_CMD_CTRL_REQUEST};
+    // Second read: application motor command data
     const unsigned char motor_cmd[] = {0x10, 0x02, 0x64, 0x00, 0xC8};
-    mock_ssl_set_read_data(motor_cmd, sizeof(motor_cmd));
+    mock_ssl_set_read_data(ctrl_req, sizeof(ctrl_req));
+    mock_ssl_set_read_data2(motor_cmd, sizeof(motor_cmd));
 
     dtls_set_recv_callback(test_recv_callback);
     TEST_ASSERT_EQUAL(ESP_OK, dtls_init(&test_config));

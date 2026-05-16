@@ -9,6 +9,9 @@ static int mock_read_result = MBEDTLS_ERR_SSL_WANT_READ;
 static const unsigned char *mock_read_data = NULL;
 static size_t mock_read_data_len = 0;
 static size_t mock_read_data_offset = 0;
+static const unsigned char *mock_read_data2 = NULL;
+static size_t mock_read_data2_len = 0;
+static int mock_read_phase = 0;
 static int mock_psk_cb_capture = 0;
 static int mock_psk_cb_called = 0;
 static int mock_accept_max_calls = 1;
@@ -24,6 +27,9 @@ void mock_ssl_reset(void) {
     mock_read_data = NULL;
     mock_read_data_len = 0;
     mock_read_data_offset = 0;
+    mock_read_data2 = NULL;
+    mock_read_data2_len = 0;
+    mock_read_phase = 0;
     mock_psk_cb_capture = 0;
     mock_psk_cb_called = 0;
     mock_accept_max_calls = 1;
@@ -38,7 +44,13 @@ void mock_ssl_set_read_data(const unsigned char *data, size_t len) {
     mock_read_data = data;
     mock_read_data_len = len;
     mock_read_data_offset = 0;
+    mock_read_phase = 0;
     mock_read_result = 0;
+}
+
+void mock_ssl_set_read_data2(const unsigned char *data, size_t len) {
+    mock_read_data2 = data;
+    mock_read_data2_len = len;
 }
 
 void mock_ssl_set_read_result(int result) { mock_read_result = result; }
@@ -160,11 +172,21 @@ int mbedtls_ssl_handshake(mbedtls_ssl_context *ssl) {
 }
 int mbedtls_ssl_read(mbedtls_ssl_context *ssl, unsigned char *buf, size_t len) {
     (void)ssl;
-    if (mock_read_data && mock_read_data_offset < mock_read_data_len) {
+    if (mock_read_phase == 0 && mock_read_data && mock_read_data_offset < mock_read_data_len) {
         size_t remaining = mock_read_data_len - mock_read_data_offset;
         size_t to_copy = remaining < len ? remaining : len;
         memcpy(buf, mock_read_data + mock_read_data_offset, to_copy);
         mock_read_data_offset += to_copy;
+        if (mock_read_data_offset >= mock_read_data_len && mock_read_data2) {
+            mock_read_phase = 1;
+        }
+        return (int)to_copy;
+    }
+    if (mock_read_phase == 1 && mock_read_data2 && mock_read_data2_len > 0) {
+        size_t to_copy = mock_read_data2_len < len ? mock_read_data2_len : len;
+        memcpy(buf, mock_read_data2, to_copy);
+        mock_read_data2 = NULL;
+        mock_read_data2_len = 0;
         return (int)to_copy;
     }
     return mock_read_result;
