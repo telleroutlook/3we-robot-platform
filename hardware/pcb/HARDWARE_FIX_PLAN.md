@@ -782,9 +782,120 @@ Total additional cost: **¥0** (safety improvements at zero BOM cost).
 
 ---
 
+## Round 6: Fixes 32–37 (Buck Converter Critical, E-Stop Polarity, I2C Addressing, USB ESD)
+
+Priority: #32 > #33 > #34 > #35 > #36 > #37
+
+### Fix 32: MP2359 Missing Schottky Diode and Bootstrap Capacitor (CRITICAL)
+
+MP2359DJ is an asynchronous buck — it has no internal low-side FET. Without an external
+freewheeling diode, inductor current has no path during off-time → voltage spike destroys IC.
+Without bootstrap capacitor, high-side gate cannot be driven → IC fails to switch.
+
+Added:
+- D6: SS34 (SOD-123F, 40V/3A Schottky) — cathode to SW, anode to GND
+- C19: 100nF (0402) — between BST and SW pins
+
+### Fix 33: MP1584EN Missing Schottky Diode and Bootstrap Capacitor (CRITICAL)
+
+Same issue as Fix 32 for the Pi5 5V/3A rail buck converter. MP1584EN is also asynchronous.
+
+Added:
+- D7: SS54 (SMA, 40V/5A Schottky) — cathode to SW, anode to GND (sized for 3A continuous)
+- C20: 100nF (0402) — between BST and SW pins
+
+Both bucks would have failed to start without these components. U4 description corrected
+from "synchronous" to "asynchronous" to prevent future confusion.
+
+### Fix 34: E-Stop Polarity Inversion (SAFETY-CRITICAL)
+
+Original wiring: SW1 NC shorts ESTOP net to GND, R5 pulls up to +3V3.
+This gives ESTOP=HIGH when pressed (NC opens → pull-up dominates).
+
+But firmware expects ESTOP=LOW = safe state (GPIO reads LOW on press → trigger shutdown).
+And nSLEEP pull-ups (R28/R29) connected to ESTOP net need ESTOP=HIGH normally to keep
+DRV8833 awake, ESTOP=LOW on press to put them to sleep.
+
+**The original polarity is backwards.** Fixed by:
+- SW1 NC now passes +3V3 through closed contact → ESTOP=HIGH normally
+- R5 changed to pull-DOWN to GND (fail-safe: wire break → ESTOP=LOW → safe state)
+- On E-stop press: NC opens → R5 pulls ESTOP to GND → firmware triggers, nSLEEP=LOW
+
+This achieves ISO 13850 fail-safe: any fault (wire break, connector disconnect, SW1
+failure-open) results in ESTOP=LOW = safe state. Positive safety architecture.
+
+### Fix 35: BNO055 I2C Address and Interface Pin Ties
+
+BNO055 PS0, PS1, and ADR pins were floating. Per datasheet:
+- PS1=LOW, PS0=LOW → I2C mode (vs SPI/UART)
+- ADR=LOW → I2C address 0x28 (matches firmware BNO055_I2C_ADDR)
+
+Added explicit GND connections for PS0, PS1, ADR in schematic. Prevents unreliable
+startup caused by floating CMOS inputs oscillating between states.
+
+### Fix 36: USB-C D+/D- ESD Protection
+
+USB-C port (J3) had no ESD protection on data lines. Added:
+- U11: USBLC6-2SC6 (SOT-23-6) — dual-line TVS for USB D+/D-
+- Rated IEC 61000-4-2: ±15kV air, ±8kV contact discharge
+- Low capacitance (2pF typ) — transparent to USB 2.0 signaling
+
+Connected between VBUS/GND with D+ and D- passing through protection channels.
+
+### Fix 37: MCP23017 I2C Address Pin Ties
+
+MCP23017 A0, A1, A2 pins were floating. With all three LOW → address 0x20
+(matches firmware MCP23017_I2C_ADDR). Added explicit GND connections.
+
+Same failure mode as Fix 35: floating CMOS inputs cause intermittent I2C
+address mismatch. Particularly problematic on this IC because firmware polls
+it at 100ms intervals — a single miss causes false payload-detect state change.
+
+---
+
+## BOM Delta (Fixes 32–37)
+
+| Fix | Components Added | Cost Impact |
+|-----|-----------------|-------------|
+| #32 | D6 (SS34), C19 (100nF) | ¥0.32 |
+| #33 | D7 (SS54), C20 (100nF) | ¥0.82 |
+| #34 | None — wiring change + R5 value unchanged | ¥0 |
+| #35 | None — GND connections to existing pads | ¥0 |
+| #36 | U11 (USBLC6-2SC6) | ¥0.30 |
+| #37 | None — GND connections to existing pads | ¥0 |
+
+Total additional cost: **¥1.44/board**
+
+---
+
+## PCB Layout Impact (Fixes 32–37)
+
+| Fix | Layout Change Required | Severity |
+|-----|----------------------|----------|
+| #32 (MP2359 Schottky+BST) | Place D6 near U4 SW pin, C19 between BST/SW | High — critical loop area |
+| #33 (MP1584 Schottky+BST) | Place D7 near U5 SW pin, C20 between BST/SW | High — critical loop area |
+| #34 (E-stop polarity) | Reroute SW1 from GND to +3V3, R5 from +3V3 to GND | Medium |
+| #35 (BNO055 pins) | Short traces from PS0/PS1/ADR pads to GND | Low |
+| #36 (USB ESD) | Place U11 adjacent to J3 USB-C connector | Medium |
+| #37 (MCP23017 A0-A2) | Short traces from A0/A1/A2 pads to GND | Low |
+
+**Layout note**: D6 and D7 placement is critical for EMI performance. The Schottky diode
+must be as close as possible to the SW pin with minimal loop area to GND. C19/C20
+bootstrap caps must be directly adjacent to BST and SW pins (≤3mm trace length).
+
+---
+
+## Deferred Items
+
+| Issue | Reason | Target |
+|-------|--------|--------|
+| #28 (AP2112K LDO margin) | 600mA LDO with 520mA estimated load. Marginal but functional. Monitor thermal on prototype. If >85°C, replace with AP7361C (1A) in Rev 2.0 | Rev 2.0 |
+
+---
+
 ## Sign-off Checklist
 
-- [ ] Schematic Rev 1.1e updated with all fixes (1–31, excluding #28 deferred)
+- [ ] Schematic Rev 1.1f updated with all fixes (1–37, excluding #28 deferred)
 - [ ] DRC clean (no ERC errors)
 - [ ] BOM regenerated from schematic
 - [ ] PCB layout updated, DRC clean
@@ -804,3 +915,10 @@ Total additional cost: **¥0** (safety improvements at zero BOM cost).
 - [ ] DRV8833 nSLEEP goes LOW when E-stop pressed (confirm with oscilloscope)
 - [ ] Battery critical shutdown: verify payload/Pi5/WiFi off within 5s of BATT_CRITICAL
 - [ ] Basic SKU build: confirm GPIO45 NOT configured as output (verify with debugger)
+- [ ] MP2359 switching confirmed on oscilloscope (SW node, clean waveform, no ringing >1V)
+- [ ] MP1584EN switching confirmed (SW node, confirm D7 conduction during off-time)
+- [ ] E-stop polarity: ESTOP net = HIGH normally, LOW when pressed (measure with DMM)
+- [ ] Wire-break test: disconnect E-stop wires → ESTOP=LOW → relay drops (fail-safe confirmed)
+- [ ] BNO055 I2C address reads as 0x28 on bus scan (i2cdetect)
+- [ ] MCP23017 I2C address reads as 0x20 on bus scan (i2cdetect)
+- [ ] USB ESD: confirm no signal degradation with U11 in path (eye diagram or enumeration test)

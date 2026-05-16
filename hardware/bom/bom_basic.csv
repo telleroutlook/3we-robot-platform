@@ -24,7 +24,7 @@ C15,100nF,0402,Various,-,1,0.02,LCSC,Relay FB2 RC filter
 R1-R2,2.2kΩ,0603,Various,-,2,0.01,LCSC,I2C pull-up (sized for 400kHz with payload bus capacitance up to 200pF)
 R3,20kΩ,0603,Various,-,1,0.01,LCSC,Battery ADC divider upper
 R4,10kΩ,0603,Various,-,1,0.01,LCSC,Battery ADC divider lower
-R5,10kΩ,0603,Various,-,1,0.01,LCSC,E-stop pull-up
+R5,10kΩ,0603,Various,-,1,0.01,LCSC,E-stop pull-down (fail-safe: wire break/NC open → ESTOP=LOW → safe state)
 R6,10kΩ,0603,Various,-,1,0.01,LCSC,EN pull-up (ESP32)
 R7,0.02Ω 1%,2512,Various,-,1,0.20,LCSC,INA219 shunt resistor (PGA=÷8: 16A range at 0.5mA resolution)
 R8,10kΩ,0603,Various,-,1,0.01,LCSC,MCP23017 reset pull-up
@@ -68,3 +68,8 @@ Q8b,AO3401A,SOT-23,AOS,AO3401A,1,0.50,LCSC,P-MOS reverse polarity protection (pa
 FB1,600Ω@100MHz,0603,Murata,BLM18PG601SN1D,1,0.15,LCSC,CAN bus VCC ferrite bead (isolates +5V_CAN from +5V_ESP)
 C18,10uF X5R 16V,0805,Various,-,1,0.15,LCSC,CAN bus +5V_CAN bulk decoupling (after FB1)
 TP1,Test Point 1mm,-,-,-,1,0.05,LCSC,MCP23017 INTA test pad (connect to spare GPIO for interrupt-driven operation)
+D6,SS34,SOD-123F,Various,SS34,1,0.30,LCSC,MP2359 freewheeling Schottky diode (cathode=SW anode=GND 40V/3A)
+D7,SS54,SMA,Various,SS54,1,0.80,LCSC,MP1584EN freewheeling Schottky diode (cathode=SW anode=GND 40V/5A)
+C19,100nF,0402,Various,-,1,0.02,LCSC,MP2359 bootstrap capacitor (BST to SW)
+C20,100nF,0402,Various,-,1,0.02,LCSC,MP1584EN bootstrap capacitor (BST to SW)
+U11,USBLC6-2SC6,SOT-23-6,STMicroelectronics,USBLC6-2SC6,1,0.30,LCSC,USB D+/D- ESD protection (IEC 61000-4-2 ±15kV air ±8kV contact)

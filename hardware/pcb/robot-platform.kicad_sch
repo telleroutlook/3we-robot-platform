@@ -11,7 +11,7 @@
     (company "3WE Robotics")
     (comment 1 "SPDX-License-Identifier: CERN-OHL-P-2.0")
     (comment 2 "Universal Modular Mobile Platform")
-    (comment 3 "Rev 1.1e: E-stop hardwire relay, DRV8833 xISEN GND, nSLEEP→ESTOP, safety architecture")
+    (comment 3 "Rev 1.1f: Buck Schottky/BST caps, E-stop polarity fix, I2C addr ties, USB ESD")
   )
   (lib_symbols
   )
@@ -126,7 +126,7 @@
     (property "Reference" "U4" (at 50 55 0) (effects (font (size 1.27 1.27))))
     (property "Value" "MP2359DJ_5V_ESP" (at 50 65 0) (effects (font (size 1.27 1.27))))
     (property "Footprint" "Package_TO_SOT_SMD:SOT-23-6" (at 50 67 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Description" "5V/1.2A synchronous buck converter (VBAT 7.4V input)" (at 50 69 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "5V/1.2A asynchronous buck converter (VBAT 7.4V input, external Schottky D6)" (at 50 69 0) (effects (font (size 1.27 1.27)) hide))
     (pin "IN"
       (uuid "8840eb7e-a821-4105-bc55-c8c1bf4a228b")
     )
@@ -198,6 +198,50 @@
       (uuid "14366a50-b146-49aa-80da-2fd4379e1d74")
     )
   )
+  (label "MP2359_SW" (at 55 62 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0032-0001-0001-000000000001"))
+  (symbol
+    (lib_id "Diode:SS34")
+    (at 55 68 270)
+    (uuid "a1b2c3d4-0032-0002-0001-000000000001")
+    (property "Reference" "D6" (at 58 68 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "SS34" (at 55 71 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Diode_SMD:D_SOD-123F" (at 55 73 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "MP2359 freewheeling Schottky diode (cathode=SW, anode=GND). 40V/3A." (at 55 75 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "K"
+      (uuid "a1b2c3d4-0032-0002-0001-000000000002")
+    )
+    (pin "A"
+      (uuid "a1b2c3d4-0032-0002-0001-000000000003")
+    )
+  )
+  (label "MP2359_SW" (at 55 65 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0032-0003-0001-000000000001"))
+  (symbol
+    (lib_id "power:GND")
+    (at 55 72 0)
+    (uuid "a1b2c3d4-0032-0004-0001-000000000001")
+    (property "Reference" "#PWR45" (at 55 74 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 55 76 0) (effects (font (size 1.27 1.27))))
+    (pin "1"
+      (uuid "a1b2c3d4-0032-0004-0001-000000000002")
+    )
+  )
+  (symbol
+    (lib_id "Device:C")
+    (at 45 58 0)
+    (uuid "a1b2c3d4-0032-0005-0001-000000000001")
+    (property "Reference" "C19" (at 45 54 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "100nF" (at 45 62 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 45 64 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "MP2359 bootstrap capacitor (BST to SW)" (at 45 66 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0032-0005-0001-000000000002")
+    )
+    (pin "2"
+      (uuid "a1b2c3d4-0032-0005-0001-000000000003")
+    )
+  )
+  (label "MP2359_BST" (at 45 55 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0032-0006-0001-000000000001"))
+  (label "MP2359_SW" (at 45 62 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0032-0007-0001-000000000001"))
   (symbol
     (lib_id "Regulator_Switching:MP1584EN")
     (at 50 90 0)
@@ -285,6 +329,50 @@
       (uuid "c1d2e3f4-0018-0004-0001-000000000002")
     )
   )
+  (label "MP1584_SW" (at 55 92 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0033-0001-0001-000000000001"))
+  (symbol
+    (lib_id "Diode:SS54")
+    (at 55 97 270)
+    (uuid "a1b2c3d4-0033-0002-0001-000000000001")
+    (property "Reference" "D7" (at 58 97 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "SS54" (at 55 100 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Diode_SMD:D_SMA" (at 55 102 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "MP1584EN freewheeling Schottky diode (cathode=SW, anode=GND). 40V/5A." (at 55 104 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "K"
+      (uuid "a1b2c3d4-0033-0002-0001-000000000002")
+    )
+    (pin "A"
+      (uuid "a1b2c3d4-0033-0002-0001-000000000003")
+    )
+  )
+  (label "MP1584_SW" (at 55 94 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0033-0003-0001-000000000001"))
+  (symbol
+    (lib_id "power:GND")
+    (at 55 101 0)
+    (uuid "a1b2c3d4-0033-0004-0001-000000000001")
+    (property "Reference" "#PWR46" (at 55 103 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 55 105 0) (effects (font (size 1.27 1.27))))
+    (pin "1"
+      (uuid "a1b2c3d4-0033-0004-0001-000000000002")
+    )
+  )
+  (symbol
+    (lib_id "Device:C")
+    (at 45 88 0)
+    (uuid "a1b2c3d4-0033-0005-0001-000000000001")
+    (property "Reference" "C20" (at 45 84 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "100nF" (at 45 92 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 45 94 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "MP1584EN bootstrap capacitor (BST to SW)" (at 45 96 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0033-0005-0001-000000000002")
+    )
+    (pin "2"
+      (uuid "a1b2c3d4-0033-0005-0001-000000000003")
+    )
+  )
+  (label "MP1584_BST" (at 45 85 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0033-0006-0001-000000000001"))
+  (label "MP1584_SW" (at 45 92 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0033-0007-0001-000000000001"))
   (symbol
     (lib_id "Regulator_Linear:AP2112K-3.3")
     (at 100 60 0)
@@ -1255,6 +1343,17 @@
       (uuid "e6368a90-2c6b-44e4-a4d7-f55eedbe9b3a")
     )
   )
+  (symbol
+    (lib_id "power:GND")
+    (at 65 218 0)
+    (uuid "a1b2c3d4-0035-0001-0001-000000000001")
+    (property "Reference" "#PWR47" (at 65 220 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 65 222 0) (effects (font (size 1.27 1.27))))
+    (property "Description" "BNO055 PS0/PS1/ADR tied to GND (selects I2C mode, address 0x28)" (at 65 224 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0035-0001-0001-000000000002")
+    )
+  )
   (label "I2C_SDA" (at 30 200 0) (effects (font (size 1.27 1.27))) (uuid "d6bc4c44-d2c4-4714-82b0-0053f0c1dab9"))
   (label "I2C_SCL" (at 30 203 0) (effects (font (size 1.27 1.27))) (uuid "20237954-7bbf-4eb7-8755-7784c1885471"))
   (label "+3V3" (at 50 192 0) (effects (font (size 1.27 1.27))) (uuid "f109ebba-f242-40d4-ac9d-37a83c1cc6c9"))
@@ -1502,6 +1601,17 @@
     )
     (pin "A2"
       (uuid "cdc67b07-71a9-40d7-bc79-45e4434104f1")
+    )
+  )
+  (symbol
+    (lib_id "power:GND")
+    (at 180 195 0)
+    (uuid "a1b2c3d4-0037-0001-0001-000000000001")
+    (property "Reference" "#PWR49" (at 180 197 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 180 199 0) (effects (font (size 1.27 1.27))))
+    (property "Description" "MCP23017 A0/A1/A2 tied to GND (I2C address = 0x20)" (at 180 201 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0037-0001-0001-000000000002")
     )
   )
   (label "I2C_SDA" (at 175 175 0) (effects (font (size 1.27 1.27))) (uuid "579f9871-23ea-4096-add3-151e7df70e8b"))
@@ -2028,11 +2138,12 @@
   )
   (label "ESTOP" (at 155 135 0) (effects (font (size 1.27 1.27))) (uuid "c91f640e-ef22-4d26-b053-19f72cd8295b"))
   (symbol
-    (lib_id "power:GND")
+    (lib_id "power:+3V3")
     (at 135 135 0)
     (uuid "a555945e-7196-46da-a6d9-93a0c9f02fc1")
     (property "Reference" "#PWR28" (at 135 133 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Value" "GND" (at 135 137 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "+3V3" (at 135 131 0) (effects (font (size 1.27 1.27))))
+    (property "Description" "SW1 NC contact source — E-stop NC passes 3.3V to ESTOP net (fail-safe: wire break → pull-down → LOW → safe)" (at 135 139 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1"
       (uuid "1fb1e6f8-4ed8-4125-9e3e-2375a7fd178f")
     )
@@ -2051,7 +2162,7 @@
       (uuid "3f79f7db-2bb2-4db6-9bec-a73a98a7e5d6")
     )
   )
-  (label "+3V3" (at 155 122 0) (effects (font (size 1.27 1.27))) (uuid "a3fa294f-6049-4423-b73d-17e4c1ad9336"))
+  (label "GND" (at 155 122 0) (effects (font (size 1.27 1.27))) (uuid "a3fa294f-6049-4423-b73d-17e4c1ad9336"))
   (label "ESTOP" (at 155 134 0) (effects (font (size 1.27 1.27))) (uuid "0103452f-c2c5-493c-93ba-4adb97983d21"))
   (symbol
     (lib_id "Device:R")
@@ -2141,6 +2252,46 @@
   )
   (label "USB_DP" (at 180 240 0) (effects (font (size 1.27 1.27))) (uuid "27d99cfb-8aa4-41b2-b8a4-29da0f6d81fe"))
   (label "USB_DN" (at 180 243 0) (effects (font (size 1.27 1.27))) (uuid "dd7f1411-b148-4c42-a51f-2e514393519b"))
+  (symbol
+    (lib_id "Power_Protection:USBLC6-2SC6")
+    (at 185 250 0)
+    (uuid "a1b2c3d4-0036-0001-0001-000000000001")
+    (property "Reference" "U11" (at 185 244 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "USBLC6-2SC6" (at 185 256 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "Package_TO_SOT_SMD:SOT-23-6" (at 185 258 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Description" "USB D+/D- ESD protection (±15kV air, ±8kV contact, IEC 61000-4-2)" (at 185 260 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1"
+      (uuid "a1b2c3d4-0036-0001-0001-000000000002")
+    )
+    (pin "2"
+      (uuid "a1b2c3d4-0036-0001-0001-000000000003")
+    )
+    (pin "3"
+      (uuid "a1b2c3d4-0036-0001-0001-000000000004")
+    )
+    (pin "4"
+      (uuid "a1b2c3d4-0036-0001-0001-000000000005")
+    )
+    (pin "5"
+      (uuid "a1b2c3d4-0036-0001-0001-000000000006")
+    )
+    (pin "6"
+      (uuid "a1b2c3d4-0036-0001-0001-000000000007")
+    )
+  )
+  (label "USB_DP" (at 185 247 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0036-0002-0001-000000000001"))
+  (label "USB_DN" (at 185 253 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0036-0003-0001-000000000001"))
+  (label "+5V_USB" (at 190 244 0) (effects (font (size 1.27 1.27))) (uuid "a1b2c3d4-0036-0004-0001-000000000001"))
+  (symbol
+    (lib_id "power:GND")
+    (at 185 258 0)
+    (uuid "a1b2c3d4-0036-0005-0001-000000000001")
+    (property "Reference" "#PWR48" (at 185 260 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 185 262 0) (effects (font (size 1.27 1.27))))
+    (pin "1"
+      (uuid "a1b2c3d4-0036-0005-0001-000000000002")
+    )
+  )
   (symbol
     (lib_id "power:GND")
     (at 160 260 0)
@@ -3286,7 +3437,7 @@
     (path "/a555945e-7196-46da-a6d9-93a0c9f02fc1"
       (reference "#PWR28")
       (unit 1)
-      (value "GND")
+      (value "+3V3")
       (footprint "")
     )
     (path "/87abc37f-d715-4653-ba88-91d82614e17e"
@@ -3489,6 +3640,66 @@
     )
     (path "/a1b2c3d4-0026-0002-0001-000000000001"
       (reference "#PWR44")
+      (unit 1)
+      (value "GND")
+      (footprint "")
+    )
+    (path "/a1b2c3d4-0032-0002-0001-000000000001"
+      (reference "D6")
+      (unit 1)
+      (value "SS34")
+      (footprint "Diode_SMD:D_SOD-123F")
+    )
+    (path "/a1b2c3d4-0032-0004-0001-000000000001"
+      (reference "#PWR45")
+      (unit 1)
+      (value "GND")
+      (footprint "")
+    )
+    (path "/a1b2c3d4-0032-0005-0001-000000000001"
+      (reference "C19")
+      (unit 1)
+      (value "100nF")
+      (footprint "Capacitor_SMD:C_0402_1005Metric")
+    )
+    (path "/a1b2c3d4-0033-0002-0001-000000000001"
+      (reference "D7")
+      (unit 1)
+      (value "SS54")
+      (footprint "Diode_SMD:D_SMA")
+    )
+    (path "/a1b2c3d4-0033-0004-0001-000000000001"
+      (reference "#PWR46")
+      (unit 1)
+      (value "GND")
+      (footprint "")
+    )
+    (path "/a1b2c3d4-0033-0005-0001-000000000001"
+      (reference "C20")
+      (unit 1)
+      (value "100nF")
+      (footprint "Capacitor_SMD:C_0402_1005Metric")
+    )
+    (path "/a1b2c3d4-0035-0001-0001-000000000001"
+      (reference "#PWR47")
+      (unit 1)
+      (value "GND")
+      (footprint "")
+    )
+    (path "/a1b2c3d4-0036-0001-0001-000000000001"
+      (reference "U11")
+      (unit 1)
+      (value "USBLC6-2SC6")
+      (footprint "Package_TO_SOT_SMD:SOT-23-6")
+    )
+    (path "/a1b2c3d4-0036-0005-0001-000000000001"
+      (reference "#PWR48")
+      (unit 1)
+      (value "GND")
+      (footprint "")
+    )
+    (path "/a1b2c3d4-0037-0001-0001-000000000001"
+      (reference "#PWR49")
       (unit 1)
       (value "GND")
       (footprint "")
