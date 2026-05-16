@@ -14,6 +14,8 @@
 
 static const char *TAG = "hotplug";
 
+static portMUX_TYPE payload_spinlock = portMUX_INITIALIZER_UNLOCKED;
+
 #define EEPROM_ADDR         0x50
 #define EEPROM_ID_SCL       30  // PBC-34 pin 30 (mapped via MCP23017)
 #define EEPROM_ID_SDA       31  // PBC-34 pin 31
@@ -145,13 +147,18 @@ esp_err_t payload_hotplug_init(void)
 
 payload_state_t payload_get_state(void)
 {
-    return state;
+    portENTER_CRITICAL(&payload_spinlock);
+    payload_state_t s = state;
+    portEXIT_CRITICAL(&payload_spinlock);
+    return s;
 }
 
 const payload_descriptor_t *payload_get_descriptor(void)
 {
-    if (state >= PAYLOAD_STATE_READY) return &descriptor;
-    return NULL;
+    portENTER_CRITICAL(&payload_spinlock);
+    const payload_descriptor_t *d = (state >= PAYLOAD_STATE_READY) ? &descriptor : NULL;
+    portEXIT_CRITICAL(&payload_spinlock);
+    return d;
 }
 
 void payload_register_callback(payload_event_callback_t cb)
@@ -178,7 +185,9 @@ esp_err_t payload_power_off(void)
         }
     }
 
+    portENTER_CRITICAL(&payload_spinlock);
     state = PAYLOAD_STATE_ABSENT;
+    portEXIT_CRITICAL(&payload_spinlock);
     notify_event();
     ESP_LOGI(TAG, "Payload power disabled");
     return err;
@@ -191,7 +200,9 @@ void payload_hotplug_task(void *params)
         case PAYLOAD_STATE_ABSENT:
             // T+0ms: Check DETECT pin
             if (read_detect_pin()) {
+                portENTER_CRITICAL(&payload_spinlock);
                 state = PAYLOAD_STATE_DETECTED;
+                portEXIT_CRITICAL(&payload_spinlock);
                 ESP_LOGI(TAG, "Payload insertion detected");
             }
             break;
@@ -200,30 +211,44 @@ void payload_hotplug_task(void *params)
             // T+10ms: Debounce confirmation
             vTaskDelay(pdMS_TO_TICKS(DEBOUNCE_MS));
             if (!read_detect_pin()) {
+                portENTER_CRITICAL(&payload_spinlock);
                 state = PAYLOAD_STATE_ABSENT;
+                portEXIT_CRITICAL(&payload_spinlock);
                 break;
             }
+            portENTER_CRITICAL(&payload_spinlock);
             state = PAYLOAD_STATE_IDENTIFYING;
+            portEXIT_CRITICAL(&payload_spinlock);
             break;
 
         case PAYLOAD_STATE_IDENTIFYING:
             // T+20ms: Read EEPROM descriptor
-            if (read_eeprom_descriptor(&descriptor) == ESP_OK) {
-                ESP_LOGI(TAG, "Identified: %s (ID: %s)", descriptor.name, descriptor.payload_id);
+            {
+                payload_descriptor_t tmp;
+                if (read_eeprom_descriptor(&tmp) == ESP_OK) {
+                    ESP_LOGI(TAG, "Identified: %s (ID: %s)", tmp.name, tmp.payload_id);
 
-                // T+30ms: Verify power budget
-                if (!verify_power_budget(&descriptor)) {
-                    ESP_LOGE(TAG, "Power budget exceeded (5V:%dmA, 12V:%dmA)",
-                             descriptor.power_5v_ma, descriptor.power_12v_ma);
+                    // T+30ms: Verify power budget
+                    if (!verify_power_budget(&tmp)) {
+                        ESP_LOGE(TAG, "Power budget exceeded (5V:%dmA, 12V:%dmA)",
+                                 tmp.power_5v_ma, tmp.power_12v_ma);
+                        portENTER_CRITICAL(&payload_spinlock);
+                        state = PAYLOAD_STATE_FAULT;
+                        portEXIT_CRITICAL(&payload_spinlock);
+                        notify_event();
+                        break;
+                    }
+                    portENTER_CRITICAL(&payload_spinlock);
+                    descriptor = tmp;
+                    state = PAYLOAD_STATE_POWERING;
+                    portEXIT_CRITICAL(&payload_spinlock);
+                } else {
+                    ESP_LOGW(TAG, "EEPROM read failed - no valid descriptor");
+                    portENTER_CRITICAL(&payload_spinlock);
                     state = PAYLOAD_STATE_FAULT;
+                    portEXIT_CRITICAL(&payload_spinlock);
                     notify_event();
-                    break;
                 }
-                state = PAYLOAD_STATE_POWERING;
-            } else {
-                ESP_LOGW(TAG, "EEPROM read failed - no valid descriptor");
-                state = PAYLOAD_STATE_FAULT;
-                notify_event();
             }
             break;
 
@@ -245,12 +270,16 @@ void payload_hotplug_task(void *params)
             // T+200ms: Check FAULT pin (should remain high-impedance = no fault)
             // For now, assume OK if DETECT still asserted
             if (read_detect_pin()) {
+                portENTER_CRITICAL(&payload_spinlock);
                 state = PAYLOAD_STATE_READY;
+                portEXIT_CRITICAL(&payload_spinlock);
                 notify_event();
                 ESP_LOGI(TAG, "Payload READY: %s", descriptor.name);
             } else {
                 payload_power_off();
+                portENTER_CRITICAL(&payload_spinlock);
                 state = PAYLOAD_STATE_FAULT;
+                portEXIT_CRITICAL(&payload_spinlock);
                 notify_event();
             }
             break;
@@ -259,14 +288,18 @@ void payload_hotplug_task(void *params)
             // Monitor for removal
             if (!read_detect_pin()) {
                 ESP_LOGI(TAG, "Payload removal detected");
+                portENTER_CRITICAL(&payload_spinlock);
                 state = PAYLOAD_STATE_REMOVING;
+                portEXIT_CRITICAL(&payload_spinlock);
             }
             break;
 
         case PAYLOAD_STATE_REMOVING:
             payload_power_off();
+            portENTER_CRITICAL(&payload_spinlock);
             memset(&descriptor, 0, sizeof(descriptor));
             state = PAYLOAD_STATE_ABSENT;
+            portEXIT_CRITICAL(&payload_spinlock);
             notify_event();
             ESP_LOGI(TAG, "Payload removed, power disabled");
             break;
@@ -276,7 +309,9 @@ void payload_hotplug_task(void *params)
             if (!read_detect_pin()) {
                 vTaskDelay(pdMS_TO_TICKS(DEBOUNCE_MS));
                 if (!read_detect_pin()) {
+                    portENTER_CRITICAL(&payload_spinlock);
                     state = PAYLOAD_STATE_ABSENT;
+                    portEXIT_CRITICAL(&payload_spinlock);
                     ESP_LOGI(TAG, "Fault cleared (payload removed)");
                 }
             }
