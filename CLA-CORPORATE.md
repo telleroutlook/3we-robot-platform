@@ -25,11 +25,14 @@ by the Corporation to submit Contributions on its behalf.
 
 ## 2. Grant of Copyright License
 
-You hereby grant to the Project maintainers and to recipients of software distributed
-by the Project a perpetual, worldwide, non-exclusive, no-charge, royalty-free,
-irrevocable copyright license to reproduce, prepare derivative works of, publicly
-display, publicly perform, sublicense, and distribute Contributions and such
-derivative works.
+You hereby grant to the Project maintainers a perpetual, worldwide, non-exclusive,
+no-charge, royalty-free, irrevocable copyright license to reproduce, prepare derivative
+works of, publicly display, publicly perform, **sublicense (including under proprietary
+or commercial terms)**, and distribute Contributions and such derivative works.
+
+This grant explicitly includes the right for the Project maintainers to offer
+Contributions as part of commercially licensed versions of the Project, while the
+open-source version remains freely available under its original license.
 
 ## 3. Grant of Patent License
 
