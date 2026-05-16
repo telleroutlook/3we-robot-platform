@@ -23,8 +23,8 @@ static const encoder_pins_t enc_pins[MOTOR_COUNT] = {
 };
 
 static pcnt_unit_handle_t pcnt_units[MOTOR_COUNT];
-static int32_t prev_count[MOTOR_COUNT];
 static float speed_rps[MOTOR_COUNT];
+static portMUX_TYPE encoder_spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 static void encoder_validate_config(void);
 
@@ -70,7 +70,6 @@ esp_err_t encoder_init(void)
         pcnt_unit_clear_count(pcnt_units[i]);
         pcnt_unit_start(pcnt_units[i]);
 
-        prev_count[i] = 0;
         speed_rps[i] = 0.0f;
     }
 
@@ -117,11 +116,13 @@ float encoder_get_speed_rps(motor_id_t id)
 void encoder_update(void)
 {
     for (int i = 0; i < MOTOR_COUNT; i++) {
-        int32_t current = encoder_get_count((motor_id_t)i);
-        int32_t delta = current - prev_count[i];
-        prev_count[i] = current;
+        int count = 0;
+        portENTER_CRITICAL(&encoder_spinlock);
+        pcnt_unit_get_count(pcnt_units[i], &count);
+        pcnt_unit_clear_count(pcnt_units[i]);
+        portEXIT_CRITICAL(&encoder_spinlock);
 
-        // revolutions per second = (delta / CPR) * control_freq
+        int32_t delta = (int32_t)count;
         speed_rps[i] = ((float)delta / (float)ENCODER_CPR) * (float)CONTROL_FREQ_HZ;
     }
 }
