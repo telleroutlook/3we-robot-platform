@@ -591,6 +591,8 @@ static void handle_session_io(int idx)
                 recv_callback(buf, (size_t)ret, (uint8_t)idx,
                              sessions[idx].peer_ip, 0);
             }
+        } else if (authority_is_holder(&authority, (uint8_t)idx)) {
+            ESP_LOGW(TAG, "Command data received but no dispatcher registered (recv_callback=NULL)");
         }
     }
 }
