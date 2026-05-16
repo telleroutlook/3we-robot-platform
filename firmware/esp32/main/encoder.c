@@ -79,6 +79,8 @@ esp_err_t encoder_init(void)
 
     encoder_validate_config();
 
+    last_update_us = esp_timer_get_time();
+
     return ESP_OK;
 }
 
