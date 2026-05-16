@@ -406,7 +406,7 @@ static void render_page_faults(void)
 
 static void render_page_system(void)
 {
-    char buf[22];
+    char buf[40];
 
     display_hw_draw_string(0, "== SYSTEM ==");
 
