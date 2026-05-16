@@ -39,8 +39,8 @@ static SemaphoreHandle_t s_mutex = NULL;
 static char s_pending_url[OTA_MAX_URL_LEN] = {0};
 static bool s_update_requested = false;
 static httpd_handle_t s_httpd = NULL;
-static int64_t s_last_upload_us = 0;
-static uint8_t s_upload_fail_streak = 0;
+static int64_t s_last_attempt_us = 0;
+static uint8_t s_fail_streak = 0;
 
 static void set_progress(ota_status_t status, uint8_t pct,
                          uint32_t received, uint32_t total, const char *err)
@@ -56,6 +56,19 @@ static void set_progress(ota_status_t status, uint8_t pct,
         s_progress.error_msg[0] = '\0';
     }
     if (s_mutex) xSemaphoreGive(s_mutex);
+}
+
+static bool ota_rate_limit_check(void)
+{
+    int64_t now_us = esp_timer_get_time();
+    uint32_t cooldown_s = OTA_RATE_LIMIT_BASE_S << (s_fail_streak < 3 ? s_fail_streak : 2);
+    if (cooldown_s > OTA_RATE_LIMIT_MAX_S) cooldown_s = OTA_RATE_LIMIT_MAX_S;
+    if (s_last_attempt_us != 0 && (now_us - s_last_attempt_us) < (int64_t)cooldown_s * 1000000LL) {
+        ESP_LOGW(TAG, "OTA rate-limited (cooldown %lus)", (unsigned long)cooldown_s);
+        return false;
+    }
+    s_last_attempt_us = now_us;
+    return true;
 }
 
 static esp_err_t verify_flash_content(const esp_partition_t *part, uint32_t size,
@@ -99,6 +112,12 @@ static esp_err_t verify_flash_content(const esp_partition_t *part, uint32_t size
 
 static esp_err_t perform_ota_from_url(const char *url)
 {
+    // Rate limiting: shared with local upload path
+    if (!ota_rate_limit_check()) {
+        set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Rate limited");
+        return ESP_ERR_INVALID_STATE;
+    }
+
     // Pre-flight safety gate
     ota_preflight_result_t preflight = ota_preflight_check();
     if (!preflight.overall_pass) {
@@ -249,6 +268,7 @@ static esp_err_t perform_ota_from_url(const char *url)
     if (!download_ok || firmware_written != firmware_size) {
         mbedtls_sha256_free(&sha_ctx);
         esp_ota_abort(ota_handle);
+        s_fail_streak++;
         set_progress(OTA_STATUS_FAILED, 0, received, total, "Download incomplete");
         return ESP_ERR_INVALID_SIZE;
     }
@@ -262,6 +282,7 @@ static esp_err_t perform_ota_from_url(const char *url)
 
     if (!ota_verify_image_hash(computed_hash, firmware_size, header)) {
         esp_ota_abort(ota_handle);
+        s_fail_streak++;
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Signature verification failed");
 #ifdef CONFIG_ROBOT_DISPLAY_ENABLED
         display_log_fault(FAULT_SRC_OTA, 1, "OTA SIG FAIL");
@@ -314,17 +335,12 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
         return ESP_FAIL;
     }
 
-    // Rate limiting: exponential backoff to protect flash from abuse
-    int64_t now_us = esp_timer_get_time();
-    uint32_t cooldown_s = OTA_RATE_LIMIT_BASE_S << (s_upload_fail_streak < 3 ? s_upload_fail_streak : 2);
-    if (cooldown_s > OTA_RATE_LIMIT_MAX_S) cooldown_s = OTA_RATE_LIMIT_MAX_S;
-    if (s_last_upload_us != 0 && (now_us - s_last_upload_us) < (int64_t)cooldown_s * 1000000LL) {
-        ESP_LOGW(TAG, "OTA upload rate-limited (cooldown %lus)", (unsigned long)cooldown_s);
+    // Rate limiting: shared exponential backoff to protect flash from abuse
+    if (!ota_rate_limit_check()) {
         httpd_resp_set_status(req, "429 Too Many Requests");
         httpd_resp_send(req, "Rate limited, try again later", HTTPD_RESP_USE_STRLEN);
         return ESP_FAIL;
     }
-    s_last_upload_us = now_us;
 
     if (req->content_len == 0 || req->content_len > OTA_MAX_IMAGE_SIZE) {
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid size");
@@ -442,7 +458,7 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
     if (!upload_ok || firmware_written != firmware_size) {
         mbedtls_sha256_free(&sha_ctx);
         esp_ota_abort(ota_handle);
-        s_upload_fail_streak++;
+        s_fail_streak++;
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Upload incomplete");
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Upload incomplete");
         return ESP_FAIL;
@@ -456,7 +472,7 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
 
     if (!ota_verify_image_hash(computed_hash, firmware_size, &header)) {
         esp_ota_abort(ota_handle);
-        s_upload_fail_streak++;
+        s_fail_streak++;
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Signature verification failed");
 #ifdef CONFIG_ROBOT_DISPLAY_ENABLED
         display_log_fault(FAULT_SRC_OTA, 1, "OTA SIG FAIL");
@@ -476,7 +492,7 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
 
     err = verify_flash_content(update_part, firmware_size, computed_hash);
     if (err != ESP_OK) {
-        s_upload_fail_streak++;
+        s_fail_streak++;
         set_progress(OTA_STATUS_FAILED, 0, 0, 0, "Flash content mismatch after write");
         httpd_resp_set_type(req, "application/json");
         httpd_resp_send(req, "{\"success\":false,\"error\":\"Flash verification failed\"}", -1);
@@ -492,7 +508,7 @@ static esp_err_t handler_ota_upload(httpd_req_t *req)
     }
 
     set_progress(OTA_STATUS_REBOOTING, 100, firmware_written, firmware_size, NULL);
-    s_upload_fail_streak = 0;
+    s_fail_streak = 0;
     httpd_resp_set_type(req, "application/json");
     httpd_resp_send(req, "{\"success\":true,\"message\":\"Rebooting...\"}", -1);
 
