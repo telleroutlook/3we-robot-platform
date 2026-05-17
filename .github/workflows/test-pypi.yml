@@ -40,7 +40,7 @@ jobs:
 
       - name: Publish to Test PyPI
         if: ${{ !inputs.dry_run }}
-        uses: pypa/gh-action-pypi-publish@fb13cb306901256ace3dab689990e13a5550ffaa  # release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1
         with:
           packages-dir: sdk/threewe/dist/
           repository-url: https://test.pypi.org/legacy/
