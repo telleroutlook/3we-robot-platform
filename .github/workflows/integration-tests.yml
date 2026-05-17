@@ -31,9 +31,8 @@ jobs:
             ros-humble-ros-gz-sim \
             ros-humble-ros-gz-bridge \
             xvfb
-          pip3 install --upgrade pip
-          pip3 install "numpy<2"
           pip3 install pytest pytest-timeout
+          pip3 install "numpy>=1.24,<2"
           pip3 install ./sdk/threewe[sim]
           rosdep update
           rosdep install --from-paths ros2_ws --ignore-src -y --skip-keys="micro_ros_agent"
@@ -49,8 +48,10 @@ jobs:
         shell: bash
         run: |
           source /opt/ros/humble/setup.bash
+          NUMPY_INCLUDE="$(python3 -c 'import numpy; print(numpy.get_include())')"
           cd ros2_ws
-          colcon build --symlink-install
+          colcon build --symlink-install \
+            --cmake-args -DPython3_NumPy_INCLUDE_DIR="$NUMPY_INCLUDE"
 
       - name: Run integration tests
         shell: bash
