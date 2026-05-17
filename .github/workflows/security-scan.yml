@@ -118,13 +118,13 @@ jobs:
 
       - name: Install SDK and pip-audit
         run: |
-          pip install -e "sdk/threewe/[all]"
+          pip install "sdk/threewe/[all]"
           pip install pip-audit
 
       - name: Run pip-audit
         run: |
-          pip-audit --format=json --output=pip-audit-report.json --skip-editable || true
-          pip-audit --strict --skip-editable
+          pip-audit --format=json --output=pip-audit-report.json || true
+          pip-audit --strict
 
       - name: Upload report
         if: always()
