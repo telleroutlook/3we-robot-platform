@@ -46,12 +46,17 @@ class CollectionManagerNode(Node):
         self.declare_parameter("dump_zone_y", 0.0)
         self.declare_parameter("dump_zone_yaw", 1.5708)
         self.declare_parameter("cmd_vel_topic", "/cmd_vel")
+        self.declare_parameter("pick_timeout_s", 15.0)
+        self.declare_parameter("return_timeout_s", 60.0)
+        self.declare_parameter("dump_timeout_s", 10.0)
+        self.declare_parameter("overall_timeout_s", 300.0)
 
         self._stage = CollectionStage.IDLE
         self._balls_in_basket = 0
         self._total_collected = 0
         self._pick_retries = 0
         self._stage_start_time: Optional[float] = None
+        self._operation_start_time: Optional[float] = None
         self._battery_percent = 100.0
         self._ball_target: Optional[PoseStamped] = None
         self._arm_status = "idle"
@@ -177,6 +182,7 @@ class CollectionManagerNode(Node):
 
         max_balls = goal_handle.request.max_balls
         start_time = self._now()
+        self._operation_start_time = start_time
 
         rate = self.create_rate(10)
         while rclpy.ok():
@@ -220,6 +226,20 @@ class CollectionManagerNode(Node):
         self._publish_state()
         now = self._now()
 
+        overall_timeout = self.get_parameter("overall_timeout_s").value
+        if (
+            self._operation_start_time
+            and now - self._operation_start_time > overall_timeout
+        ):
+            self.get_logger().error(
+                f"Overall operation timeout ({overall_timeout}s) — aborting"
+            )
+            self._cancel_navigation()
+            self._stop_robot()
+            self._stage = CollectionStage.IDLE
+            self._operation_start_time = None
+            return
+
         if self._stage == CollectionStage.SEARCHING:
             self._handle_searching(now)
         elif self._stage == CollectionStage.APPROACHING:
@@ -237,6 +257,7 @@ class CollectionManagerNode(Node):
             self.get_logger().info("Search timed out — stopping")
             self._stop_robot()
             self._stage = CollectionStage.IDLE
+            self._operation_start_time = None
             return
 
         if self._ball_target is not None:
@@ -272,6 +293,17 @@ class CollectionManagerNode(Node):
                 self._stage_start_time = self._now()
 
     def _handle_picking(self) -> None:
+        pick_timeout = self.get_parameter("pick_timeout_s").value
+        if (
+            self._stage_start_time
+            and self._now() - self._stage_start_time > pick_timeout
+        ):
+            self.get_logger().warn(f"Pick timed out ({pick_timeout}s) — skipping ball")
+            self._ball_target = None
+            self._stage = CollectionStage.SEARCHING
+            self._stage_start_time = self._now()
+            return
+
         if self._arm_pick_requested and self._arm_status != "idle":
             self._arm_pick_requested = False
 
@@ -312,6 +344,18 @@ class CollectionManagerNode(Node):
                 self._stage_start_time = self._now()
 
     def _handle_returning(self) -> None:
+        return_timeout = self.get_parameter("return_timeout_s").value
+        if (
+            self._stage_start_time
+            and self._now() - self._stage_start_time > return_timeout
+        ):
+            self.get_logger().warn(f"Return timed out ({return_timeout}s) — aborting")
+            self._cancel_navigation()
+            self._stop_robot()
+            self._stage = CollectionStage.IDLE
+            self._operation_start_time = None
+            return
+
         if self._nav2_done:
             self._nav2_done = False
             if self._nav2_succeeded:
@@ -324,9 +368,7 @@ class CollectionManagerNode(Node):
                 self._send_nav2_to_dump_zone()
 
     def _handle_dumping(self) -> None:
-        # Wait for basket controller to finish (check basket_state topic)
-        # For simplicity, transition after dump_hold_time
-        dump_time = 3.0  # dump_hold + reset
+        dump_time = self.get_parameter("dump_timeout_s").value
         if self._stage_start_time and self._now() - self._stage_start_time > dump_time:
             self._balls_in_basket = 0
             self.get_logger().info("Dump complete — resuming search")
