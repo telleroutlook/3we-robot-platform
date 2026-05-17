@@ -17,11 +17,17 @@ runs identically in simulation and on real hardware, with <$500 reproducible har
 
 *Autonomous navigation in office_v2 scene — 360° LiDAR, real-time obstacle avoidance, 4 lines of Python*
 
+</div>
+
 > **Note:** The animation above is a concept demo (generated with matplotlib), not a Gazebo simulation or real hardware recording. It illustrates the target API and navigation behavior.
 
 ### Try it now — 30 seconds, zero dependencies beyond numpy
 
+<div align="center">
+
 [![asciicast](https://asciinema.org/a/akn7EAEkGo9VmOZv.svg)](https://asciinema.org/a/akn7EAEkGo9VmOZv)
+
+</div>
 
 ```bash
 git clone https://github.com/telleroutlook/3we-robot-platform.git
@@ -30,8 +36,6 @@ python examples/navigate_office.py
 ```
 
 > The recording was made with [`demo/record_demo.sh`](demo/record_demo.sh) — clone the repo and run it yourself to verify.
-
-</div>
 
 ---
 
