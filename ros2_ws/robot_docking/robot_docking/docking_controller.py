@@ -47,6 +47,7 @@ class DockingController(Node):
         self._stage = DockingStage.IDLE
         self._retries = 0
         self._contact_confirmed = False
+        self._estop_active = False
         self._stage_start_time: Optional[float] = None
         self._nav2_goal_handle = None
         self._nav2_result_future = None
@@ -72,6 +73,17 @@ class DockingController(Node):
         self._tag_pose: Optional[PoseStamped] = None
         self._tag_pose_sub = self.create_subscription(
             PoseStamped, "/docking/tag_pose", self._on_tag_pose, 10
+        )
+
+        from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
+
+        estop_qos = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            depth=10,
+        )
+        self._estop_sub = self.create_subscription(
+            Bool, "/emergency_stop", self._on_estop, estop_qos
         )
 
         cb_group = ReentrantCallbackGroup()
@@ -139,6 +151,9 @@ class DockingController(Node):
     def _on_tag_pose(self, msg: PoseStamped) -> None:
         self._tag_pose = msg
 
+    def _on_estop(self, msg: Bool) -> None:
+        self._estop_active = msg.data
+
     def _execute_dock(self, goal_handle: ServerGoalHandle):
         self.get_logger().info("Executing dock action")
         self._goal_handle = goal_handle
@@ -160,6 +175,14 @@ class DockingController(Node):
                 self._stage = DockingStage.IDLE
                 goal_handle.canceled()
                 return self._make_result(False, "Cancelled by user", start_time)
+
+            if self._estop_active:
+                self._cancel_nav2_goal()
+                self._set_servo_enabled(False)
+                self._stop_robot()
+                self._stage = DockingStage.FAILED
+                goal_handle.abort()
+                return self._make_result(False, "Emergency stop activated", start_time)
 
             if self._stage == DockingStage.DOCKED:
                 goal_handle.succeed()
@@ -295,6 +318,14 @@ class DockingController(Node):
             return
 
         if self._stage == DockingStage.FAILED:
+            return
+
+        if self._estop_active:
+            self._cancel_nav2_goal()
+            self._set_servo_enabled(False)
+            self._stop_robot()
+            self.get_logger().error("E-stop active — aborting docking")
+            self._stage = DockingStage.FAILED
             return
 
         now = self.get_clock().now().nanoseconds / 1e9
