@@ -38,6 +38,35 @@ jobs:
           ruff format --check sdk/threewe/
           ruff check sdk/threewe/
 
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install threewe with dev + sim dependencies
+        run: pip install -e "sdk/threewe/[dev,sim]"
+
+      - name: Run benchmarks
+        working-directory: sdk/threewe
+        run: |
+          pytest tests/test_performance.py \
+            --benchmark-only \
+            --benchmark-json=benchmark-results.json \
+            --benchmark-warmup=on
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: benchmark-results
+          path: sdk/threewe/benchmark-results.json
+          retention-days: 90
+
   test-payload-interface:
     runs-on: ubuntu-latest
     steps:

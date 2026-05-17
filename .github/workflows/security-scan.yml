@@ -105,3 +105,59 @@ jobs:
           name: semgrep-report
           path: semgrep-report.json
           retention-days: 30
+
+  pip-audit:
+    name: pip-audit (Dependency Vulnerabilities)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install SDK and pip-audit
+        run: |
+          pip install -e "sdk/threewe/[all]"
+          pip install pip-audit
+
+      - name: Run pip-audit
+        run: |
+          pip-audit --format=json --output=pip-audit-report.json || true
+          pip-audit --strict
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pip-audit-report
+          path: pip-audit-report.json
+          retention-days: 30
+
+  sbom:
+    name: SBOM Generation (CycloneDX)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install SDK and cyclonedx-bom
+        run: |
+          pip install -e "sdk/threewe/[all]"
+          pip install cyclonedx-bom
+
+      - name: Generate SBOM
+        run: |
+          cyclonedx-py environment \
+            --output-format json \
+            --outfile sbom-threewe.cdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom-cyclonedx
+          path: sbom-threewe.cdx.json
+          retention-days: 90

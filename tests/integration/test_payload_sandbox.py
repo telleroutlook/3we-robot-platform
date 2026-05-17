@@ -15,21 +15,18 @@ motor control, safety circuits, or core system configuration."
 from __future__ import annotations
 
 import time
-from typing import Any, List
+from typing import Any
 
 import pytest
 
 rclpy = pytest.importorskip("rclpy", reason="rclpy not available")
 
 from geometry_msgs.msg import Twist  # noqa: E402
-from rclpy.node import Node  # noqa: E402
-from std_msgs.msg import Bool  # noqa: E402
 
-from conftest import service_caller, topic_collector  # noqa: E402
+from conftest import topic_collector  # noqa: E402
 
 try:
     from robot_interfaces.srv import EmergencyStop, PayloadPower
-    from robot_interfaces.msg import PayloadState
 
     HAS_INTERFACES = True
 except ImportError:
@@ -201,9 +198,7 @@ class TestPayloadSandboxIsolation:
             "payload_power_test", namespace=PAYLOAD_NAMESPACE
         )
         try:
-            client = payload_node.create_client(
-                PayloadPower, "/payload/power"
-            )
+            client = payload_node.create_client(PayloadPower, "/payload/power")
 
             if not client.wait_for_service(timeout_sec=5.0):
                 pytest.skip("PayloadPower service not available")

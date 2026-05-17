@@ -195,9 +195,9 @@ async def execute_vlm_instruction(
                 on_step(step, response_text if "response_text" in dir() else "", {})
             continue
         except Exception as e:
-            import logging
+            from threewe.logging import get_logger
 
-            logging.getLogger(__name__).warning("VLM step %d error: %s", step, e)
+            get_logger(__name__).warning("vlm_step_error", step=step, error=str(e))
             if on_step:
                 on_step(step, "", {})
             continue

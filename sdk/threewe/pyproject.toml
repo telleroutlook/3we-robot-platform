@@ -41,13 +41,17 @@ data = [
 hub = [
     "huggingface-hub>=0.20",
 ]
+logging = [
+    "structlog>=24.1",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "pytest-asyncio>=0.21",
+    "pytest-benchmark>=4.0",
     "ruff>=0.4",
 ]
-all = ["threewe[sim,ai,data,hub,dev]"]
+all = ["threewe[sim,ai,data,hub,logging,dev]"]
 
 [project.scripts]
 threewe = "threewe.cli:main"

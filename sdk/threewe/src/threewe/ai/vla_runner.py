@@ -195,11 +195,9 @@ class VLARunner:
 
             if isinstance(output, torch.Tensor):
                 return output[0].cpu().numpy().astype(np.float32)
-            import logging
+            from threewe.logging import get_logger
 
-            logging.getLogger(__name__).warning(
-                "PyTorch model returned non-tensor output: %s", type(output)
-            )
+            get_logger(__name__).warning("pytorch_non_tensor_output", output_type=str(type(output)))
             return np.zeros(self.action_dim, dtype=np.float32)
 
     @property

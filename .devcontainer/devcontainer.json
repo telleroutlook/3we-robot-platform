@@ -1,0 +1,43 @@
+{
+  "name": "3we Robot Platform (ROS2 + Python 3.11 + Gazebo)",
+  "build": {
+    "dockerfile": "../docker/Dockerfile.sim",
+    "context": ".."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.analysis.typeCheckingMode": "basic",
+        "editor.formatOnSave": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff"
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "ms-iot.vscode-ros",
+        "ms-vscode.cpptools",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens"
+      ]
+    }
+  },
+  "postCreateCommand": "pip install --break-system-packages -e 'sdk/threewe/[all]' && pip install --break-system-packages -e 'sdk/[dev]'",
+  "postStartCommand": "Xvfb :99 -screen 0 1280x720x24 &",
+  "remoteUser": "root",
+  "forwardPorts": [8080, 8888, 9090],
+  "portsAttributes": {
+    "8080": { "label": "noVNC (Gazebo GUI)", "onAutoForward": "notify" },
+    "8888": { "label": "Jupyter Lab", "onAutoForward": "notify" },
+    "9090": { "label": "rosbridge", "onAutoForward": "silent" }
+  },
+  "containerEnv": {
+    "ROS_DOMAIN_ID": "42",
+    "DISPLAY": ":99"
+  }
+}
