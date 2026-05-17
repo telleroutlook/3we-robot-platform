@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """Generate a professional 2D navigation demo video for 3we.
 
 Produces a 30-second MP4 showing:
