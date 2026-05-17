@@ -63,7 +63,6 @@ class FaultInjector:
         self._config = config or FaultConfig()
         self._rng = Random(self._config.seed)
         self._start_time = time.monotonic()
-        self._disconnect_start: float | None = None
         self._stale_cache: dict[str, Any] = {}
         self._call_count = 0
 
@@ -79,9 +78,7 @@ class FaultInjector:
         elapsed = time.monotonic() - self._start_time
         if elapsed < self._config.disconnect_after_s:
             return False
-        if self._disconnect_start is None:
-            self._disconnect_start = time.monotonic()
-        disconnect_elapsed = time.monotonic() - self._disconnect_start
+        disconnect_elapsed = elapsed - self._config.disconnect_after_s
         return disconnect_elapsed < self._config.disconnect_duration_s
 
     @property
