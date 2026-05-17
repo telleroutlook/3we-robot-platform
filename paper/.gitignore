@@ -5,3 +5,5 @@
 *.out
 *.pdf
 !figures/*.pdf
+!main.pdf
+!main_zh.pdf
