@@ -128,7 +128,8 @@ jobs:
             ros-humble-nav2-bringup \
             ros-humble-gazebo-ros-pkgs \
             ros-humble-ros-gz-sim \
-            ros-humble-ros-gz-bridge
+            ros-humble-ros-gz-bridge \
+            xvfb
           pip3 install pytest pytest-timeout
           pip3 install ./sdk/threewe[sim]
           rosdep update
@@ -145,7 +146,9 @@ jobs:
         shell: bash
         env:
           QT_QPA_PLATFORM: offscreen
+          DISPLAY: ":99"
         run: |
+          Xvfb :99 -screen 0 1024x768x24 &
           source /opt/ros/humble/setup.bash
           source ros2_ws/install/setup.bash
           ros2 launch robot_simulation gazebo.launch.py headless:=true &
