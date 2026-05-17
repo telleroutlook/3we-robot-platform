@@ -123,8 +123,9 @@ jobs:
 
       - name: Run pip-audit
         run: |
-          pip-audit --format=json --output=pip-audit-report.json || true
-          pip-audit --strict
+          pip freeze --exclude threewe > /tmp/requirements-audit.txt
+          pip-audit -r /tmp/requirements-audit.txt --format=json --output=pip-audit-report.json || true
+          pip-audit -r /tmp/requirements-audit.txt --strict
 
       - name: Upload report
         if: always()
