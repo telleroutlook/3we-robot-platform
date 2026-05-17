@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: CERN-OHL-P-2.0
 # Hardware Fix Plan — Pre-Production Corrections
 
-Status: DRAFT — requires review before PCB re-spin
+Status: IMPLEMENTED — all fixes applied to schematic and firmware (2026-05-16)
 Date: 2026-05-16
-Affects: robot-platform.kicad_sch Rev 1.1, bom_basic.csv, bom_industrial.csv
+Updated: 2026-05-17
+Affects: robot-platform.kicad_sch Rev 1.1f, bom_basic.csv, bom_industrial.csv
 
 ---
 
@@ -963,9 +964,9 @@ Total additional cost: **¥0.02/board**
 
 ## Sign-off Checklist
 
-- [ ] Schematic Rev 1.1f updated with all fixes (1–42, excluding #28 deferred)
-- [ ] DRC clean (no ERC errors)
-- [ ] BOM regenerated from schematic
+- [x] Schematic Rev 1.1f updated with all fixes (1–42, excluding #28 deferred)
+- [x] DRC clean (no ERC errors)
+- [x] BOM regenerated from schematic
 - [ ] PCB layout updated, DRC clean
 - [ ] Gerbers generated and visually inspected
 - [ ] First article prototype ordered

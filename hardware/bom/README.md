@@ -39,7 +39,7 @@ Complete parts list for building a 3we robot. Three hardware tiers available —
 | 48mm Mecanum wheel | `48mm麦克纳姆轮 铝合金` | `48mm mecanum wheel aluminum hub` |
 | 65mm Mecanum wheel | `65mm麦克纳姆轮 铝合金 PU滚子` | `65mm mecanum wheel aluminum PU roller` |
 | 18650 battery holder 2S | `18650电池盒 2串 带BMS` | `18650 battery holder 2S with BMS` |
-| E-stop mushroom button | `急停按钮 φ30 常闭 蘑菇头` | `emergency stop button 30mm NC mushroom` |
+| E-stop mushroom button | `急停按钮 φ30 双常闭 蘑菇头` | `emergency stop button 30mm 2NC mushroom` |
 | LD06 LiDAR | `乐动LD06激光雷达` | `LD06 LiDAR 360 degree laser scanner` |
 | USB fisheye camera 170° | `USB广角摄像头 170度 1080P` | `USB fisheye camera 170 degree 1080P` |
 | 5V fan 30×30mm | `3010风扇 5V` | `30mm 5V cooling fan 3010` |
@@ -56,8 +56,8 @@ Self-contained ESP32-S3 platform for learning motor control, sensor fusion, and 
 |:----|:----------|:----|:-------|:-----------|:-------|
 | U1 | ESP32-S3-WROOM-1-N8R8 | 1 | 28 | 28 | LCSC |
 | U2 | DRV8833 motor driver | 2 | 6.50 | 13 | LCSC |
-| U3 | AMS1117-3.3 LDO | 1 | 0.80 | 0.80 | LCSC |
-| U4 | MT3608 boost converter | 1 | 1.20 | 1.20 | LCSC |
+| U3 | AP2112K-3.3 LDO | 1 | 1.10 | 1.10 | LCSC |
+| U4 | MP2359DJ buck converter | 1 | 1.50 | 1.50 | LCSC |
 | U5 | MP1584EN buck converter | 1 | 3.50 | 3.50 | LCSC |
 | U6 | MCP23017 GPIO expander | 1 | 8.50 | 8.50 | LCSC |
 | U7 | INA219 power monitor | 1 | 5.80 | 5.80 | LCSC |
@@ -66,7 +66,7 @@ Self-contained ESP32-S3 platform for learning motor control, sensor fusion, and 
 | S1-4 | HC-SR04 ultrasonic | 4 | 4.50 | 18 | LCSC |
 | IMU1 | BNO055 IMU module | 1 | 45 | 45 | LCSC |
 | BAT1 | 2S 18650 + BMS | 1 | 35 | 35 | Taobao |
-| SW1 | E-stop button (NC) | 1 | 8 | 8 | Taobao |
+| SW1 | E-stop button (dual NC) | 1 | 8 | 8 | Taobao |
 | RLY1 | Safety relay dual-CH | 1 | 15 | 15 | Taobao |
 | J1 | PBC-34 connector pair | 2 | 5 | 10 | LCSC |
 | J2 | XT30 connector | 2 | 2.50 | 5 | LCSC |
@@ -117,7 +117,8 @@ If a component is unavailable, these substitutes are verified compatible:
 | HC-SR04 | VL53L0X ToF | I2C interface (fewer GPIO); shorter range (2m vs 4m) |
 | N20 1:90 motor | N20 1:100 motor | Slightly slower top speed; more torque |
 | 48mm Mecanum wheel | 65mm Mecanum wheel | Better ground contact; requires bracket adjustment |
-| MT3608 | SY7208 | Pin-compatible boost; wider input range |
+| MP2359DJ | TPS5430 | SOIC-8, higher current (3A); requires footprint change |
+| AP2112K-3.3 | ME6211C33 | SOT-23-5, same pinout; lower cost |
 | Raspberry Pi 5 | Orange Pi 5 Plus | RK3588 SoC; needs different HAT for Hailo |
 
 ---
