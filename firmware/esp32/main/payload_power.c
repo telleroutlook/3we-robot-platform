@@ -82,14 +82,14 @@ esp_err_t payload_power_disable_all(void)
 {
     if (!s_initialized) return ESP_ERR_INVALID_STATE;
 
-    esp_err_t last_err = ESP_OK;
+    esp_err_t first_err = ESP_OK;
     for (int i = s_num_rails - 1; i >= 0; i--) {
         esp_err_t err = payload_power_disable_rail(i);
-        if (err != ESP_OK) last_err = err;
+        if (err != ESP_OK && first_err == ESP_OK) first_err = err;
     }
 
     ESP_LOGI(TAG, "All power rails disabled");
-    return last_err;
+    return first_err;
 }
 
 power_rail_state_t payload_power_get_state(int rail_index)

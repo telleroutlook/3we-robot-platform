@@ -297,7 +297,9 @@ export class RobotEstopButton extends HTMLElement {
 
   private onEstopState(msg: EmergencyStopState): void {
     this.estopped = msg.stopped;
-    if (msg.stopped) {
+    if (msg.state === 2) {
+      this.setVisualState('recovery_pending');
+    } else if (msg.stopped) {
       this.setVisualState('estopped');
     } else {
       this.setVisualState('normal');

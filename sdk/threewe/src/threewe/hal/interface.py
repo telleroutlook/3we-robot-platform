@@ -49,7 +49,7 @@ class HardwareProfileData:
     name: str = "3we_standard_v2"
     wheel_type: str = "mecanum"
     wheel_separation: float = 0.24
-    wheel_radius: float = 0.048
+    wheel_radius: float = 0.0325
     max_linear_velocity: float = 0.5
     max_angular_velocity: float = 2.0
     sensors: list[str] = field(

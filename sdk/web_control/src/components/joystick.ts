@@ -91,8 +91,8 @@ export class RobotJoystick extends HTMLElement {
   private currentVx = 0;
   private currentOmega = 0;
 
-  private maxLinearVel = 0.35;
-  private maxAngularVel = 2.5;
+  private maxLinearVel = 0.5;
+  private maxAngularVel = 1.0;
 
   constructor() {
     super();

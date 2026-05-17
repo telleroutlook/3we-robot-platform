@@ -229,12 +229,12 @@ class Robot:
                 and sent as cmd_vel.
         """
         self._ensure_connected()
-        wheel_radius = 0.0325  # 65mm diameter
-        k = 0.17  # wheel_base_x + wheel_base_y
+        r = self._hardware.wheel_radius
+        k = self._hardware.wheel_separation / 2.0
         rad_s = [s * (2.0 * np.pi) / 60.0 for s in speeds]
-        vx = wheel_radius * (rad_s[0] + rad_s[1] + rad_s[2] + rad_s[3]) / 4.0
-        vy = wheel_radius * (-rad_s[0] + rad_s[1] + rad_s[2] - rad_s[3]) / 4.0
-        omega = wheel_radius * (-rad_s[0] + rad_s[1] - rad_s[2] + rad_s[3]) / (4.0 * k)
+        vx = r * (rad_s[0] + rad_s[1] + rad_s[2] + rad_s[3]) / 4.0
+        vy = r * (-rad_s[0] + rad_s[1] + rad_s[2] - rad_s[3]) / 4.0
+        omega = r * (-rad_s[0] + rad_s[1] - rad_s[2] + rad_s[3]) / (4.0 * k)
         self._clamp_and_send(vx, vy, omega)
 
     def stop(self) -> None:

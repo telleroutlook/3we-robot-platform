@@ -122,4 +122,4 @@ class ExecutionResult:
 
     success: bool = False
     description: str = ""
-    images: list = field(default_factory=list)
+    images: list[np.ndarray] = field(default_factory=list)
