@@ -59,12 +59,14 @@ def _mock_rclpy():
     mock_geometry = MagicMock()
     mock_std_msgs = MagicMock()
 
+    mock_qos = MagicMock()
     modules = {
         "rclpy": mock_rclpy,
         "rclpy.node": mock_node_module,
         "rclpy.action": mock_action,
         "rclpy.action.server": mock_server_module,
         "rclpy.callback_groups": mock_cb_groups,
+        "rclpy.qos": mock_qos,
         "geometry_msgs": mock_geometry,
         "geometry_msgs.msg": mock_geometry,
         "std_msgs": mock_std_msgs,
