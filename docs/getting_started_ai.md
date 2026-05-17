@@ -59,7 +59,7 @@ Standard Gymnasium interface — plug into any RL library (SB3, CleanRL, RLlib):
 import gymnasium
 import threewe.gym  # registers environments
 
-env = gymnasium.make("3we/Navigation-v1", backend="gazebo")
+env = gymnasium.make("3we/Navigation-v1")
 obs, info = env.reset()
 
 for step in range(1000):
@@ -78,6 +78,7 @@ env.close()
 | `3we/Navigation-v1` | Point-to-point navigation | Easy |
 | `3we/Exploration-v1` | Map unknown area | Medium |
 | `3we/ObjectNav-v1` | Find target object | Hard |
+| `3we/VLN-v1` | Follow language instruction | Hard |
 
 ---
 

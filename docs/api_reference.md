@@ -2,7 +2,7 @@
 
 Auto-generated API documentation for the `threewe` Python package.
 
-**Version**: 0.2.0
+**Version**: 1.0.0
 
 ## Table of Contents
 
@@ -25,7 +25,8 @@ Auto-generated API documentation for the `threewe` Python package.
 
 AI-First interface for controlling a 3we robot.
 
-Supports three backends:
+Supports four backends:
+- "mock": Zero-dependency 2D kinematic simulation with configurable noise
 - "gazebo": Gazebo Harmonic simulation (CPU, CI, quick iteration)
 - "isaac_sim": NVIDIA Isaac Sim (GPU RL training, domain randomization)
 - "real": Physical robot via ROS2 (Pi 5 + ESP32-S3 + micro-ROS)
@@ -34,7 +35,7 @@ All backends return data in identical formats — code written for one backend
 works on all others without modification.
 
 ```python
-Robot(self, backend: 'str' = 'gazebo', config: 'str | RobotConfig' = 'standard_v2', *, hardware: 'str' = '3we_standard_v2', scene: 'str' = 'office_v2', auto_connect: 'bool' = True) -> 'None'
+Robot(self, backend: 'str' = 'gazebo', config: 'str | RobotConfig' = 'standard_v2', *, hardware: 'str' = '3we_standard_v2', scene: 'str' = 'office_v2', auto_connect: 'bool' = True, verbose: 'bool' = False) -> 'None'
 ```
 
 Initialize self.  See help(type(self)) for accurate signature.

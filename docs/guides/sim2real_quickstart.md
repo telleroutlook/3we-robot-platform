@@ -32,7 +32,7 @@ env = gymnasium.make("3we/Navigation-v1", max_steps=500)
 
 # Train PPO for 50k steps (~2 minutes)
 model = PPO("MultiInputPolicy", env, verbose=1)
-model.fit(total_timesteps=50_000)
+model.learn(total_timesteps=50_000)
 model.save("nav_ppo")
 ```
 
@@ -116,7 +116,7 @@ from threewe.benchmark.sim2real import STANDARD_TRANSFER_TESTS, evaluate_transfe
 
 # 5 standard transfer tests with pass/fail criteria
 for test in STANDARD_TRANSFER_TESTS:
-    print(f"{test.name}: {test.metric} (threshold: {test.threshold})")
+    print(f"{test.name}: {test.metric.value} (multiplier: {test.pass_multiplier})")
 ```
 
 Run the full validation suite:

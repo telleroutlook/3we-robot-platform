@@ -166,7 +166,7 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 | Imitation Learning Data | ✅ Ready | `save_lerobot()` export + HuggingFace Hub push/pull |
 | VLM/LLM Control | ✅ Ready | GPT-4o / Qwen-VL, async API decoupled from 50Hz control loop |
 | Hardware Safety | ✅ Ready | 3-tier watchdog: 500ms cmd_vel timeout, 1s software WDT, 1.6s hardware WDT (TPS3813) |
-| RL Gymnasium Envs | ✅ Ready | 5 standard envs (PointNav, Exploration, ObjectNav, VLN, Patrol) + multi-agent |
+| RL Gymnasium Envs | ✅ Ready | 4 standard envs (PointNav, Exploration, ObjectNav, VLN) + multi-agent |
 | Edge AI Inference | ✅ Ready | Hailo-8L M.2 accelerator (13 TOPS) on Raspberry Pi 5 |
 | VLA Model Deploy | ✅ Ready | ONNX / PyTorch / Hailo HEF, `from_pretrained()` from Hub |
 | Domain Randomization | ✅ Ready | Physics, visual, and sensor noise — configurable per-episode |
@@ -184,11 +184,11 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 ├─────────────────────────────────────────────────────────────────┤
 │                     threewe Python API                           │
 │  Robot · Types · Config · AI (VLM/VLA) · Gym · Data · Benchmark │
-├──────────────────┬──────────────────┬───────────────────────────┤
-│  GazeboBackend   │   RealBackend    │   IsaacSimBackend         │
-│  (Gazebo Harmonic│   (ROS2 Topics)  │   (GPU-accelerated)      │
-│   + ros_gz_bridge│                  │                           │
-├──────────────────┴──────────────────┴───────────────────────────┤
+├──────────────────┬──────────────────┬──────────────┬────────────────┤
+│  MockBackend     │  GazeboBackend   │ RealBackend  │ IsaacSimBackend│
+│  (Zero-dep 2D   │  (Gazebo Harmonic│ (ROS2 Topics)│ (GPU-accelerated│
+│   kinematic sim) │   + ros_gz_bridge│              │  parallel RL)  │
+├──────────────────┴──────────────────┴──────────────┴────────────────┤
 │                     ROS2 Jazzy + Nav2                            │
 │   /cmd_vel · /scan · /odom · /camera · NavigateToPose Action    │
 ├─────────────────────────────────────────────────────────────────┤
@@ -196,7 +196,7 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 │   Motor PID · Encoders · IMU · Safety Relay · micro-ROS         │
 ├─────────────────────────────────────────────────────────────────┤
 │                     Hardware Layer                               │
-│   Mecanum · DRV8833 · LD06 LiDAR · BNO055 · Battery · E-Stop   │
+│   Mecanum · DRV8833 · HC-SR04/LD06 · BNO055 · Battery · E-Stop  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

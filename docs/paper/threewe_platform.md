@@ -2,7 +2,7 @@
 
 **Authors:** 3we Contributors
 
-**Abstract.** Embodied AI research requires tight integration between simulation environments and physical robots, yet current platforms impose significant barriers: high hardware costs ($5,000+), complex middleware stacks, and fundamental gaps between simulated and real-world behavior. We present 3we, an open-source robot platform that addresses these challenges through three contributions: (1) an AI-First Python API that eliminates direct ROS2 interaction, reducing typical task implementations from 60+ lines to under 5; (2) reproducible open hardware under CERN-OHL-P v2 with a bill of materials under $300; and (3) a Backend Abstraction Layer that enforces identical data formats and coordinate frames across Gazebo, Isaac Sim, and physical hardware backends. The platform provides native Gymnasium environments for reinforcement learning, built-in support for Vision-Language-Action (VLA) model deployment, and a trajectory recording pipeline compatible with the LeRobot ecosystem. Three standardized benchmark tasks (PointNav, ObjectNav, Exploration) with a public leaderboard enable reproducible evaluation. By dramatically lowering the cost and complexity of sim-to-real research, 3we aims to democratize embodied AI development for the broader research community.
+**Abstract.** Embodied AI research requires tight integration between simulation environments and physical robots, yet current platforms impose significant barriers: high hardware costs ($5,000+), complex middleware stacks, and fundamental gaps between simulated and real-world behavior. We present 3we, an open-source robot platform that addresses these challenges through: (1) an AI-First Python API that eliminates direct ROS2 interaction, reducing typical task implementations from 60+ lines to under 5; (2) reproducible open hardware under CERN-OHL-P v2 with a bill of materials of approximately $300; (3) a Backend Abstraction Layer that enforces identical data formats and coordinate frames across four backends (Mock, Gazebo, Isaac Sim, and physical hardware); (4) four Gymnasium-compatible environments (Navigation, Exploration, ObjectNav, VLN) plus a multi-agent cooperative environment; (5) a Hardware Abstraction Layer supporting heterogeneous robot platforms; and (6) trajectory recording with LeRobot/HuggingFace Hub interoperability. Three standardized benchmark tasks (PointNav, ObjectNav, Exploration) with a public leaderboard enable reproducible evaluation. By dramatically lowering the cost and complexity of sim-to-real research, 3we aims to democratize embodied AI development for the broader research community.
 
 ---
 
@@ -51,10 +51,10 @@ The 3we platform employs a three-layer architecture separating user-facing AI re
 |  └─────────────────────────────────────────────────────┘ |
 +----------------------------------------------------------+
 |  Layer 2: Backend Abstraction Layer                       |
-|  ┌──────────┐  ┌──────────────┐  ┌──────────────────┐  |
-|  │  Gazebo  │  │  Isaac Sim   │  │  Real Hardware   │  |
-|  │ (CPU,CI) │  │ (GPU,Train)  │  │ (Pi5+ESP32+ROS) │  |
-|  └──────────┘  └──────────────┘  └──────────────────┘  |
+|  ┌────────┐  ┌──────────┐  ┌──────────────┐  ┌────────────────────┐  |
+|  │  Mock  │  │  Gazebo  │  │  Isaac Sim   │  │  Real Hardware     │  |
+|  │(No-dep)│  │ (CPU,CI) │  │ (GPU,Train)  │  │ (Pi5+ESP32+ROS)   │  |
+|  └────────┘  └──────────┘  └──────────────┘  └────────────────────┘  |
 +----------------------------------------------------------+
 |  Layer 1: Physical / Simulated Substrate                  |
 |  ┌──────────────────────────────────────────────────────┐|
@@ -64,7 +64,7 @@ The 3we platform employs a three-layer architecture separating user-facing AI re
 +----------------------------------------------------------+
 ```
 
-**Hardware Platform.** The physical robot comprises a Raspberry Pi 5 (8GB) as the main compute unit, a Hailo-8L M.2 accelerator providing 13 TOPS of neural network inference, an ESP32-S3 microcontroller running micro-ROS for real-time motor control, four mecanum wheels enabling omnidirectional motion, a 2D LiDAR for SLAM, and a USB fisheye camera. Total weight is approximately 2.5 kg with a maximum linear velocity of 1.2 m/s.
+**Hardware Platform.** The physical robot comprises a Raspberry Pi 5 (8GB) as the main compute unit, a Hailo-8L M.2 accelerator providing 13 TOPS of neural network inference, an ESP32-S3 microcontroller running micro-ROS for real-time motor control, four 65mm mecanum wheels enabling omnidirectional motion, HC-SR04 ultrasonic sensors for basic obstacle avoidance (with optional LD06 LiDAR for SLAM), and a USB fisheye camera (170° FoV). Total weight is approximately 3.5 kg with a maximum linear velocity of 0.5 m/s.
 
 **Software Stack.** The runtime environment uses ROS2 Jazzy with Nav2 for path planning, SLAM Toolbox for map building, and micro-ROS on the ESP32-S3 for 50 Hz motor control loops. Critically, none of these components are exposed to the end user; the `threewe` Python package mediates all interaction through the Backend Abstraction Layer.
 
@@ -74,7 +74,7 @@ The 3we platform employs a three-layer architecture separating user-facing AI re
 
 ### 4.1 Design Philosophy
 
-The `threewe` package (v0.2.0) is designed for AI researchers who should never need to learn ROS2 concepts (nodes, topics, services, actions) to conduct embodied AI experiments. The API provides:
+The `threewe` package (v1.0.0) is designed for AI researchers who should never need to learn ROS2 concepts (nodes, topics, services, actions) to conduct embodied AI experiments. The API provides:
 
 - Synchronous sensor access (images, LiDAR, pose, IMU)
 - Async navigation primitives (`move_to`, `explore`, `follow_path`)
@@ -109,12 +109,12 @@ The platform registers standard Gymnasium environments for seamless integration 
 
 ```python
 import gymnasium
-env = gymnasium.make("3we/Navigation-v1", backend="gazebo")
+env = gymnasium.make("3we/Navigation-v1")
 obs, info = env.reset()
 obs, reward, terminated, truncated, info = env.step(action)
 ```
 
-Three environments of increasing difficulty are provided: `Navigation-v1` (point-to-point), `Exploration-v1` (frontier-based coverage), and `ObjectNav-v1` (semantic goal navigation).
+Four environments of increasing difficulty are provided: `Navigation-v1` (point-to-point), `Exploration-v1` (frontier-based coverage), `ObjectNav-v1` (semantic goal navigation), and `VLN-v1` (vision-language navigation with instruction-following). A `MultiAgentEnv` is also available for cooperative multi-robot exploration.
 
 ### 4.4 VLM/VLA Native Support
 
