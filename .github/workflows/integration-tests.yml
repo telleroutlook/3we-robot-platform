@@ -30,6 +30,7 @@ jobs:
             ros-humble-ros-gz-sim \
             ros-humble-ros-gz-bridge
           pip3 install pytest pytest-timeout
+          pip3 install ./sdk/threewe[sim]
           rosdep update
           rosdep install --from-paths ros2_ws --ignore-src -y --skip-keys="micro_ros_agent"
 
