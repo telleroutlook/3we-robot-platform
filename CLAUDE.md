@@ -12,6 +12,27 @@ This is an AI-First open-source robot platform for Embodied AI research. The sam
 
 The project follows an Open Core model: hardware, firmware, ROS2 stack, and SDK are fully open-source. Proprietary components (AI models, cloud services, advanced web panel) live in separate repositories.
 
+## Repository Responsibility Split
+
+This project (`3we-robot-platform`) and the website repo (`3we-website`) have clearly separated responsibilities. Do NOT duplicate content across them.
+
+| Responsibility | Owner | Rationale |
+|---|---|---|
+| Technical docs (API, Getting Started, CLI) | **This repo** `docs/` | Co-located with code, auto-generated from docstrings via MkDocs |
+| Leaderboard data logic | **This repo** `data/leaderboard.json` | Data engine, submission validation, JSON storage |
+| Playground (interactive demo) | **This repo** (future HuggingFace Spaces) | Compute-intensive, needs Python environment |
+| Brand homepage / marketing | **Website** | Brand display belongs on official site |
+| Leaderboard display frontend | **Website** `/benchmarks` | Reads JSON from this repo, never hardcodes data |
+| Playground embed | **Website** `/playground` | iframe embed of Spaces, no duplicate logic |
+| Blog | **Website** `/blog` | Pure content publishing |
+| Community page | **Website** `/community` | Links back to this repo's CONTRIBUTING.md |
+| Product / Hardware / Pricing pages | **Website** | Marketing and comparison content |
+
+**Key rules:**
+- Documentation content lives ONLY in `docs/`. The website's `/docs` path is a 301 redirect to `docs.3we.org`.
+- Benchmark data lives ONLY in `data/leaderboard.json`. The website fetches this at build time.
+- Never put API reference, tutorials, or getting-started content in the website repo.
+
 ## Architecture Principles
 
 - **Sim2Real consistency**: The Python API must behave identically across simulation and real hardware — zero code changes to switch backends
