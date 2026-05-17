@@ -152,7 +152,7 @@ jobs:
       - name: Generate SBOM
         run: |
           cyclonedx-py environment \
-            --output-format json \
+            --output-format JSON \
             -o sbom-threewe.cdx.json
 
       - name: Upload SBOM
