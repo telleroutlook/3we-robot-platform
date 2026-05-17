@@ -142,10 +142,9 @@ jobs:
         shell: bash
         run: |
           source /opt/ros/humble/setup.bash
-          NUMPY_INCLUDE="$(python3 -c 'import numpy; print(numpy.get_include())')"
+          export CPATH="$(python3 -c 'import numpy; print(numpy.get_include())'):${CPATH:-}"
           cd ros2_ws
-          colcon build --symlink-install \
-            --cmake-args -DPython3_NumPy_INCLUDE_DIR="$NUMPY_INCLUDE"
+          colcon build --symlink-install
 
       - name: Run integration tests
         shell: bash
