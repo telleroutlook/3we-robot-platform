@@ -168,6 +168,7 @@ void payload_register_callback(payload_event_callback_t cb)
 esp_err_t payload_power_off(void)
 {
     esp_err_t err;
+    esp_err_t first_err = ESP_OK;
     const uint8_t rails[] = { PAYLOAD_VBAT_EN_BIT, PAYLOAD_12V_EN_BIT, PAYLOAD_5V_EN_BIT };
     bool recovered = false;
 
@@ -181,6 +182,9 @@ esp_err_t payload_power_off(void)
         }
         if (err != ESP_OK) {
             ESP_LOGE("payload", "Failed to disable rail bit %d", rails[i]);
+            if (first_err == ESP_OK) {
+                first_err = err;
+            }
         }
     }
 
@@ -189,7 +193,7 @@ esp_err_t payload_power_off(void)
     portEXIT_CRITICAL(&payload_spinlock);
     notify_event();
     ESP_LOGI(TAG, "Payload power disabled");
-    return err;
+    return first_err;
 }
 
 void payload_hotplug_task(void *params)
