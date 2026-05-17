@@ -64,6 +64,7 @@ TEMPLATE.innerHTML = `
   <canvas id="canvas" width="220" height="220"></canvas>
   <div class="velocity-readout">
     <span><span class="vel-label">Vx:</span> <span id="vxValue">0.00</span></span>
+    <span><span class="vel-label">Vy:</span> <span id="vyValue">0.00</span></span>
     <span><span class="vel-label">Vz:</span> <span id="vzValue">0.00</span></span>
   </div>
 </div>
@@ -73,6 +74,7 @@ export class RobotJoystick extends HTMLElement {
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
   private vxEl!: HTMLElement;
+  private vyEl!: HTMLElement;
   private vzEl!: HTMLElement;
 
   private centerX = 110;
@@ -89,10 +91,29 @@ export class RobotJoystick extends HTMLElement {
   private animFrame: number | null = null;
 
   private currentVx = 0;
+  private currentVy = 0;
   private currentOmega = 0;
 
   private maxLinearVel = 0.5;
+  private maxLateralVel = 0.5;
   private maxAngularVel = 1.0;
+  private holonomic = false;
+
+  static get observedAttributes(): string[] {
+    return ['holonomic', 'max-linear-vel', 'max-angular-vel', 'max-lateral-vel'];
+  }
+
+  attributeChangedCallback(name: string, _old: string | null, val: string | null): void {
+    if (name === 'holonomic') {
+      this.holonomic = val !== null && val !== 'false';
+    } else if (name === 'max-linear-vel' && val) {
+      this.maxLinearVel = parseFloat(val) || 0.5;
+    } else if (name === 'max-angular-vel' && val) {
+      this.maxAngularVel = parseFloat(val) || 1.0;
+    } else if (name === 'max-lateral-vel' && val) {
+      this.maxLateralVel = parseFloat(val) || 0.5;
+    }
+  }
 
   constructor() {
     super();
@@ -109,6 +130,7 @@ export class RobotJoystick extends HTMLElement {
     if (!ctx) return;
     this.ctx = ctx;
     this.vxEl = shadow.getElementById('vxValue') as HTMLElement;
+    this.vyEl = shadow.getElementById('vyValue') as HTMLElement;
     this.vzEl = shadow.getElementById('vzValue') as HTMLElement;
 
     this.canvas.addEventListener('pointerdown', this.onPointerDown);
@@ -136,6 +158,7 @@ export class RobotJoystick extends HTMLElement {
     this.knobX = 0;
     this.knobY = 0;
     this.currentVx = 0;
+    this.currentVy = 0;
     this.currentOmega = 0;
     this.updateReadout();
   }
@@ -171,6 +194,7 @@ export class RobotJoystick extends HTMLElement {
     this.knobX = 0;
     this.knobY = 0;
     this.currentVx = 0;
+    this.currentVy = 0;
     this.currentOmega = 0;
     this.updateReadout();
     this.publishZero();
@@ -204,14 +228,21 @@ export class RobotJoystick extends HTMLElement {
       this.knobY = 0;
     }
 
-    // Map: Y-up = forward (linear.x), X-right = turn right (negative angular.z)
+    // Map: Y-up = forward (linear.x)
     this.currentVx = -this.knobY * this.maxLinearVel;
-    this.currentOmega = -this.knobX * this.maxAngularVel;
+    if (this.holonomic) {
+      this.currentVy = this.knobX * this.maxLateralVel;
+      this.currentOmega = 0;
+    } else {
+      this.currentVy = 0;
+      this.currentOmega = -this.knobX * this.maxAngularVel;
+    }
     this.updateReadout();
   }
 
   private updateReadout(): void {
     this.vxEl.textContent = this.currentVx.toFixed(2);
+    this.vyEl.textContent = this.currentVy.toFixed(2);
     this.vzEl.textContent = this.currentOmega.toFixed(2);
   }
 
@@ -287,9 +318,10 @@ export class RobotJoystick extends HTMLElement {
     this.stopPublishing();
     // Publish at 20 Hz
     this.publishTimer = setInterval(() => {
-      if (!this.active && this.currentVx === 0 && this.currentOmega === 0) return;
+      if (!this.active && this.currentVx === 0 && this.currentVy === 0 && this.currentOmega === 0)
+        return;
       const msg: Twist = {
-        linear: { x: this.currentVx, y: 0, z: 0 },
+        linear: { x: this.currentVx, y: this.currentVy, z: 0 },
         angular: { x: 0, y: 0, z: this.currentOmega },
       };
       connection.publish('/cmd_vel', 'geometry_msgs/Twist', msg);

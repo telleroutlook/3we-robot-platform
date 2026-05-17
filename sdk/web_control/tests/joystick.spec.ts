@@ -174,7 +174,7 @@ test.describe('Joystick component', () => {
     }
   });
 
-  test('linear velocity is capped at maxLinearVel (0.35 m/s)', async ({ page }) => {
+  test('linear velocity is capped at maxLinearVel (0.5 m/s)', async ({ page }) => {
     const mock = (
       page as unknown as {
         __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
@@ -202,13 +202,13 @@ test.describe('Joystick component', () => {
 
     for (const msg of cmdVelMsgs) {
       const m = msg as { msg: { linear: { x: number } } };
-      expect(Math.abs(m.msg.linear.x)).toBeLessThanOrEqual(0.35 + 0.001);
+      expect(Math.abs(m.msg.linear.x)).toBeLessThanOrEqual(0.5 + 0.001);
     }
 
     await page.mouse.up();
   });
 
-  test('angular velocity is capped at maxAngularVel (2.5 rad/s)', async ({ page }) => {
+  test('angular velocity is capped at maxAngularVel (1.0 rad/s)', async ({ page }) => {
     const mock = (
       page as unknown as {
         __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
@@ -236,7 +236,7 @@ test.describe('Joystick component', () => {
 
     for (const msg of cmdVelMsgs) {
       const m = msg as { msg: { angular: { z: number } } };
-      expect(Math.abs(m.msg.angular.z)).toBeLessThanOrEqual(2.5 + 0.001);
+      expect(Math.abs(m.msg.angular.z)).toBeLessThanOrEqual(1.0 + 0.001);
     }
 
     await page.mouse.up();
@@ -330,5 +330,103 @@ test.describe('Joystick component', () => {
       const canvas = joystick.shadowRoot!.getElementById('canvas')!;
       canvas.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 }));
     });
+  });
+
+  test('default mode publishes zero linear.y', async ({ page }) => {
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
+
+    const canvas = page.locator('robot-joystick').locator('canvas#canvas');
+    const box = await canvas.boundingBox();
+    expect(box).not.toBeNull();
+
+    const cx = box!.x + box!.width / 2;
+    const cy = box!.y + box!.height / 2;
+
+    mock.messages.length = 0;
+
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + box!.width * 0.3, cy - box!.height * 0.3);
+    await page.waitForTimeout(100);
+
+    const cmdVelMsgs = mock.messages.filter((msg: unknown) => {
+      const m = msg as { op?: string; topic?: string };
+      return m.op === 'publish' && m.topic === '/cmd_vel';
+    });
+
+    for (const msg of cmdVelMsgs) {
+      const m = msg as { msg: { linear: { y: number } } };
+      expect(m.msg.linear.y).toBe(0);
+    }
+
+    await page.mouse.up();
+  });
+
+  test('holonomic mode maps X-axis to lateral velocity (linear.y)', async ({ page }) => {
+    const mock = (
+      page as unknown as {
+        __mock: ReturnType<typeof setupMockRosbridge> extends Promise<infer T> ? T : never;
+      }
+    ).__mock;
+
+    // Set holonomic attribute and drag right via dispatchEvent on shadow canvas
+    await page.evaluate(() => {
+      const joystick = document.querySelector('robot-joystick')!;
+      joystick.setAttribute('holonomic', '');
+      const canvas = joystick.shadowRoot!.getElementById('canvas')!;
+      const rect = canvas.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      canvas.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          clientX: cx,
+          clientY: cy,
+          bubbles: true,
+          pointerId: 1,
+        })
+      );
+      canvas.dispatchEvent(
+        new PointerEvent('pointermove', {
+          clientX: cx + rect.width * 0.3,
+          clientY: cy,
+          bubbles: true,
+          pointerId: 1,
+        })
+      );
+    });
+
+    await page.waitForTimeout(100);
+
+    const cmdVel = await mock.waitForMessage((msg: unknown) => {
+      const m = msg as { op?: string; topic?: string; msg?: { linear?: { y?: number } } };
+      return (
+        m.op === 'publish' &&
+        m.topic === '/cmd_vel' &&
+        m.msg?.linear?.y !== undefined &&
+        m.msg.linear.y !== 0
+      );
+    });
+
+    expect(cmdVel).toBeTruthy();
+    const m = cmdVel as { msg: { linear: { y: number }; angular: { z: number } } };
+    expect(m.msg.linear.y).toBeGreaterThan(0);
+    expect(m.msg.angular.z).toBe(0);
+
+    await page.evaluate(() => {
+      const joystick = document.querySelector('robot-joystick')!;
+      const canvas = joystick.shadowRoot!.getElementById('canvas')!;
+      canvas.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 }));
+    });
+  });
+
+  test('velocity readout displays Vy value', async ({ page }) => {
+    const joystick = page.locator('robot-joystick');
+    const vy = joystick.locator('#vyValue');
+    await expect(vy).toHaveText('0.00');
   });
 });
