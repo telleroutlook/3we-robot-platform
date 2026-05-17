@@ -25,6 +25,12 @@ extern void test_set_speed_limit_valid(void);
 extern void test_set_speed_limit_rejects_zero(void);
 extern void test_set_speed_limit_rejects_negative(void);
 extern void test_set_speed_limit_rejects_above_hard_cap(void);
+extern void test_clamp_velocity_diagonal_exceeds_limit(void);
+extern void test_clamp_velocity_single_axis_same_as_scalar(void);
+extern void test_clamp_velocity_within_limit_unchanged(void);
+extern void test_clamp_velocity_zero_vector(void);
+extern void test_clamp_velocity_preserves_direction(void);
+extern void test_clamp_velocity_negative_components(void);
 
 // test_encoder_math.c
 extern void test_encoder_zero_delta_gives_zero_speed(void);
@@ -388,6 +394,14 @@ int main(void)
     RUN_TEST(test_set_speed_limit_rejects_zero);
     RUN_TEST(test_set_speed_limit_rejects_negative);
     RUN_TEST(test_set_speed_limit_rejects_above_hard_cap);
+
+    // Magnitude-based velocity clamping
+    RUN_TEST(test_clamp_velocity_diagonal_exceeds_limit);
+    RUN_TEST(test_clamp_velocity_single_axis_same_as_scalar);
+    RUN_TEST(test_clamp_velocity_within_limit_unchanged);
+    RUN_TEST(test_clamp_velocity_zero_vector);
+    RUN_TEST(test_clamp_velocity_preserves_direction);
+    RUN_TEST(test_clamp_velocity_negative_components);
 
     // Encoder math
     RUN_TEST(test_encoder_zero_delta_gives_zero_speed);

@@ -41,5 +41,6 @@ esp_err_t safety_clear_relay_fault(void);
 esp_err_t safety_set_speed_limit(float limit_mps);
 float safety_get_speed_limit(void);
 float safety_clamp_speed(float requested_mps);
+void safety_clamp_velocity(float *vx, float *vy);
 
 #endif // SAFETY_H

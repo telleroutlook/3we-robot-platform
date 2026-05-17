@@ -133,9 +133,13 @@ static void cmd_vel_callback(const void *msg_in)
         return;
     }
 
+    float vx = (float)msg->linear.x;
+    float vy = (float)msg->linear.y;
+    safety_clamp_velocity(&vx, &vy);
+
     cmd_vel_t cmd = {
-        .vx = safety_clamp_speed((float)msg->linear.x),
-        .vy = safety_clamp_speed((float)msg->linear.y),
+        .vx = vx,
+        .vy = vy,
         .omega = fmaxf(-MAX_ANGULAR_VEL, fminf(MAX_ANGULAR_VEL, (float)msg->angular.z)),
     };
     motor_mecanum_drive(&cmd);

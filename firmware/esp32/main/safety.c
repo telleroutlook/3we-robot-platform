@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "safety.h"
 #include "motor_control.h"
+#include <math.h>
 #include "pin_definitions.h"
 #include "robot_params.h"
 #include "i2c_bus.h"
@@ -624,5 +625,19 @@ float safety_clamp_speed(float requested_mps)
     if (requested_mps > limit) return limit;
     if (requested_mps < -limit) return -limit;
     return requested_mps;
+}
+
+void safety_clamp_velocity(float *vx, float *vy)
+{
+    portENTER_CRITICAL(&safety_spinlock);
+    float limit = speed_limit_mps;
+    portEXIT_CRITICAL(&safety_spinlock);
+
+    float mag = sqrtf((*vx) * (*vx) + (*vy) * (*vy));
+    if (mag <= limit || mag < 1e-6f) return;
+
+    float scale = limit / mag;
+    *vx *= scale;
+    *vy *= scale;
 }
 
