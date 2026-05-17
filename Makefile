@@ -53,7 +53,7 @@ firmware-build:
 	cd firmware/esp32 && idf.py build
 
 firmware-test:
-	cd firmware/tests && make clean && make && ./test_runner
+	cd firmware/tests && make clean && make && ./build/test_runner
 
 # ─── ROS2 ────────────────────────────────────────────────────────────────────
 
@@ -88,7 +88,7 @@ python-lint:
 	ruff check sdk/
 
 python-test:
-	cd sdk && python -m pytest tests/ -v --tb=short
+	cd sdk && python3 -m pytest tests/ -v --tb=short
 
 # ─── Cross-Layer Validation ───────────────────────────────────────────────────
 
@@ -113,7 +113,7 @@ validate: validate-types validate-params validate-pins validate-bom validate-kco
 
 coverage:
 	cd sdk/web_control && npm run test:coverage
-	cd sdk && python -m pytest tests/ --cov=payload_interface --cov-report=term --cov-report=xml:coverage.xml
+	cd sdk && python3 -m pytest tests/ --cov=payload_interface --cov-report=term --cov-report=xml:coverage.xml
 
 # ─── Aggregate Targets ────────────────────────────────────────────────────────
 

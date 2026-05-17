@@ -132,6 +132,7 @@ jobs:
             ros-humble-ros-gz-bridge \
             xvfb
           pip3 install --upgrade pip
+          pip3 install "numpy<2"
           pip3 install pytest pytest-timeout
           pip3 install ./sdk/threewe[sim]
           rosdep update

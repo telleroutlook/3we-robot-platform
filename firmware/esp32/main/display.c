@@ -485,8 +485,7 @@ void display_log_fault(display_fault_source_t source, uint8_t code, const char *
     entry->timestamp_ms = (uint32_t)(esp_timer_get_time() / 1000);
     entry->source = (uint8_t)source;
     entry->code = code;
-    strncpy(entry->msg, msg ? msg : "", sizeof(entry->msg) - 1);
-    entry->msg[sizeof(entry->msg) - 1] = '\0';
+    snprintf(entry->msg, sizeof(entry->msg), "%s", msg ? msg : "");
 
     s_fault_log_head = (s_fault_log_head + 1) % DISPLAY_FAULT_LOG_SIZE;
     if (s_fault_log_count < DISPLAY_FAULT_LOG_SIZE) {

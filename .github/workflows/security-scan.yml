@@ -123,8 +123,8 @@ jobs:
 
       - name: Run pip-audit
         run: |
-          pip-audit --format=json --output=pip-audit-report.json || true
-          pip-audit --strict
+          pip-audit --format=json --output=pip-audit-report.json --skip-editable || true
+          pip-audit --strict --skip-editable
 
       - name: Upload report
         if: always()
@@ -153,7 +153,7 @@ jobs:
         run: |
           cyclonedx-py environment \
             --output-format json \
-            --outfile sbom-threewe.cdx.json
+            -o sbom-threewe.cdx.json
 
       - name: Upload SBOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
