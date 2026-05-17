@@ -193,6 +193,6 @@ Before powering on for the first time:
 Once powered on and confirmed working:
 
 1. **Flash firmware** — See [Firmware Guide](firmware_guide.md) for ESP-IDF build and flash
-2. **Basic SKU**: Use [Web Control](../sdk/web_control/) or [Web Basic](../sdk/web_basic/) for WiFi teleop
+2. **Basic SKU**: Use [Web Control](https://github.com/telleroutlook/3we-robot-platform/tree/main/sdk/web_control) or [Web Basic](https://github.com/telleroutlook/3we-robot-platform/tree/main/sdk/web_basic) for WiFi teleop
 3. **Standard SKU**: Install ROS2 on Pi 5, then follow [Getting Started (AI)](getting_started_ai.md)
-4. **Full BOM details**: See [hardware/bom/README.md](../hardware/bom/README.md) for pricing and sourcing
+4. **Full BOM details**: See [hardware/bom/README.md](https://github.com/telleroutlook/3we-robot-platform/blob/main/hardware/bom/README.md) for pricing and sourcing

@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: Apache-2.0
+site_name: 3we Robot Platform
+site_url: https://docs.3we.org
+repo_url: https://github.com/telleroutlook/3we-robot-platform
+repo_name: telleroutlook/3we-robot-platform
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: amber
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: amber
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+    - search.suggest
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["sdk/threewe/src"]
+          options:
+            show_source: true
+            show_root_heading: true
+            members_order: source
+            docstring_style: google
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Basic Setup: getting_started_basic.md
+      - AI Researchers: getting_started_ai.md
+      - Sim2Real Quickstart: guides/sim2real_quickstart.md
+      - Troubleshooting: troubleshooting.md
+  - Architecture:
+      - System Diagrams: architecture-diagrams.md
+      - Network Architecture: network_architecture.md
+  - SDK Reference:
+      - Python API: api_reference.md
+      - Auto-generated API: reference/api.md
+      - Web Control API: web_control_api.md
+      - ROS2 Interface: ros2_interface_reference.md
+      - ROSBridge Guide: rosbridge_guide.md
+  - Hardware:
+      - Assembly Guide: assembly_guide.md
+      - Firmware Guide: firmware_guide.md
+      - PBC-34 Payload: pbc34_payload_guide.md
+      - Hailo Integration: hailo_integration.md
+  - Benchmarks:
+      - Leaderboard: leaderboard.md
+      - Performance Benchmarks: performance_benchmarks.md
+      - SLAM Alternatives: slam-alternatives.md
+  - Deployment:
+      - Production Deployment: production_deployment.md
+      - Fleet OTA Strategy: fleet_ota_strategy.md
+      - Fleet Telemetry: fleet_telemetry.md
+      - Secrets Management: secrets_management.md
+  - Reference:
+      - Compliance Checklist: compliance_checklist.md
+      - Competitive Analysis: competitive_analysis.md
+      - GitHub Discussions Setup: github_discussions_setup.md
+      - Research Paper: paper/threewe_platform.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true

@@ -8,6 +8,7 @@
 .PHONY: python-lint python-test
 .PHONY: docker-build docker-up docker-down
 .PHONY: validate-types validate-params validate-pins validate-bom validate-kconfig coverage
+.PHONY: docs-serve docs-build
 
 # Default target
 all: lint test build
@@ -134,12 +135,21 @@ docker-up:
 docker-down:
 	docker compose down
 
+# ─── Documentation ────────────────────────────────────────────────────────────
+
+docs-serve:
+	mkdocs serve
+
+docs-build:
+	mkdocs build --strict
+
 # ─── Clean ────────────────────────────────────────────────────────────────────
 
 clean:
 	rm -rf sdk/web_control/dist
 	rm -rf sdk/web_control/node_modules/.vite
 	rm -rf ros2_ws/build ros2_ws/install ros2_ws/log
+	rm -rf site
 	cd firmware/tests && make clean 2>/dev/null || true
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete 2>/dev/null || true

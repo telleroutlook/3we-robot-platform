@@ -1,0 +1,138 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-05-17",
+  "entries": [
+    {
+      "agent_name": "3we-baseline-v2",
+      "task": "pointnav",
+      "scene": "office_v2",
+      "episodes": 100,
+      "seed_start": 0,
+      "metrics": {
+        "success_rate": 0.915,
+        "spl": 0.87,
+        "mean_duration": 11.2
+      },
+      "software": {
+        "threewe_version": "1.0.0",
+        "backend": "gazebo",
+        "backend_version": "Harmonic"
+      },
+      "metadata": {
+        "method": "Nav2 DWB with tuned parameters",
+        "code_url": "https://github.com/telleroutlook/3we-robot-platform"
+      },
+      "submitted_at": "2025-04-15"
+    },
+    {
+      "agent_name": "VLM-Nav-GPT4o",
+      "task": "objectnav",
+      "scene": "office_v2",
+      "episodes": 100,
+      "seed_start": 0,
+      "metrics": {
+        "success_rate": 0.783,
+        "spl": 0.71,
+        "mean_duration": 18.4
+      },
+      "software": {
+        "threewe_version": "1.0.0",
+        "backend": "gazebo",
+        "backend_version": "Harmonic"
+      },
+      "metadata": {
+        "method": "VLM-guided navigation with GPT-4o vision",
+        "code_url": "https://github.com/telleroutlook/3we-robot-platform"
+      },
+      "submitted_at": "2025-04-10"
+    },
+    {
+      "agent_name": "Frontier-Explorer",
+      "task": "exploration",
+      "scene": "office_v2",
+      "episodes": 100,
+      "seed_start": 0,
+      "metrics": {
+        "success_rate": 0.887,
+        "coverage": 0.82,
+        "mean_duration": 45.2
+      },
+      "software": {
+        "threewe_version": "1.0.0",
+        "backend": "gazebo",
+        "backend_version": "Harmonic"
+      },
+      "metadata": {
+        "method": "Frontier-based exploration with cost-utility selection",
+        "code_url": "https://github.com/telleroutlook/3we-robot-platform"
+      },
+      "submitted_at": "2025-03-28"
+    },
+    {
+      "agent_name": "PPO-MecanumNav",
+      "task": "pointnav",
+      "scene": "office_v2",
+      "episodes": 100,
+      "seed_start": 0,
+      "metrics": {
+        "success_rate": 0.892,
+        "spl": 0.84,
+        "mean_duration": 9.8
+      },
+      "software": {
+        "threewe_version": "1.0.0",
+        "backend": "isaac_sim",
+        "backend_version": "4.0"
+      },
+      "metadata": {
+        "method": "PPO with mecanum wheel dynamics, 1M timesteps",
+        "code_url": "https://github.com/telleroutlook/3we-robot-platform"
+      },
+      "submitted_at": "2025-03-15"
+    },
+    {
+      "agent_name": "3we-baseline-v1",
+      "task": "pointnav",
+      "scene": "office_v2",
+      "episodes": 100,
+      "seed_start": 0,
+      "metrics": {
+        "success_rate": 0.982,
+        "spl": 0.94,
+        "mean_duration": 8.1
+      },
+      "software": {
+        "threewe_version": "0.9.0",
+        "backend": "mock",
+        "backend_version": "0.9.0"
+      },
+      "metadata": {
+        "method": "Nav2 DWB baseline on mock backend",
+        "code_url": "https://github.com/telleroutlook/3we-robot-platform"
+      },
+      "submitted_at": "2025-02-20"
+    },
+    {
+      "agent_name": "SAC-OmniDrive",
+      "task": "pointnav",
+      "scene": "office_v2",
+      "episodes": 100,
+      "seed_start": 0,
+      "metrics": {
+        "success_rate": 0.861,
+        "spl": 0.8,
+        "mean_duration": 10.4
+      },
+      "software": {
+        "threewe_version": "1.0.0",
+        "backend": "gazebo",
+        "backend_version": "Harmonic"
+      },
+      "metadata": {
+        "method": "SAC with omnidirectional action space, 500k timesteps",
+        "code_url": "https://github.com/telleroutlook/3we-robot-platform"
+      },
+      "submitted_at": "2025-02-10"
+    }
+  ]
+}

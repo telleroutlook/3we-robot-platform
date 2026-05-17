@@ -18,10 +18,10 @@ class TextEncoder:
 
     Methods:
         - "tfidf": Zero-dependency TF-IDF-like bag-of-words encoding.
-          Fast, deterministic, no downloads. Suitable for low-dimensional
-          conditioning signals in simple VLA models.
+            Fast, deterministic, no downloads. Suitable for low-dimensional
+            conditioning signals in simple VLA models.
         - "sentence_transformers": Uses sentence-transformers library for
-          high-quality semantic embeddings. Requires optional dependency.
+            high-quality semantic embeddings. Requires optional dependency.
     """
 
     def __init__(self, method: str = "tfidf", dim: int = 64) -> None:

@@ -323,4 +323,4 @@ import type {
 } from './types';
 ```
 
-See [`sdk/web_control/src/types.ts`](../sdk/web_control/src/types.ts) for the full type definitions.
+See [`sdk/web_control/src/types.ts`](https://github.com/telleroutlook/3we-robot-platform/blob/main/sdk/web_control/src/types.ts) for the full type definitions.

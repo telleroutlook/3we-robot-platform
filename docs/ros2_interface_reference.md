@@ -376,7 +376,7 @@ odom
 | /payload/state | Reliable | Transient Local | Keep Last 1 | — |
 | /wheel_speeds | Best Effort | Volatile | Keep Last 5 | 25ms |
 
-Full QoS configuration: [`ros2_ws/robot_bringup/config/qos_profiles.yaml`](../ros2_ws/robot_bringup/config/qos_profiles.yaml)
+Full QoS configuration: [`ros2_ws/robot_bringup/config/qos_profiles.yaml`](https://github.com/telleroutlook/3we-robot-platform/blob/main/ros2_ws/robot_bringup/config/qos_profiles.yaml)
 
 ## Data Rate Budget
 

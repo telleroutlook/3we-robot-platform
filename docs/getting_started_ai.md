@@ -163,7 +163,7 @@ Same API, different physics. The abstraction guarantees identical data formats (
 | Interactive tutorials | `notebooks/01_hello_world.ipynb` through `05_data_collection.ipynb` |
 | Train RL policy | `examples/rl_obstacle_avoidance.py` |
 | Deploy VLA model | `examples/vlm_navigation.py` |
-| Build the hardware | [Assembly Guide](assembly_guide.md) + [BOM](../hardware/bom/README.md) |
+| Build the hardware | [Assembly Guide](assembly_guide.md) + [BOM](https://github.com/telleroutlook/3we-robot-platform/blob/main/hardware/bom/README.md) |
 | Benchmark comparison | `threewe benchmark run --help` |
 
 ---
