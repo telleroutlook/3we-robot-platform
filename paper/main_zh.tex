@@ -42,9 +42,9 @@
 % ===========================================================================
 \begin{abstract}
 具身智能研究需要仿真、真实硬件与学习算法的深度协同——然而现有平台往往迫使研究者在昂贵的商业系统、纯仿真环境，或具有陡峭 ROS2 学习曲线的硬件平台之间做出取舍。
-本文提出 \textbf{3we}，一套完全开源的基础设施，使相同的 Python 代码无需任何修改即可在轻量级 mock 仿真器、Gazebo、NVIDIA Isaac Sim 及真实硬件（Raspberry Pi~5 + Hailo-8L）上完全一致地运行。
-该平台提供 AI 优先的 Python API，可将典型 ROS2 导航代码从 60 余行压缩至 5 行；同时提供 Gymnasium 兼容环境、原生 VLM/VLA 集成，以及覆盖 7 个评估场景的标准化基准测试。
-在物料清单（BOM）成本不超过 300 美元的可复现硬件上，初步验证表明点导航任务的仿真到现实迁移率超过 0.6，社区基线在结构化仿真环境中达到 82\% 的成功率（SPL 0.65）。
+本文提出 \textbf{3we}，一套完全开源的基础设施，使相同的 Python 代码无需任何修改即可在轻量级 Mock 仿真器、Gazebo、NVIDIA Isaac Sim 及真实硬件（Raspberry Pi~5 + Hailo-8L）上完全一致地运行。
+该平台提供 AI 优先的 Python API，可将典型 ROS2 导航代码从 60 余行压缩至 5 行；提供四类 Gymnasium 兼容环境（导航、探索、目标导航、视觉-语言导航）及多智能体协作环境；原生 VLM/VLA 集成与 Hailo NPU 边缘推理；硬件抽象层（HAL）支持第三方机器人；轨迹录制与 LeRobot/HuggingFace Hub 互操作；以及覆盖 7 个评估场景的标准化基准测试。
+在物料清单（BOM）成本约 300 美元的可复现硬件上，初步验证表明点导航任务的仿真到现实迁移率超过 0.6，社区基线在结构化仿真环境中达到 82\% 的成功率（SPL 0.65）。
 所有软件（Apache~2.0 协议）、硬件设计（CERN-OHL-P~v2 协议）及文档（CC-BY-SA~4.0 协议）均已公开发布。
 \end{abstract}
 
@@ -76,10 +76,12 @@ ROS2~\cite{macenski2022ros2} 提供了健壮的中间件，但对于专注于算
 \end{figure}
 
 \begin{itemize}
-    \item \textbf{BOM 不超过 300 美元的开放硬件}，提供完整可复现的 PCB 设计（KiCad）、机械图纸及选型指南，遵循 CERN-OHL-P~v2 协议。
+    \item \textbf{BOM 约 300 美元的开放硬件}，提供完整可复现的 PCB 设计（KiCad）、机械图纸及选型指南，遵循 CERN-OHL-P~v2 协议。
     \item \textbf{零代码 Sim2Real}：统一的 Python API，\texttt{Robot(backend="gazebo")} 与 \texttt{Robot(backend="real")} 执行完全相同的用户代码。
-    \item \textbf{AI 优先 API}：从安装到首次导航仅需 5 行代码，原生支持 VLM/VLA 集成及 Gymnasium 接口。
+    \item \textbf{AI 优先 API}：从安装到首次导航仅需 5 行代码，原生支持 VLM/VLA 集成、多级动作空间及 Gymnasium 接口。
     \item \textbf{标准化基准测试}：覆盖 7 个场景的 3 类任务，提供可复现的基线结果与社区排行榜。
+    \item \textbf{硬件抽象层}：内置多平台硬件配置文件，支持 3we、AgileX Scout、TurtleBot4、Unitree Go2 等异构平台。
+    \item \textbf{数据与可复现性}：轨迹录制器导出 LeRobot/Open-X 格式，\texttt{ExperimentProtocol} 锁定种子、版本与超参数以确保可复现。
 \end{itemize}
 
 % ===========================================================================
@@ -138,22 +140,22 @@ Gymnasium 环境 & \checkmark & -- & \checkmark & \checkmark & \checkmark \\
 
 \begin{enumerate}
     \item \textbf{AI 优先 Python API}（用户层）：研究者使用标准 Python async/await 编写代码，无需接触 ROS2、launch 文件或消息类型。
-    \item \textbf{3we-core}（中间件层）：负责后端调度、传感器数据标准化、坐标变换与安全检查。
+    \item \textbf{3we-core}（中间件层）：负责后端调度、传感器数据标准化、坐标变换、安全检查、硬件抽象与域随机化噪声注入。
     \item \textbf{ROS2 / micro-ROS}（基础设施层）：Nav2 路径规划、SLAM、micro-ROS 到 ESP32 固件的桥接，对用户完全透明。
 \end{enumerate}
 
 \subsection{后端多态性}
 
-核心抽象为 \texttt{BackendBase}，由五个后端实现：
+核心抽象为 \texttt{BackendBase}，由四个后端实现：
 
 \begin{itemize}
-    \item \textbf{Mock}：零依赖的 2D 运动学仿真，支持可配置噪声。可在任意机器上运行，无需 GPU 或 ROS2。
+    \item \textbf{Mock}：零依赖的 2D 运动学仿真，支持可配置噪声与碰撞检测。可在任意机器上运行，无需 GPU 或 ROS2。
     \item \textbf{Gazebo}：基于 Gazebo Harmonic 的完整物理仿真，对 CPU 友好，支持无头模式（CI 兼容）。
-    \item \textbf{Isaac Sim}：GPU 加速渲染与物理仿真，支持大规模强化学习训练及域随机化。
+    \item \textbf{Isaac Sim}：GPU 加速渲染与物理仿真，支持大规模并行环境强化学习训练、域随机化及向量化策略优化。
     \item \textbf{Real}：通过 ROS2 话题驱动物理硬件，API 接口完全一致。
 \end{itemize}
 
-所有后端均返回冻结数据类（\texttt{Pose2D}、\texttt{LaserScan}、\texttt{RGBDImage}），字段与语义完全统一，由共享类型定义强制保证。
+所有后端均返回类型化数据类（\texttt{Pose2D}、\texttt{LaserScan}、\texttt{RGBDImage}、\texttt{IMUData}、\texttt{BatteryState} 等），字段与语义完全统一，由共享类型定义强制保证。
 
 \begin{figure}[H]
 \centering
@@ -180,13 +182,15 @@ async with Robot(backend="gazebo") as robot:
 
 切换至真实硬件仅需修改后端参数，无需任何代码改动、重新编译或配置变更。
 
+API 提供丰富的感知与动作接口：同步感知方法（\texttt{get\_camera\_image}、\texttt{get\_lidar\_scan}、\texttt{get\_pose}、\texttt{get\_imu}、\texttt{get\_battery\_state}、\texttt{get\_map}、\texttt{get\_wheel\_speeds}、\texttt{get\_motor\_current}）、异步导航（\texttt{move\_to}、\texttt{move\_forward}、\texttt{rotate}、\texttt{explore}、\texttt{follow\_path}）、以及面向 RL 的标准化观测接口（\texttt{get\_observation(modalities=...)})。VLA 策略输出可直接通过 \texttt{execute\_action(action)} 驱动机器人。
+
 \subsection{硬件规格}
 
 表~\ref{tab:hardware} 列出了标准 SKU 的参考硬件配置。
 
 \begin{table}[H]
 \centering
-\caption{标准 SKU 硬件配置（BOM：300 美元）}
+\caption{Standard SKU 硬件配置（BOM：约 300 美元）}
 \label{tab:hardware}
 \scriptsize
 \begin{tabular}{@{}lll@{}}
@@ -196,14 +200,17 @@ async with Robot(backend="gazebo") as robot:
 计算平台 & Raspberry Pi 5（8GB） & ARM SBC 最佳性价比 \\
 AI 加速器 & Hailo-8L（13 TOPS） & VLM/VLA 边缘推理 \\
 微控制器 & ESP32-S3 + micro-ROS & 实时控制 + ROS2 原生 \\
-激光雷达 & LD06（2D，360°） & 8 美元，满足 2D SLAM 需求 \\
+测距 & 4 × HC-SR04 超声波 & 基础避障（LiDAR 可选升级） \\
 IMU & BNO055（9 轴） & 片上融合，零配置 \\
-驱动 & 4 × 麦克纳姆轮 & 全向运动，室内优化 \\
-摄像头 & 1080p USB 鱼眼 & 大视场角，适配 VLM 任务 \\
-安全 & 双通道继电器 & ISO 13850 急停，硬件强制 \\
+驱动 & 4 × 65mm 麦克纳姆轮 & 全向运动，室内优化 \\
+摄像头 & 1080p USB 鱼眼 170° & 大视场角，适配 VLM 任务 \\
+安全 & 双通道继电器 + 急停按钮 & ISO 13850，硬件强制断电 \\
+电源 & 3 × 2S 18650 + BMS & 7.4V 供电，长续航 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\noindent \textit{可选升级}：LD06 激光雷达（+\$17）用于 2D SLAM 与 Nav2 自主导航。
 
 所有设计遵循 CERN-OHL-P~v2 协议发布，提供 KiCad~8 源文件、Gerber 制造文件及逐步装配文档。
 
@@ -222,9 +229,11 @@ IMU & BNO055（9 轴） & 片上融合，零配置 \\
 Mock 与 Gazebo 后端注入了与参考硬件物理特性匹配的噪声：
 
 \begin{itemize}
-    \item \textbf{激光雷达}（LD06）：高斯距离噪声 $\sigma = 8$~mm
-    \item \textbf{IMU}（BNO055）：陀螺仪噪声 $\sigma = 0.0014$~rad/s
-    \item \textbf{里程计}：麦克纳姆轮打滑率 5--15\% 随机变化
+    \item \textbf{激光雷达}（LD06）：高斯距离噪声 $\sigma = 8$~mm，随机丢失射线概率 1\%
+    \item \textbf{IMU}（BNO055）：陀螺仪噪声 $\sigma = 0.0014$~rad/s，加速度计噪声 $\sigma = 0.01$~m/s²
+    \item \textbf{相机}（OV5647）：像素噪声 $\sigma = 3$，亮度漂移 $\sigma = 5$
+    \item \textbf{里程计}：麦克纳姆轮打滑率 5--15\% 随机变化，航向噪声 $\sigma = 0.002$~rad
+    \item \textbf{电机电流}：测量噪声 $\sigma = 15$~mA，固定偏置 5~mA
 \end{itemize}
 
 \subsection{迁移验证协议}
@@ -251,6 +260,13 @@ Mock 与 Gazebo 后端注入了与参考硬件物理特性匹配的噪声：
 
 总体通过标准要求 $\geq$80\% 的测试项目通过。表~\ref{tab:transfer} 中的迁移率数据来自基于记录噪声模型的初步硬件验证；大规模验证正在进行中。
 
+迁移验证可通过 CLI 一键执行并生成完整报告：
+
+\begin{lstlisting}
+threewe sim2real report --backend gazebo \
+    --scene office_v2 --trials 5
+\end{lstlisting}
+
 % ===========================================================================
 \section{基准测试套件}
 
@@ -266,9 +282,9 @@ Mock 与 Gazebo 后端注入了与参考硬件物理特性匹配的噪声：
 基准测试套件定义了三类难度递增的导航任务：
 
 \begin{itemize}
-    \item \textbf{点导航（PointNav）}：导航至 $(x, y)$ 坐标。评估指标：成功率（SR）、SPL。
-    \item \textbf{目标导航（ObjectNav）}：寻找目标物体类别。评估指标：SR、SPL。
-    \item \textbf{探索（Exploration）}：在时间预算内最大化区域覆盖率。评估指标：覆盖率。
+    \item \textbf{点导航（PointNav）}：导航至 $(x, y)$ 坐标，成功阈值 0.5m。评估指标：成功率（SR）、SPL、平均耗时。有效场景覆盖全部 7 个环境。
+    \item \textbf{目标导航（ObjectNav）}：寻找 10 类目标物体（椅子、桌子、门、植物、显示器等）。评估指标：SR、SPL。有效场景：office\_v2、apartment\_v1、warehouse\_v1、cluttered\_v1、dynamic\_v1。
+    \item \textbf{探索（Exploration）}：在时间预算内最大化区域覆盖率（阈值 80\%）。评估指标：覆盖率、耗时。有效场景：5 个室内/室外环境。
 \end{itemize}
 
 \subsection{评估环境}
@@ -316,23 +332,81 @@ threewe benchmark run --task pointnav \
 
 \subsection{Gymnasium 集成}
 
-面向强化学习研究者，3we 提供标准 Gymnasium 环境接口：
+面向强化学习研究者，3we 提供四类标准 Gymnasium 环境及一个多智能体协作环境：
 
 \begin{lstlisting}
 import gymnasium as gym
-env = gym.make("3we/Navigation-v1",
-               scene="office_v2", backend="mock")
+
+# Point-to-point navigation
+env = gym.make("3we/Navigation-v1")
+
+# Coverage exploration
+env = gym.make("3we/Exploration-v1")
+
+# Object-goal navigation (10 categories)
+env = gym.make("3we/ObjectNav-v1")
+
+# Vision-Language Navigation (instruction-following)
+env = gym.make("3we/VLN-v1")
+
 obs, info = env.reset()
 obs, reward, term, trunc, info = env.step(action)
 \end{lstlisting}
+
+导航环境支持三级动作空间（\texttt{CMD\_VEL}：端到端 RL；\texttt{WHEEL\_VEL}：底层控制研究；\texttt{WAYPOINT}：高层 VLM/LLM 规划），并在 \texttt{info} 字典中返回底层物理量（wheel\_speeds、imu\_raw、motor\_current），便于域随机化与 sim-to-real 研究。
+
+此外，\texttt{MultiAgentEnv} 实现了兼容 PettingZoo 并行 API 的多机器人协作探索环境，支持 2--4 个智能体的协同覆盖策略训练。
+
+% ===========================================================================
+\section{硬件抽象与数据基础设施}
+
+\subsection{硬件抽象层（HAL）}
+
+为支持异构机器人平台，3we 实现了 \texttt{HardwareProfile} 协议，将运动学参数（轮型、轮距、轮径、速度上限）与传感器配置从控制逻辑中解耦。内置配置文件覆盖四种平台：
+
+\begin{itemize}
+    \item \textbf{3we\_standard\_v2}：麦克纳姆轮，0.24m 轮距，最大 0.5~m/s
+    \item \textbf{AgileX Scout}：差速驱动，65~kg，最大 1.5~m/s
+    \item \textbf{TurtleBot4}：差速驱动，3.9~kg，最大 0.31~m/s
+    \item \textbf{Unitree Go2}：四足，15~kg，最大 2.5~m/s
+\end{itemize}
+
+研究者亦可通过 YAML 文件定义自定义硬件配置文件，实现\texttt{Robot(hardware="my\_robot")} 即插即用。
+
+\subsection{轨迹录制与数据共享}
+
+\texttt{threewe.data} 模块提供：
+\begin{itemize}
+    \item \textbf{TrajectoryRecorder}：以固定频率录制观测-动作对，支持遥操作与自主执行场景。
+    \item \textbf{HDF5/LeRobot 导出}：兼容 HuggingFace Hub 的数据集格式，可直接用于 VLA 模型训练。
+    \item \textbf{数据集卡片生成}：自动生成符合 Hub 规范的 README.md 元数据。
+\end{itemize}
+
+\subsection{域随机化}
+
+\texttt{threewe.sim} 模块提供经硬件标定的传感器噪声模型（\texttt{SensorNoiseModel}），涵盖 LiDAR 距离噪声、IMU 漂移、相机像素噪声、里程计打滑及电机电流扰动。用户可在训练循环中调用 \texttt{noise.apply\_lidar(scan)} 等方法，无需修改仿真器底层即可实现域随机化：
+
+\begin{lstlisting}
+from threewe.sim.noise import SensorNoiseModel
+noise = SensorNoiseModel(seed=42)
+noisy_scan = noise.apply_lidar(clean_scan)
+noisy_accel, noisy_gyro, noisy_ori = noise.apply_imu(
+    acceleration, angular_velocity, orientation)
+\end{lstlisting}
+
+\subsection{实验可复现性}
+
+\texttt{ExperimentProtocol} 数据类锁定实验的全部可变量——随机种子、后端、场景、硬件配置、任务与超参数——并自动记录 SDK 版本与 Git SHA，确保结果可精确复现。
 
 % ===========================================================================
 \section{结论与未来工作}
 
 本文提出了 3we，一套完全开源的具身智能研究基础设施，通过统一的 Python API 弥合了仿真与现实之间的鸿沟。
-核心贡献包括：（1）跨四个后端的零代码 Sim2Real 迁移；（2）BOM 不超过 300 美元的可复现开放硬件；（3）将导航代码复杂度降低 12 倍的 AI 优先 API 设计；（4）附社区基线的标准化基准测试体系。
+核心贡献包括：（1）跨四个后端的零代码 Sim2Real 迁移；（2）BOM 约 300 美元的可复现开放硬件；（3）将导航代码复杂度降低 12 倍的 AI 优先 API 设计；（4）附社区基线的标准化基准测试体系；（5）支持第三方机器人的硬件抽象层；（6）兼容 LeRobot/Open-X 格式的轨迹录制与数据共享；（7）包含域随机化模块的仿真管线与 Hailo NPU 边缘 VLA 推理支持。
 
-未来方向包括：基于 Isaac Sim 域随机化的大规模强化学习、兼容 LeRobot/Open-X 格式的社区轨迹数据共享平台、支持第三方机器人的硬件抽象层，以及 VLA 模型在边缘硬件上的系统化部署评估。
+项目附带 6 份 Jupyter Notebook 教程（从 Hello World 到 Sim2Real 里程计漂移分析），研究者可无需硬件即刻验证零代码后端切换的实际效果。
+
+未来方向包括：基于 Isaac Sim 并行环境的大规模向量化 RL 训练、跨机器人零样本策略迁移（利用 HAL 归一化不同运动学模型）、与 RoboCup 标准赛题的深度集成、以及面向开放世界导航的基础模型端到端微调。
 
 本平台已在 \url{https://github.com/telleroutlook/3we-robot-platform} 公开发布，分别遵循 Apache~2.0（软件）、CERN-OHL-P~v2（硬件）及 CC-BY-SA~4.0（文档）协议。
 

@@ -38,8 +38,8 @@
 \begin{abstract}
 Embodied AI research requires tight integration of simulation, real hardware, and learning algorithms---yet existing platforms force researchers to choose between expensive proprietary systems, simulation-only environments, or hardware platforms with steep ROS2 learning curves.
 We present \textbf{3we}, a fully open-source infrastructure where the same Python code runs identically across a lightweight mock simulator, Gazebo, NVIDIA Isaac Sim, and real hardware (Raspberry Pi~5 + Hailo-8L) with zero modification.
-The platform provides an AI-First Python API that reduces typical ROS2 navigation code from 60+ lines to 5, Gymnasium-compatible environments, native VLM/VLA integration, and standardized benchmarks across 7 evaluation scenes.
-On reproducible hardware costing under \$300 (BOM), preliminary validation yields Sim-to-Real transfer ratios exceeding 0.6 on point navigation tasks, with community baselines achieving 82\% success rate (SPL 0.65) in structured simulation environments.
+The platform provides an AI-First Python API that reduces typical ROS2 navigation code from 60+ lines to 5; four Gymnasium-compatible environments (Navigation, Exploration, ObjectNav, Vision-Language Navigation) plus a multi-agent cooperative environment; native VLM/VLA integration with Hailo NPU edge inference; a Hardware Abstraction Layer (HAL) supporting third-party robots; trajectory recording with LeRobot/HuggingFace Hub interoperability; and standardized benchmarks across 7 evaluation scenes.
+On reproducible hardware costing approximately \$300 (BOM), preliminary validation yields Sim-to-Real transfer ratios exceeding 0.6 on point navigation tasks, with community baselines achieving 82\% success rate (SPL 0.65) in structured simulation environments.
 All software (Apache~2.0), hardware designs (CERN-OHL-P~v2), and documentation (CC-BY-SA~4.0) are publicly available.
 \end{abstract}
 
@@ -69,10 +69,12 @@ We introduce \textbf{3we} (``three-way Embodied''), an open infrastructure that 
 \end{figure}
 
 \begin{itemize}
-    \item \textbf{Open hardware under \$300 BOM} with fully reproducible PCB designs (KiCad), mechanical drawings, and sourcing guides under CERN-OHL-P~v2.
+    \item \textbf{Open hardware at approximately \$300 BOM} with fully reproducible PCB designs (KiCad), mechanical drawings, and sourcing guides under CERN-OHL-P~v2.
     \item \textbf{Zero-code Sim2Real}: a unified Python API where \texttt{Robot(backend="gazebo")} and \texttt{Robot(backend="real")} execute identical user code.
-    \item \textbf{AI-First API}: 5 lines from installation to first navigation, with native VLM/VLA integration and Gymnasium compatibility.
+    \item \textbf{AI-First API}: 5 lines from installation to first navigation, with native VLM/VLA integration, multi-level action spaces, and Gymnasium compatibility.
     \item \textbf{Standardized benchmarks}: 3 task types across 7 scenes with reproducible baselines and community leaderboard.
+    \item \textbf{Hardware Abstraction Layer}: built-in profiles for 3we, AgileX Scout, TurtleBot4, Unitree Go2, with user-extensible YAML definitions.
+    \item \textbf{Data and reproducibility}: trajectory recorder exports to LeRobot/Open-X format; \texttt{ExperimentProtocol} locks seed, version, and hyperparameters.
 \end{itemize}
 
 % ===========================================================================
@@ -131,22 +133,22 @@ Gymnasium Env & \checkmark & -- & \checkmark & \checkmark & \checkmark \\
 
 \begin{enumerate}
     \item \textbf{AI-First Python API} (user-facing): Researchers write standard Python with async/await. No ROS2, launch files, or message types exposed.
-    \item \textbf{3we-core} (middleware): Manages backend dispatch, sensor data standardization, coordinate transforms, and safety checks.
+    \item \textbf{3we-core} (middleware): Manages backend dispatch, sensor data standardization, coordinate transforms, safety checks, hardware abstraction, and domain randomization noise injection.
     \item \textbf{ROS2 / micro-ROS} (infrastructure): Nav2 path planning, SLAM, micro-ROS bridge to ESP32 firmware. Entirely transparent to users.
 \end{enumerate}
 
 \subsection{Backend Polymorphism}
 
-The core abstraction is \texttt{BackendBase}, implemented by five backends:
+The core abstraction is \texttt{BackendBase}, implemented by four backends:
 
 \begin{itemize}
-    \item \textbf{Mock}: Zero-dependency 2D kinematic simulation with configurable noise. Runs anywhere, no GPU or ROS2 needed.
+    \item \textbf{Mock}: Zero-dependency 2D kinematic simulation with configurable noise and collision detection. Runs anywhere, no GPU or ROS2 needed.
     \item \textbf{Gazebo}: Full physics via Gazebo Harmonic. CPU-friendly, CI-compatible (headless mode).
-    \item \textbf{Isaac Sim}: GPU-accelerated rendering and physics for large-scale RL training with domain randomization.
+    \item \textbf{Isaac Sim}: GPU-accelerated rendering and physics for large-scale parallel RL training with domain randomization and vectorized policy optimization.
     \item \textbf{Real}: Physical hardware via ROS2 topics. Identical API surface.
 \end{itemize}
 
-All backends return frozen dataclasses (\texttt{Pose2D}, \texttt{LaserScan}, \texttt{RGBDImage}) with identical fields and semantics, enforced by shared type definitions.
+All backends return typed dataclasses (\texttt{Pose2D}, \texttt{LaserScan}, \texttt{RGBDImage}, \texttt{IMUData}, \texttt{BatteryState}, etc.) with identical fields and semantics, enforced by shared type definitions.
 
 \begin{figure}[t]
 \centering
@@ -173,13 +175,15 @@ async with Robot(backend="gazebo") as robot:
 
 Switching to real hardware requires only changing the backend parameter---no code modification, no recompilation, no configuration changes.
 
+The API provides a rich perception and action interface: synchronous perception (\texttt{get\_camera\_image}, \texttt{get\_lidar\_scan}, \texttt{get\_pose}, \texttt{get\_imu}, \texttt{get\_battery\_state}, \texttt{get\_map}, \texttt{get\_wheel\_speeds}, \texttt{get\_motor\_current}), async navigation (\texttt{move\_to}, \texttt{move\_forward}, \texttt{rotate}, \texttt{explore}, \texttt{follow\_path}), and a standardized observation interface for RL (\texttt{get\_observation(modalities=...)}). VLA policy outputs drive the robot directly via \texttt{execute\_action(action)}.
+
 \subsection{Hardware Specification}
 
 Table~\ref{tab:hardware} summarizes the reference hardware at standard SKU level.
 
 \begin{table}[t]
 \centering
-\caption{Standard SKU Hardware (BOM: \$300)}
+\caption{Standard SKU Hardware (BOM: approximately \$300)}
 \label{tab:hardware}
 \scriptsize
 \begin{tabular}{@{}lll@{}}
@@ -189,14 +193,17 @@ Component & Selection & Rationale \\
 Compute & Raspberry Pi 5 (8GB) & Best price/performance ARM SBC \\
 AI Accelerator & Hailo-8L (13 TOPS) & Edge inference for VLM/VLA \\
 MCU & ESP32-S3 + micro-ROS & Real-time control + ROS2 native \\
-LiDAR & LD06 (2D, 360$^\circ$) & \$8, sufficient for 2D SLAM \\
+Ranging & 4$\times$ HC-SR04 ultrasonic & Basic obstacle avoidance (LiDAR optional) \\
 IMU & BNO055 (9-axis) & On-chip fusion, zero configuration \\
-Drive & 4$\times$ Mecanum wheels & Omnidirectional, indoor-optimized \\
-Camera & 1080p USB fisheye & Wide FoV for VLM tasks \\
-Safety & Dual-channel relay & ISO 13850 E-stop, hardware-enforced \\
+Drive & 4$\times$ 65mm Mecanum wheels & Omnidirectional, indoor-optimized \\
+Camera & 1080p USB fisheye 170$^\circ$ & Wide FoV for VLM tasks \\
+Safety & Dual-channel relay + E-stop & ISO 13850, hardware-enforced cutoff \\
+Power & 3$\times$ 2S 18650 + BMS & 7.4V supply, extended runtime \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\noindent \textit{Optional upgrade}: LD06 LiDAR (+\$17) for 2D SLAM and Nav2 autonomous navigation.
 
 All designs are released under CERN-OHL-P~v2 with KiCad~8 source files, Gerber manufacturing outputs, and step-by-step assembly documentation.
 
@@ -215,9 +222,11 @@ All designs are released under CERN-OHL-P~v2 with KiCad~8 source files, Gerber m
 The mock and Gazebo backends inject physically-grounded noise matching the reference hardware:
 
 \begin{itemize}
-    \item \textbf{LiDAR} (LD06): Gaussian range noise $\sigma = 8$~mm
-    \item \textbf{IMU} (BNO055): Gyroscope noise $\sigma = 0.0014$~rad/s
-    \item \textbf{Odometry}: Mecanum wheel slip 5--15\% stochastic variation
+    \item \textbf{LiDAR} (LD06): Gaussian range noise $\sigma = 8$~mm, 1\% missing ray probability
+    \item \textbf{IMU} (BNO055): Gyroscope noise $\sigma = 0.0014$~rad/s, accelerometer noise $\sigma = 0.01$~m/s$^2$
+    \item \textbf{Camera} (OV5647): Pixel noise $\sigma = 3$, brightness drift $\sigma = 5$
+    \item \textbf{Odometry}: Mecanum wheel slip 5--15\% stochastic variation, heading noise $\sigma = 0.002$~rad
+    \item \textbf{Motor current}: Measurement noise $\sigma = 15$~mA, fixed offset bias 5~mA
 \end{itemize}
 
 \subsection{Transfer Validation Protocol}
@@ -244,6 +253,13 @@ Dynamic obstacle & Collision rate & real $\leq$ sim $\times$ 1.5 & 0.81 \\
 
 Overall pass rate requires $\geq$80\% of tests passing. The transfer ratios in Table~\ref{tab:transfer} are derived from preliminary hardware trials with the documented noise model; large-scale validation is ongoing.
 
+Transfer validation can be executed via CLI with a single command:
+
+\begin{lstlisting}
+threewe sim2real report --backend gazebo \
+    --scene office_v2 --trials 5
+\end{lstlisting}
+
 % ===========================================================================
 \section{Benchmark Suite}
 
@@ -259,9 +275,9 @@ Overall pass rate requires $\geq$80\% of tests passing. The transfer ratios in T
 The benchmark suite defines three navigation tasks of increasing difficulty:
 
 \begin{itemize}
-    \item \textbf{PointNav}: Navigate to $(x, y)$ coordinates. Metrics: Success Rate (SR), SPL.
-    \item \textbf{ObjectNav}: Find a target object category. Metrics: SR, SPL.
-    \item \textbf{Exploration}: Maximize area coverage within time budget. Metric: Coverage fraction.
+    \item \textbf{PointNav}: Navigate to $(x, y)$ coordinates (success threshold: 0.5m). Metrics: Success Rate (SR), SPL, average duration. Valid across all 7 scenes.
+    \item \textbf{ObjectNav}: Find a target object from 10 categories (chair, desk, door, plant, monitor, etc.). Metrics: SR, SPL. Valid in 5 scenes.
+    \item \textbf{Exploration}: Maximize area coverage within time budget (threshold: 80\%). Metrics: Coverage fraction, duration. Valid in 5 scenes.
 \end{itemize}
 
 \subsection{Evaluation Environments}
@@ -309,23 +325,81 @@ threewe benchmark run --task pointnav \
 
 \subsection{Gymnasium Integration}
 
-For RL researchers, 3we provides standard Gymnasium environments:
+For RL researchers, 3we provides four standard Gymnasium environments and a multi-agent cooperative environment:
 
 \begin{lstlisting}
 import gymnasium as gym
-env = gym.make("3we/Navigation-v1",
-               scene="office_v2", backend="mock")
+
+# Point-to-point navigation
+env = gym.make("3we/Navigation-v1")
+
+# Coverage exploration
+env = gym.make("3we/Exploration-v1")
+
+# Object-goal navigation (10 categories)
+env = gym.make("3we/ObjectNav-v1")
+
+# Vision-Language Navigation (instruction-following)
+env = gym.make("3we/VLN-v1")
+
 obs, info = env.reset()
 obs, reward, term, trunc, info = env.step(action)
 \end{lstlisting}
+
+The Navigation environment supports three action levels (\texttt{CMD\_VEL}: end-to-end RL; \texttt{WHEEL\_VEL}: low-level control research; \texttt{WAYPOINT}: high-level VLM/LLM planning) and returns low-level physics data (wheel speeds, IMU, motor current) in the \texttt{info} dict for domain randomization research.
+
+Additionally, \texttt{MultiAgentEnv} implements a PettingZoo-compatible parallel API for 2--4 robot cooperative exploration training.
+
+% ===========================================================================
+\section{Hardware Abstraction and Data Infrastructure}
+
+\subsection{Hardware Abstraction Layer (HAL)}
+
+To support heterogeneous robot platforms, 3we implements a \texttt{HardwareProfile} protocol that decouples kinematic parameters (wheel type, separation, radius, velocity limits) and sensor configuration from control logic. Built-in profiles cover four platforms:
+
+\begin{itemize}
+    \item \textbf{3we\_standard\_v2}: Mecanum wheels, 0.24m separation, max 0.5~m/s
+    \item \textbf{AgileX Scout}: Differential drive, 65~kg, max 1.5~m/s
+    \item \textbf{TurtleBot4}: Differential drive, 3.9~kg, max 0.31~m/s
+    \item \textbf{Unitree Go2}: Quadruped, 15~kg, max 2.5~m/s
+\end{itemize}
+
+Researchers can define custom hardware profiles via YAML files, enabling \texttt{Robot(hardware="my\_robot")} plug-and-play integration.
+
+\subsection{Trajectory Recording and Data Sharing}
+
+The \texttt{threewe.data} module provides:
+\begin{itemize}
+    \item \textbf{TrajectoryRecorder}: Records observation-action pairs at fixed frequency during teleoperation or autonomous execution.
+    \item \textbf{HDF5/LeRobot export}: Dataset format compatible with HuggingFace Hub, directly usable for VLA model training.
+    \item \textbf{Dataset card generation}: Automatic README.md metadata conforming to Hub specifications.
+\end{itemize}
+
+\subsection{Domain Randomization}
+
+The \texttt{threewe.sim} module provides hardware-calibrated sensor noise models (\texttt{SensorNoiseModel}) covering LiDAR range noise, IMU drift, camera pixel noise, odometry slip, and motor current perturbation. Users inject noise in training loops via \texttt{noise.apply\_lidar(scan)} without modifying the underlying simulator:
+
+\begin{lstlisting}
+from threewe.sim.noise import SensorNoiseModel
+noise = SensorNoiseModel(seed=42)
+noisy_scan = noise.apply_lidar(clean_scan)
+noisy_accel, noisy_gyro, noisy_ori = noise.apply_imu(
+    acceleration, angular_velocity, orientation)
+\end{lstlisting}
+
+\subsection{Experiment Reproducibility}
+
+The \texttt{ExperimentProtocol} dataclass locks all experiment variables---random seed, backend, scene, hardware profile, task, and hyperparameters---and automatically records SDK version and Git SHA, ensuring exact reproducibility.
 
 % ===========================================================================
 \section{Conclusion and Future Work}
 
 We presented 3we, a fully open infrastructure for Embodied AI research that bridges the gap between simulation and reality through a unified Python API.
-Key contributions include: (1)~zero-code Sim2Real transfer across four backends, (2)~reproducible open hardware at \$300 BOM, (3)~AI-first API design reducing navigation code complexity by 12$\times$, and (4)~standardized benchmarks with community baselines.
+Key contributions include: (1)~zero-code Sim2Real transfer across four backends, (2)~reproducible open hardware at approximately \$300 BOM, (3)~AI-first API design reducing navigation code complexity by 12$\times$, (4)~standardized benchmarks with community baselines, (5)~Hardware Abstraction Layer supporting third-party robots, (6)~trajectory recording with LeRobot/Open-X format interoperability, and (7)~domain randomization module with Hailo NPU edge VLA inference support.
 
-Future directions include: Isaac Sim domain randomization for large-scale RL, a community data hub for trajectory sharing (compatible with LeRobot/Open-X formats), Hardware Abstraction Layer for third-party robot support, and systematic VLA model deployment evaluation on edge hardware.
+The project ships 6 Jupyter Notebook tutorials (from Hello World to Sim2Real odometry drift analysis), enabling researchers to immediately verify zero-code backend switching without hardware.
+
+Future directions include: large-scale vectorized RL training using Isaac Sim parallel environments, cross-robot zero-shot policy transfer (leveraging HAL to normalize heterogeneous kinematics), deeper integration with RoboCup standard tasks, and end-to-end foundation model fine-tuning for open-world navigation.
 
 The platform is available at \url{https://github.com/telleroutlook/3we-robot-platform} under Apache~2.0 (software), CERN-OHL-P~v2 (hardware), and CC-BY-SA~4.0 (documentation).
 
