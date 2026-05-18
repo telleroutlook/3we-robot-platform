@@ -1,0 +1,9 @@
+Ref,Val,Package,PosX,PosY,Rot,Side
+"J1","PBC-34_Payload_Bus","PBC-34",60.000000,-87.000000,0.000000,top
+"J2","XT30_Battery","XT30_Male_Vertical",10.000000,-10.000000,0.000000,top
+"J3","USB_C","USB_C_Receptacle_HRO_TYPE-C-31-M-12",117.000000,-45.000000,0.000000,top
+"MH1","MountingHole_M2.5","MountingHole_2.7mm_M2.5_Pad_Via",5.000000,-20.000000,0.000000,top
+"MH2","MountingHole_M2.5","MountingHole_2.7mm_M2.5_Pad_Via",115.000000,-20.000000,0.000000,top
+"MH3","MountingHole_M2.5","MountingHole_2.7mm_M2.5_Pad_Via",5.000000,-70.000000,0.000000,top
+"MH4","MountingHole_M2.5","MountingHole_2.7mm_M2.5_Pad_Via",115.000000,-70.000000,0.000000,top
+"U1","ESP32-S3-WROOM-1","ESP32-S3-WROOM-1",60.000000,-40.000000,0.000000,top
