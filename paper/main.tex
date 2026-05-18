@@ -316,7 +316,7 @@ Exploration & warehouse\_v1 & --- & --- & 110.0 \\
 \end{tabular}
 \end{table}
 
-These baselines serve as reference points for the community leaderboard. Results are fully reproducible via:
+These baselines serve as reference points for the public community leaderboard, which is hosted as a versioned JSON file in the repository (\texttt{data/leaderboard.json}) and rendered at \url{https://3we.org/benchmarks}. Submissions are validated against the standardized seed protocol and SDK version. Results are fully reproducible via:
 
 \begin{lstlisting}
 threewe benchmark run --task pointnav \
@@ -375,7 +375,7 @@ The \texttt{threewe.data} module provides:
     \item \textbf{Dataset card generation}: Automatic README.md metadata conforming to Hub specifications.
 \end{itemize}
 
-\subsection{Domain Randomization}
+\subsection{Domain Randomization and Fault Injection}
 
 The \texttt{threewe.sim} module provides hardware-calibrated sensor noise models (\texttt{SensorNoiseModel}) covering LiDAR range noise, IMU drift, camera pixel noise, odometry slip, and motor current perturbation. Users inject noise in training loops via \texttt{noise.apply\_lidar(scan)} without modifying the underlying simulator:
 
@@ -387,6 +387,16 @@ noisy_accel, noisy_gyro, noisy_ori = noise.apply_imu(
     acceleration, angular_velocity, orientation)
 \end{lstlisting}
 
+Beyond sensor-level noise, \texttt{FaultInjector} wraps any backend to simulate communication-layer faults---configurable latency with jitter, stochastic packet loss (returning stale sensor data), and timed disconnections---enabling chaos-engineering tests of policies and ROS2 stacks without modifying user code:
+
+\begin{lstlisting}
+from threewe.sim.fault_injection import (
+    FaultConfig, FaultInjector)
+config = FaultConfig(latency_ms=50,
+                     packet_loss_rate=0.1)
+faulty = FaultInjector(backend, config)
+\end{lstlisting}
+
 \subsection{Experiment Reproducibility}
 
 The \texttt{ExperimentProtocol} dataclass locks all experiment variables---random seed, backend, scene, hardware profile, task, and hyperparameters---and automatically records SDK version and Git SHA, ensuring exact reproducibility.
@@ -395,7 +405,7 @@ The \texttt{ExperimentProtocol} dataclass locks all experiment variables---rando
 \section{Conclusion and Future Work}
 
 We presented 3we, a fully open infrastructure for Embodied AI research that bridges the gap between simulation and reality through a unified Python API.
-Key contributions include: (1)~zero-code Sim2Real transfer across four backends, (2)~reproducible open hardware at approximately \$300 BOM, (3)~AI-first API design reducing navigation code complexity by 12$\times$, (4)~standardized benchmarks with community baselines, (5)~Hardware Abstraction Layer supporting third-party robots, (6)~trajectory recording with LeRobot/Open-X format interoperability, and (7)~domain randomization module with Hailo NPU edge VLA inference support.
+Key contributions include: (1)~zero-code Sim2Real transfer across four backends, (2)~reproducible open hardware at approximately \$300 BOM, (3)~AI-first API design reducing navigation code complexity by 12$\times$, (4)~standardized benchmarks with community baselines and a public leaderboard, (5)~Hardware Abstraction Layer supporting third-party robots, (6)~trajectory recording with LeRobot/Open-X format interoperability, and (7)~a domain-randomization module covering both sensor noise and communication-layer fault injection, with Hailo NPU edge VLA inference support.
 
 The project ships 6 Jupyter Notebook tutorials (from Hello World to Sim2Real odometry drift analysis), enabling researchers to immediately verify zero-code backend switching without hardware.
 

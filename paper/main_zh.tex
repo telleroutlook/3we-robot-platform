@@ -10,6 +10,7 @@
 \usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{multicol}
+\usepackage{float}
 \usepackage{balance}
 
 \geometry{a4paper, margin=2.5cm}
@@ -323,7 +324,7 @@ threewe sim2real report --backend gazebo \
 \end{tabular}
 \end{table}
 
-上述基线结果作为社区排行榜的参考基准，可通过以下命令完全复现：
+上述基线结果作为公开社区排行榜的参考基准；排行榜以版本化 JSON 文件形式托管于代码仓库（\texttt{data/leaderboard.json}），并渲染于 \url{https://3we.org/benchmarks}。提交结果须依据标准化种子协议与 SDK 版本进行验证。结果可通过以下命令完全复现：
 
 \begin{lstlisting}
 threewe benchmark run --task pointnav \
@@ -382,7 +383,7 @@ obs, reward, term, trunc, info = env.step(action)
     \item \textbf{数据集卡片生成}：自动生成符合 Hub 规范的 README.md 元数据。
 \end{itemize}
 
-\subsection{域随机化}
+\subsection{域随机化与故障注入}
 
 \texttt{threewe.sim} 模块提供经硬件标定的传感器噪声模型（\texttt{SensorNoiseModel}），涵盖 LiDAR 距离噪声、IMU 漂移、相机像素噪声、里程计打滑及电机电流扰动。用户可在训练循环中调用 \texttt{noise.apply\_lidar(scan)} 等方法，无需修改仿真器底层即可实现域随机化：
 
@@ -394,6 +395,16 @@ noisy_accel, noisy_gyro, noisy_ori = noise.apply_imu(
     acceleration, angular_velocity, orientation)
 \end{lstlisting}
 
+除传感器层噪声外，\texttt{FaultInjector} 可包装任意后端以模拟通信层故障——可配置的延迟与抖动、随机丢包（返回过期传感器数据）以及定时断连——使研究者无需修改用户代码即可对策略与 ROS2 协议栈进行混沌工程测试：
+
+\begin{lstlisting}
+from threewe.sim.fault_injection import (
+    FaultConfig, FaultInjector)
+config = FaultConfig(latency_ms=50,
+                     packet_loss_rate=0.1)
+faulty = FaultInjector(backend, config)
+\end{lstlisting}
+
 \subsection{实验可复现性}
 
 \texttt{ExperimentProtocol} 数据类锁定实验的全部可变量——随机种子、后端、场景、硬件配置、任务与超参数——并自动记录 SDK 版本与 Git SHA，确保结果可精确复现。
@@ -402,7 +413,7 @@ noisy_accel, noisy_gyro, noisy_ori = noise.apply_imu(
 \section{结论与未来工作}
 
 本文提出了 3we，一套完全开源的具身智能研究基础设施，通过统一的 Python API 弥合了仿真与现实之间的鸿沟。
-核心贡献包括：（1）跨四个后端的零代码 Sim2Real 迁移；（2）BOM 约 300 美元的可复现开放硬件；（3）将导航代码复杂度降低 12 倍的 AI 优先 API 设计；（4）附社区基线的标准化基准测试体系；（5）支持第三方机器人的硬件抽象层；（6）兼容 LeRobot/Open-X 格式的轨迹录制与数据共享；（7）包含域随机化模块的仿真管线与 Hailo NPU 边缘 VLA 推理支持。
+核心贡献包括：（1）跨四个后端的零代码 Sim2Real 迁移；（2）BOM 约 300 美元的可复现开放硬件；（3）将导航代码复杂度降低 12 倍的 AI 优先 API 设计；（4）附社区基线与公开排行榜的标准化基准测试体系；（5）支持第三方机器人的硬件抽象层；（6）兼容 LeRobot/Open-X 格式的轨迹录制与数据共享；（7）同时覆盖传感器噪声与通信层故障注入的域随机化模块，并支持 Hailo NPU 边缘 VLA 推理。
 
 项目附带 6 份 Jupyter Notebook 教程（从 Hello World 到 Sim2Real 里程计漂移分析），研究者可无需硬件即刻验证零代码后端切换的实际效果。
 
