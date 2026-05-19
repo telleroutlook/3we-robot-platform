@@ -47,7 +47,7 @@ async def main():
 asyncio.run(main())
 ```
 
-Switch `backend="gazebo"` to `backend="real"` — zero code changes.
+Switch `backend="gazebo"` to `backend="real"` — the Python API stays the same. Sim-to-real transfer in practice still depends on your task; see [Sim-to-Real Gap](sim_to_real_gap.md) for what needs tuning.
 
 ---
 

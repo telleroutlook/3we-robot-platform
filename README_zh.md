@@ -10,8 +10,12 @@
 [![PyPI](https://img.shields.io/badge/pip_install-threewe_(coming_soon)-orange.svg)](sdk/threewe/)
 [![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blueviolet.svg)](https://ros.org/)
 
-面向具身 AI 研究的开源机器人平台 —— 同样的 Python 代码在仿真和真机上零代码修改运行，
+面向具身 AI 研究的开源机器人平台 —— 仿真与真机使用一致的 Python API，
 硬件复现成本 <$500。
+
+> **关于 Sim2Real 的说明：** 切换后端时 Python API 保持一致，但实际的 sim-to-real
+> 迁移仍需要针对任务调整（传感器模型、噪声、动力学）。我们为常见场景提供 preset，
+> 但不会声称已经消除 reality gap。详见 [Sim-to-Real Gap 说明](docs/sim_to_real_gap.md)。
 
 <img src="https://img.xuexiao.eu.org/1778836342754-19b737g.gif" alt="3we autonomous navigation demo" width="720">
 
@@ -50,7 +54,7 @@ async with Robot(backend="mock") as robot:
     pose = robot.get_pose()
 ```
 
-将 `backend="mock"` 切换为 `backend="gazebo"` 或 `backend="real"` —— 零代码修改，同一 API。
+将 `backend="mock"` 切换为 `backend="gazebo"` 或 `backend="real"` —— Python API 保持一致。传感器模型和仿真配置可能仍需按任务调整，详见 [Sim-to-Real Gap](docs/sim_to_real_gap.md)。
 
 ---
 
@@ -60,7 +64,7 @@ async with Robot(backend="mock") as robot:
 |:---|:---|:---|
 | **AI/ML 研究者** | Gymnasium 环境、VLM/VLA 集成、轨迹录制 —— 专注模型，无需学 ROS2 | [快速开始 (AI)](docs/getting_started_ai.md) |
 | **机器人学生** | 从 PCB 到 Python 的完整栈，硬件 <$500，生产级代码而非玩具示例 | [快速开始 (基础)](docs/getting_started_basic.md) |
-| **RL 研究者** | `gymnasium.make("3we/Navigation-v1")` —— 标准 RL 接口，真正的 Sim2Real 迁移 | [快速开始 (AI)](docs/getting_started_ai.md) |
+| **RL 研究者** | `gymnasium.make("3we/Navigation-v1")` —— 标准 RL 接口，常见任务提供 sim-to-real preset | [快速开始 (AI)](docs/getting_started_ai.md) |
 | **硬件爱好者** | 开放 BOM、组装指南、CERN-OHL-P 开源 PCB + 结构件 | [组装指南](docs/assembly_guide.md) |
 
 ---
@@ -166,7 +170,7 @@ threewe benchmark run --task pointnav --episodes 100 --backend gazebo
 
 | 能力 | 状态 | 详情 |
 |------|------|------|
-| Sim2Real 零代码切换 | ✅ 就绪 | 4 种后端（mock/gazebo/isaac_sim/real），Python API 完全一致 |
+| 跨后端一致的 Python API | ✅ 就绪 | 4 种后端（mock/gazebo/isaac_sim/real），同一 Robot 类 —— 任务相关的仿真调参仍需自行完成（[详情](docs/sim_to_real_gap.md)） |
 | 模仿学习数据 | ✅ 就绪 | `save_lerobot()` 导出 + HuggingFace Hub 推送/拉取 |
 | VLM/LLM 控制 | ✅ 就绪 | GPT-4o / Qwen-VL，异步 API 与 50Hz 控制循环解耦 |
 | 硬件安全 | ✅ 就绪 | 3 级看门狗：500ms cmd_vel 超时、1s 软件 WDT、1.6s 硬件 WDT (TPS3813) |
@@ -213,7 +217,7 @@ threewe benchmark run --task pointnav --episodes 100 --backend gazebo
 | 特性 | **3we** | TurtleBot 4 | LeRobot | Isaac Lab |
 |:--------|:---:|:---:|:---:|:---:|
 | Python API（无需 ROS2 知识） | 是 | 否 | N/A | 部分 |
-| Sim2Real（零代码修改） | 是 | 否 | 否 | 是 |
+| 同一 API：mock → 仿真 → 真机 | 是 | 否 | 否 | 是 |
 | 开放硬件（PCB + BOM） | 完全 | 部分 | N/A | N/A |
 | Gymnasium 接口 | 是 | 否 | 部分 | 是 |
 | VLM/VLA 集成 | 是 | 否 | 是 | 否 |

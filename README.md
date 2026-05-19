@@ -10,8 +10,14 @@
 [![PyPI](https://img.shields.io/badge/pip_install-threewe_(coming_soon)-orange.svg)](sdk/threewe/)
 [![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blueviolet.svg)](https://ros.org/)
 
-An open-source robot platform for Embodied AI research — the same Python code
-runs identically in simulation and on real hardware, with <$500 reproducible hardware.
+An open-source robot platform for Embodied AI research — a consistent Python API
+across simulation and real hardware, with <$500 reproducible hardware.
+
+> **A note on Sim2Real:** The Python API stays the same when you switch backends, but
+> sim-to-real transfer in practice still requires task-specific tuning (sensor models,
+> noise, dynamics). We provide presets for common scenarios; we don't claim the gap
+> away. See [Sim-to-Real Gap](docs/sim_to_real_gap.md) for what works, what doesn't,
+> and where you'll likely need to do downstream work.
 
 <img src="https://img.xuexiao.eu.org/1778836342754-19b737g.gif" alt="3we autonomous navigation demo" width="720">
 
@@ -50,7 +56,7 @@ async with Robot(backend="mock") as robot:
     pose = robot.get_pose()
 ```
 
-Switch `backend="mock"` to `backend="gazebo"` or `backend="real"` — zero code changes, same API.
+Switch `backend="mock"` to `backend="gazebo"` or `backend="real"` — the Python API stays the same. Sensor models and sim configs may still need task-specific tuning; see [Sim-to-Real Gap](docs/sim_to_real_gap.md).
 
 ---
 
@@ -60,7 +66,7 @@ Switch `backend="mock"` to `backend="gazebo"` or `backend="real"` — zero code 
 |:---|:---|:---|
 | **AI/ML Researcher** | Gymnasium envs, VLM/VLA integration, trajectory recording — focus on your model, not ROS2 | [Getting Started (AI)](docs/getting_started_ai.md) |
 | **Robotics Student** | Full stack from PCB to Python, <$500 hardware, production-grade code instead of toy examples | [Getting Started (Basic)](docs/getting_started_basic.md) |
-| **RL Practitioner** | `gymnasium.make("3we/Navigation-v1")` — standard RL interface with real Sim2Real transfer | [Getting Started (AI)](docs/getting_started_ai.md) |
+| **RL Practitioner** | `gymnasium.make("3we/Navigation-v1")` — standard RL interface with sim-to-real presets for common tasks | [Getting Started (AI)](docs/getting_started_ai.md) |
 | **Hardware Builder** | Open BOM, assembly guide, CERN-OHL-P licensed PCB + structure | [Assembly Guide](docs/assembly_guide.md) |
 
 ---
@@ -166,7 +172,7 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 
 | Capability | Status | Details |
 |------------|--------|---------|
-| Sim2Real Zero-Code Switch | ✅ Ready | 4 backends (mock/gazebo/isaac_sim/real), identical Python API |
+| Consistent Python API across backends | ✅ Ready | 4 backends (mock/gazebo/isaac_sim/real), same Robot class — task-specific sim tuning still required ([details](docs/sim_to_real_gap.md)) |
 | Imitation Learning Data | ✅ Ready | `save_lerobot()` export + HuggingFace Hub push/pull |
 | VLM/LLM Control | ✅ Ready | GPT-4o / Qwen-VL, async API decoupled from 50Hz control loop |
 | Hardware Safety | ✅ Ready | 3-tier watchdog: 500ms cmd_vel timeout, 1s software WDT, 1.6s hardware WDT (TPS3813) |
@@ -213,7 +219,7 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 | Feature | **3we** | TurtleBot 4 | LeRobot | Isaac Lab |
 |:--------|:---:|:---:|:---:|:---:|
 | Python API (no ROS2 knowledge needed) | Yes | No | N/A | Partial |
-| Sim2Real (zero code change) | Yes | No | No | Yes |
+| Same API, mock → sim → real | Yes | No | No | Yes |
 | Open Hardware (PCB + BOM) | Full | Partial | N/A | N/A |
 | Gymnasium Interface | Yes | No | Partial | Yes |
 | VLM/VLA Integration | Yes | No | Yes | No |

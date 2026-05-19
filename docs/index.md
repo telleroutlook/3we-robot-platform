@@ -1,6 +1,6 @@
 # 3we Robot Platform Documentation
 
-AI-First Open Infrastructure for Embodied Robotics — same Python code runs in simulation and on real hardware.
+AI-First Open Infrastructure for Embodied Robotics — a consistent Python API across simulation backends and real hardware. Sim-to-real transfer still requires task-specific tuning; see the [Sim-to-Real Gap](sim_to_real_gap.md) page for what works out of the box and what doesn't.
 
 ---
 
@@ -30,7 +30,8 @@ print(robot.pose())
 
     [:octicons-arrow-right-24: Basic Setup](getting_started_basic.md)
     [:octicons-arrow-right-24: AI Researchers](getting_started_ai.md)
-    [:octicons-arrow-right-24: Sim2Real](guides/sim2real_quickstart.md)
+    [:octicons-arrow-right-24: Sim2Real Quickstart](guides/sim2real_quickstart.md)
+    [:octicons-arrow-right-24: Sim-to-Real Gap](sim_to_real_gap.md)
 
 - :material-api: **SDK Reference**
 

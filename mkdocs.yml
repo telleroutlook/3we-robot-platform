@@ -49,6 +49,7 @@ nav:
       - Basic Setup: getting_started_basic.md
       - AI Researchers: getting_started_ai.md
       - Sim2Real Quickstart: guides/sim2real_quickstart.md
+      - Sim-to-Real Gap: sim_to_real_gap.md
       - Troubleshooting: troubleshooting.md
   - Architecture:
       - System Diagrams: architecture-diagrams.md

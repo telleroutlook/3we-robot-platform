@@ -1,6 +1,6 @@
 # Sim2Real Quick Start Guide
 
-> Train a navigation policy in simulation. Deploy on real hardware. Zero code changes.
+> Train a navigation policy in simulation, then deploy on real hardware using the same Python API. **The API is the same — sim-to-real transfer is not.** This guide covers the easy case (point-to-point navigation in a structured environment); for what genuinely transfers and what doesn't, see [Sim-to-Real Gap](../sim_to_real_gap.md) first.
 
 ## Prerequisites
 
@@ -57,11 +57,11 @@ asyncio.run(evaluate("gazebo"))
 ## Step 3: Deploy on Real Hardware
 
 ```python
-# THE ONLY CHANGE: backend="gazebo" → backend="real"
+# Same code, real hardware: backend="gazebo" → backend="real"
 asyncio.run(evaluate("real"))
 ```
 
-That's it. No retraining. No fine-tuning. No code modification.
+The Python API is identical, but expect a sim-to-real gap in practice. For point-to-point navigation in a controlled environment with conservative speeds, a policy trained in Gazebo often transfers usefully without retraining. Tasks that depend on detailed sensor characteristics (raw IMU, RGB-based perception, contact dynamics) typically need domain randomization, sim config tuning, or fine-tuning on real data. See [Sim-to-Real Gap](../sim_to_real_gap.md) for specifics.
 
 ## One-Click Script
 
