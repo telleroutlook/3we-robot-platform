@@ -46,7 +46,7 @@ jobs:
           # ctex needs the full font set; the action's default image (TeX Live full) covers it.
 
       - name: Upload PDFs as artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: papers
           path: |
