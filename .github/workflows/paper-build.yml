@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Paper Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'paper/**.tex'
+      - 'paper/**.bib'
+      - 'paper/figures/**'
+      - 'paper/generate_*.py'
+      - '.github/workflows/paper-build.yml'
+  pull_request:
+    paths:
+      - 'paper/**.tex'
+      - 'paper/**.bib'
+      - 'paper/figures/**'
+      - 'paper/generate_*.py'
+      - '.github/workflows/paper-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # commit-back step needs full history + write-capable token
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compile English paper (xelatex)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: paper
+          latexmk_use_xelatex: true
+          latexmk_shell_escape: false
+
+      - name: Compile Chinese paper (xelatex)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main_zh.tex
+          working_directory: paper
+          latexmk_use_xelatex: true
+          latexmk_shell_escape: false
+          # ctex needs the full font set; the action's default image (TeX Live full) covers it.
+
+      - name: Upload PDFs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: papers
+          path: |
+            paper/main.pdf
+            paper/main_zh.pdf
+          if-no-files-found: error
+
+      - name: Commit rebuilt PDFs back to main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -e
+          if git diff --quiet -- paper/main.pdf paper/main_zh.pdf; then
+            echo "PDFs unchanged — nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add paper/main.pdf paper/main_zh.pdf
+          git commit -m "docs(paper): rebuild PDFs from latest .tex sources [skip ci]"
+          git push

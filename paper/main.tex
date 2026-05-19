@@ -37,7 +37,7 @@
 % ===========================================================================
 \begin{abstract}
 Embodied AI research requires tight integration of simulation, real hardware, and learning algorithms---yet existing platforms force researchers to choose between expensive proprietary systems, simulation-only environments, or hardware platforms with steep ROS2 learning curves.
-We present \textbf{3we}, a fully open-source infrastructure where the same Python code runs identically across a lightweight mock simulator, Gazebo, NVIDIA Isaac Sim, and real hardware (Raspberry Pi~5 + Hailo-8L) with zero modification.
+We present \textbf{3we}, a fully open-source infrastructure that exposes a consistent Python API across a lightweight mock simulator, Gazebo, NVIDIA Isaac Sim, and real hardware (Raspberry Pi~5 + Hailo-8L), so the same user code targets every backend without modification. We make no claim of zero-effort sim-to-real transfer: closing the residual gap (sensor models, dynamics, actuator delay) still requires task-specific tuning, which the platform supports through documented domain-randomization and fault-injection hooks.
 The platform provides an AI-First Python API that reduces typical ROS2 navigation code from 60+ lines to 5; four Gymnasium-compatible environments (Navigation, Exploration, ObjectNav, Vision-Language Navigation) plus a multi-agent cooperative environment; native VLM/VLA integration with Hailo NPU edge inference; a Hardware Abstraction Layer (HAL) supporting third-party robots; trajectory recording with LeRobot/HuggingFace Hub interoperability; and standardized benchmarks across 7 evaluation scenes.
 On reproducible hardware costing approximately \$300 (BOM), preliminary validation yields Sim-to-Real transfer ratios exceeding 0.6 on point navigation tasks, with community baselines achieving 82\% success rate (SPL 0.65) in structured simulation environments.
 All software (Apache~2.0), hardware designs (CERN-OHL-P~v2), and documentation (CC-BY-SA~4.0) are publicly available.
@@ -70,7 +70,7 @@ We introduce \textbf{3we} (``three-way Embodied''), an open infrastructure that 
 
 \begin{itemize}
     \item \textbf{Open hardware at approximately \$300 BOM} with fully reproducible PCB designs (KiCad), mechanical drawings, and sourcing guides under CERN-OHL-P~v2.
-    \item \textbf{Zero-code Sim2Real}: a unified Python API where \texttt{Robot(backend="gazebo")} and \texttt{Robot(backend="real")} execute identical user code.
+    \item \textbf{Consistent API across backends}: a unified Python API where \texttt{Robot(backend="gazebo")} and \texttt{Robot(backend="real")} execute the same user code without modification. Closing the residual sim-to-real gap remains a task-level concern, supported by the platform's noise and fault-injection hooks.
     \item \textbf{AI-First API}: 5 lines from installation to first navigation, with native VLM/VLA integration, multi-level action spaces, and Gymnasium compatibility.
     \item \textbf{Standardized benchmarks}: 3 task types across 7 scenes with reproducible baselines and community leaderboard.
     \item \textbf{Hardware Abstraction Layer}: built-in profiles for 3we, AgileX Scout, TurtleBot4, Unitree Go2, with user-extensible YAML definitions.
@@ -94,7 +94,7 @@ LeRobot~\cite{cadene2024lerobot} (HuggingFace) provides VLA model deployment for
 
 \subsection{Positioning}
 
-3we occupies a unique position: fully open hardware \emph{and} software with guaranteed Sim2Real API consistency, ROS2-native navigation, and AI-first design. Table~\ref{tab:comparison} summarizes key differences.
+3we occupies a unique position: fully open hardware \emph{and} software with a guaranteed-consistent Python API across all backends (an API-level contract; sim-to-real \emph{transfer} still requires task-specific tuning), ROS2-native navigation, and AI-first design. Table~\ref{tab:comparison} summarizes key differences.
 
 \begin{table}[t]
 \centering
@@ -107,7 +107,7 @@ Feature & 3we & TurtleBot4 & Isaac Lab & LeRobot & Habitat \\
 \midrule
 Open Hardware & \checkmark & -- & -- & \checkmark & -- \\
 BOM $\leq$\$300 & \checkmark & -- & N/A & \checkmark & N/A \\
-Sim2Real API & \checkmark & -- & Sim only & -- & Sim only \\
+Cross-backend API & \checkmark & -- & Sim only & -- & Sim only \\
 ROS2 + Nav2 & \checkmark & \checkmark & Partial & -- & -- \\
 AI-First Python & \checkmark & -- & \checkmark & \checkmark & \checkmark \\
 VLM/VLA Native & \checkmark & -- & -- & \checkmark & -- \\
@@ -405,9 +405,9 @@ The \texttt{ExperimentProtocol} dataclass locks all experiment variables---rando
 \section{Conclusion and Future Work}
 
 We presented 3we, a fully open infrastructure for Embodied AI research that bridges the gap between simulation and reality through a unified Python API.
-Key contributions include: (1)~zero-code Sim2Real transfer across four backends, (2)~reproducible open hardware at approximately \$300 BOM, (3)~AI-first API design reducing navigation code complexity by 12$\times$, (4)~standardized benchmarks with community baselines and a public leaderboard, (5)~Hardware Abstraction Layer supporting third-party robots, (6)~trajectory recording with LeRobot/Open-X format interoperability, and (7)~a domain-randomization module covering both sensor noise and communication-layer fault injection, with Hailo NPU edge VLA inference support.
+Key contributions include: (1)~a Python API that runs unchanged across four backends (mock, Gazebo, Isaac Sim, real hardware), with explicit hooks for closing the residual sim-to-real gap rather than a claim of zero-effort transfer; (2)~reproducible open hardware at approximately \$300 BOM; (3)~AI-first API design reducing navigation code complexity by 12$\times$; (4)~standardized benchmarks with community baselines and a public leaderboard; (5)~Hardware Abstraction Layer supporting third-party robots; (6)~trajectory recording with LeRobot/Open-X format interoperability; and (7)~a domain-randomization module covering both sensor noise and communication-layer fault injection, with Hailo NPU edge VLA inference support.
 
-The project ships 6 Jupyter Notebook tutorials (from Hello World to Sim2Real odometry drift analysis), enabling researchers to immediately verify zero-code backend switching without hardware.
+The project ships 6 Jupyter Notebook tutorials (from Hello World to sim-to-real odometry drift analysis), enabling researchers to immediately verify cross-backend API consistency without hardware.
 
 Future directions include: large-scale vectorized RL training using Isaac Sim parallel environments, cross-robot zero-shot policy transfer (leveraging HAL to normalize heterogeneous kinematics), deeper integration with RoboCup standard tasks, and end-to-end foundation model fine-tuning for open-world navigation.
 

@@ -43,7 +43,7 @@
 % ===========================================================================
 \begin{abstract}
 具身智能研究需要仿真、真实硬件与学习算法的深度协同——然而现有平台往往迫使研究者在昂贵的商业系统、纯仿真环境，或具有陡峭 ROS2 学习曲线的硬件平台之间做出取舍。
-本文提出 \textbf{3we}，一套完全开源的基础设施，使相同的 Python 代码无需任何修改即可在轻量级 Mock 仿真器、Gazebo、NVIDIA Isaac Sim 及真实硬件（Raspberry Pi~5 + Hailo-8L）上完全一致地运行。
+本文提出 \textbf{3we}，一套完全开源的基础设施，在轻量级 Mock 仿真器、Gazebo、NVIDIA Isaac Sim 及真实硬件（Raspberry Pi~5 + Hailo-8L）之上提供一致的 Python API，使相同的用户代码无需修改即可面向所有后端。本文不主张"零成本 Sim2Real 迁移"：弥合残余的仿真-现实差距（传感器模型、动力学、执行器延迟）仍需面向任务的调优，平台通过文档化的域随机化与故障注入接口为此提供支持。
 该平台提供 AI 优先的 Python API，可将典型 ROS2 导航代码从 60 余行压缩至 5 行；提供四类 Gymnasium 兼容环境（导航、探索、目标导航、视觉-语言导航）及多智能体协作环境；原生 VLM/VLA 集成与 Hailo NPU 边缘推理；硬件抽象层（HAL）支持第三方机器人；轨迹录制与 LeRobot/HuggingFace Hub 互操作；以及覆盖 7 个评估场景的标准化基准测试。
 在物料清单（BOM）成本约 300 美元的可复现硬件上，初步验证表明点导航任务的仿真到现实迁移率超过 0.6，社区基线在结构化仿真环境中达到 82\% 的成功率（SPL 0.65）。
 所有软件（Apache~2.0 协议）、硬件设计（CERN-OHL-P~v2 协议）及文档（CC-BY-SA~4.0 协议）均已公开发布。
@@ -78,7 +78,7 @@ ROS2~\cite{macenski2022ros2} 提供了健壮的中间件，但对于专注于算
 
 \begin{itemize}
     \item \textbf{BOM 约 300 美元的开放硬件}，提供完整可复现的 PCB 设计（KiCad）、机械图纸及选型指南，遵循 CERN-OHL-P~v2 协议。
-    \item \textbf{零代码 Sim2Real}：统一的 Python API，\texttt{Robot(backend="gazebo")} 与 \texttt{Robot(backend="real")} 执行完全相同的用户代码。
+    \item \textbf{跨后端一致的 API}：统一的 Python API，\texttt{Robot(backend="gazebo")} 与 \texttt{Robot(backend="real")} 无需修改即可执行相同的用户代码。残余的仿真-现实差距仍属任务级问题，平台通过传感器噪声与故障注入接口为此提供支持。
     \item \textbf{AI 优先 API}：从安装到首次导航仅需 5 行代码，原生支持 VLM/VLA 集成、多级动作空间及 Gymnasium 接口。
     \item \textbf{标准化基准测试}：覆盖 7 个场景的 3 类任务，提供可复现的基线结果与社区排行榜。
     \item \textbf{硬件抽象层}：内置多平台硬件配置文件，支持 3we、AgileX Scout、TurtleBot4、Unitree Go2 等异构平台。
@@ -102,7 +102,7 @@ LeRobot~\cite{cadene2024lerobot}（HuggingFace）为操作任务提供 VLA 模�
 
 \subsection{平台定位}
 
-3we 占据独特的生态位：在保证 Sim2Real API 一致性的前提下，同时提供完全开放的硬件\emph{与}软件，并具备 ROS2 原生导航与 AI 优先设计。表~\ref{tab:comparison} 总结了与主要平台的关键差异。
+3we 占据独特的生态位：在保证跨后端 Python API 一致性的前提下（这是 API 层面的契约；Sim2Real \emph{迁移}仍需任务级调优），同时提供完全开放的硬件\emph{与}软件，并具备 ROS2 原生导航与 AI 优先设计。表~\ref{tab:comparison} 总结了与主要平台的关键差异。
 
 \begin{table}[H]
 \centering
@@ -115,7 +115,7 @@ LeRobot~\cite{cadene2024lerobot}（HuggingFace）为操作任务提供 VLA 模�
 \midrule
 开放硬件 & \checkmark & -- & -- & \checkmark & -- \\
 BOM $\leq$\$300 & \checkmark & -- & N/A & \checkmark & N/A \\
-Sim2Real API & \checkmark & -- & 仅仿真 & -- & 仅仿真 \\
+跨后端 API & \checkmark & -- & 仅仿真 & -- & 仅仿真 \\
 ROS2 + Nav2 & \checkmark & \checkmark & 部分 & -- & -- \\
 AI 优先 Python & \checkmark & -- & \checkmark & \checkmark & \checkmark \\
 VLM/VLA 原生 & \checkmark & -- & -- & \checkmark & -- \\
@@ -413,9 +413,9 @@ faulty = FaultInjector(backend, config)
 \section{结论与未来工作}
 
 本文提出了 3we，一套完全开源的具身智能研究基础设施，通过统一的 Python API 弥合了仿真与现实之间的鸿沟。
-核心贡献包括：（1）跨四个后端的零代码 Sim2Real 迁移；（2）BOM 约 300 美元的可复现开放硬件；（3）将导航代码复杂度降低 12 倍的 AI 优先 API 设计；（4）附社区基线与公开排行榜的标准化基准测试体系；（5）支持第三方机器人的硬件抽象层；（6）兼容 LeRobot/Open-X 格式的轨迹录制与数据共享；（7）同时覆盖传感器噪声与通信层故障注入的域随机化模块，并支持 Hailo NPU 边缘 VLA 推理。
+核心贡献包括：（1）跨四个后端（Mock、Gazebo、Isaac Sim、真实硬件）保持不变的 Python API，并通过显式接口支持任务级调优以弥合残余的 Sim2Real 差距，而非主张"零成本迁移"；（2）BOM 约 300 美元的可复现开放硬件；（3）将导航代码复杂度降低 12 倍的 AI 优先 API 设计；（4）附社区基线与公开排行榜的标准化基准测试体系；（5）支持第三方机器人的硬件抽象层；（6）兼容 LeRobot/Open-X 格式的轨迹录制与数据共享；（7）同时覆盖传感器噪声与通信层故障注入的域随机化模块，并支持 Hailo NPU 边缘 VLA 推理。
 
-项目附带 6 份 Jupyter Notebook 教程（从 Hello World 到 Sim2Real 里程计漂移分析），研究者可无需硬件即刻验证零代码后端切换的实际效果。
+项目附带 6 份 Jupyter Notebook 教程（从 Hello World 到 Sim2Real 里程计漂移分析），研究者可无需硬件即刻验证跨后端 API 一致性的实际效果。
 
 未来方向包括：基于 Isaac Sim 并行环境的大规模向量化 RL 训练、跨机器人零样本策略迁移（利用 HAL 归一化不同运动学模型）、与 RoboCup 标准赛题的深度集成、以及面向开放世界导航的基础模型端到端微调。
 
