@@ -187,27 +187,23 @@ See the [Benchmark Leaderboard](docs/leaderboard.md) for baseline results and su
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Your Python Code                            │
-│  robot.move_to() · robot.get_image() · robot.execute_instruction│
-├─────────────────────────────────────────────────────────────────┤
-│                     threewe Python API                           │
-│  Robot · Types · Config · AI (VLM/VLA) · Gym · Data · Benchmark │
-├──────────────────┬──────────────────┬──────────────┬────────────────┤
-│  MockBackend     │  GazeboBackend   │ RealBackend  │ IsaacSimBackend│
-│  (Zero-dep 2D   │  (Gazebo Harmonic│ (ROS2 Topics)│ (GPU-accelerated│
-│   kinematic sim) │   + ros_gz_bridge│              │  parallel RL)  │
-├──────────────────┴──────────────────┴──────────────┴────────────────┤
-│                     ROS2 Jazzy + Nav2                            │
-│   /cmd_vel · /scan · /odom · /camera · NavigateToPose Action    │
-├─────────────────────────────────────────────────────────────────┤
-│                     Firmware (ESP32-S3)                          │
-│   Motor PID · Encoders · IMU · Safety Relay · micro-ROS         │
-├─────────────────────────────────────────────────────────────────┤
-│                     Hardware Layer                               │
-│   Mecanum · DRV8833 · HC-SR04/LD06 · BNO055 · Battery · E-Stop  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A["<b>Your Python Code</b><br/>robot.move_to() · robot.get_image() · robot.execute_instruction()"]
+    B["<b>threewe Python API</b><br/>Robot · Types · Config · AI (VLM/VLA) · Gym · Data · Benchmark"]
+    C1["<b>MockBackend</b><br/>Zero-dep 2D<br/>kinematic sim"]
+    C2["<b>GazeboBackend</b><br/>Gazebo Harmonic<br/>+ ros_gz_bridge"]
+    C3["<b>RealBackend</b><br/>ROS2 Topics"]
+    C4["<b>IsaacSimBackend</b><br/>GPU-accelerated<br/>parallel RL"]
+    D["<b>ROS2 Jazzy + Nav2</b><br/>/cmd_vel · /scan · /odom · /camera · NavigateToPose Action"]
+    E["<b>Firmware (ESP32-S3)</b><br/>Motor PID · Encoders · IMU · Safety Relay · micro-ROS"]
+    F["<b>Hardware Layer</b><br/>Mecanum · DRV8833 · HC-SR04/LD06 · BNO055 · Battery · E-Stop"]
+
+    A --> B
+    B --> C1 & C2 & C3 & C4
+    C1 & C2 & C3 & C4 --> D
+    D --> E
+    E --> F
 ```
 
 ---

@@ -185,27 +185,23 @@ threewe benchmark run --task pointnav --episodes 100 --backend gazebo
 
 ## 系统架构
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      你的 Python 代码                             │
-│  robot.move_to() · robot.get_image() · robot.execute_instruction│
-├─────────────────────────────────────────────────────────────────┤
-│                     threewe Python API                           │
-│  Robot · Types · Config · AI (VLM/VLA) · Gym · Data · Benchmark │
-├──────────────────┬──────────────────┬──────────────┬────────────────┤
-│  MockBackend     │  GazeboBackend   │ RealBackend  │ IsaacSimBackend│
-│  (零依赖 2D     │  (Gazebo Harmonic│ (ROS2 Topics)│ (GPU 加速      │
-│   运动学仿真)    │   + ros_gz_bridge│              │  并行 RL)      │
-├──────────────────┴──────────────────┴──────────────┴────────────────┤
-│                     ROS2 Jazzy + Nav2                            │
-│   /cmd_vel · /scan · /odom · /camera · NavigateToPose Action    │
-├─────────────────────────────────────────────────────────────────┤
-│                     固件层 (ESP32-S3)                             │
-│   电机 PID · 编码器 · IMU · 安全继电器 · micro-ROS              │
-├─────────────────────────────────────────────────────────────────┤
-│                     硬件层                                        │
-│   麦克纳姆轮 · DRV8833 · HC-SR04/LD06 · BNO055 · 电池 · 急停   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A["<b>你的 Python 代码</b><br/>robot.move_to() · robot.get_image() · robot.execute_instruction()"]
+    B["<b>threewe Python API</b><br/>Robot · Types · Config · AI (VLM/VLA) · Gym · Data · Benchmark"]
+    C1["<b>MockBackend</b><br/>零依赖 2D<br/>运动学仿真"]
+    C2["<b>GazeboBackend</b><br/>Gazebo Harmonic<br/>+ ros_gz_bridge"]
+    C3["<b>RealBackend</b><br/>ROS2 Topics"]
+    C4["<b>IsaacSimBackend</b><br/>GPU 加速<br/>并行 RL"]
+    D["<b>ROS2 Jazzy + Nav2</b><br/>/cmd_vel · /scan · /odom · /camera · NavigateToPose Action"]
+    E["<b>固件层 (ESP32-S3)</b><br/>电机 PID · 编码器 · IMU · 安全继电器 · micro-ROS"]
+    F["<b>硬件层</b><br/>麦克纳姆轮 · DRV8833 · HC-SR04/LD06 · BNO055 · 电池 · 急停"]
+
+    A --> B
+    B --> C1 & C2 & C3 & C4
+    C1 & C2 & C3 & C4 --> D
+    D --> E
+    E --> F
 ```
 
 ---

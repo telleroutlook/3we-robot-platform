@@ -103,18 +103,17 @@ trajectory.save("demo_001.hdf5")
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────┐
-│          Your AI Code (Python)               │
-├──────────────────────────────────────────────┤
-│          threewe Python API                  │
-│   Perception · Action · Gym · VLM · Data     │
-├──────────────────────────────────────────────┤
-│       Backend Abstraction Layer              │
-├─────────────┬─────────────┬──────────────────┤
-│   Gazebo    │  Isaac Sim  │  Real Hardware   │
-│   (CPU, CI) │  (GPU, RL)  │  (Pi5 + ESP32)  │
-└─────────────┴─────────────┴──────────────────┘
+```mermaid
+flowchart TB
+    A["<b>Your AI Code (Python)</b>"]
+    B["<b>threewe Python API</b><br/>Perception · Action · Gym · VLM · Data"]
+    C["<b>Backend Abstraction Layer</b>"]
+    D1["<b>Gazebo</b><br/>CPU, CI"]
+    D2["<b>Isaac Sim</b><br/>GPU, RL"]
+    D3["<b>Real Hardware</b><br/>Pi5 + ESP32"]
+
+    A --> B --> C
+    C --> D1 & D2 & D3
 ```
 
 ---
