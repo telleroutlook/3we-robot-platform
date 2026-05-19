@@ -20,16 +20,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          # commit-back step needs full history + write-capable token
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Compile English paper (xelatex)
         uses: xu-cheng/latex-action@v3
@@ -57,16 +54,8 @@ jobs:
             paper/main_zh.pdf
           if-no-files-found: error
 
-      - name: Commit rebuilt PDFs back to main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          set -e
-          if git diff --quiet -- paper/main.pdf paper/main_zh.pdf; then
-            echo "PDFs unchanged — nothing to commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add paper/main.pdf paper/main_zh.pdf
-          git commit -m "docs(paper): rebuild PDFs from latest .tex sources [skip ci]"
-          git push
+      # Note: we deliberately do NOT push the rebuilt PDFs back to main from CI.
+      # Branch protection requires 2 status checks that a bot push can't satisfy,
+      # so the maintainer downloads the `papers` artifact and commits it manually
+      # (or via a follow-up PR). Keeping this workflow read-only also avoids
+      # CI loops when other workflows ignore [skip ci].
