@@ -39,7 +39,7 @@ jobs:
           rosdep install --from-paths ros2_ws --ignore-src -y --skip-keys="micro_ros_agent"
 
       - name: Cache colcon workspace
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ros2_ws/build
           key: colcon-${{ runner.os }}-${{ hashFiles('ros2_ws/*/CMakeLists.txt', 'ros2_ws/*/package.xml', 'ros2_ws/*/setup.py') }}
