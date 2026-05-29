@@ -13,6 +13,8 @@
 An open-source robot platform for Embodied AI research — a consistent Python API
 across simulation and real hardware, with <$500 reproducible hardware.
 
+> **Status:** Active development. Mock backend is functional. Hardware builds and Gazebo integration are being validated — no completed physical prototype video yet.
+
 > **A note on Sim2Real:** The Python API stays the same when you switch backends, but
 > sim-to-real transfer in practice still requires task-specific tuning (sensor models,
 > noise, dynamics). We provide presets for common scenarios; we don't claim the gap
@@ -238,7 +240,7 @@ flowchart TB
 | IMU | BNO055 (9-axis fused) |
 | Max Velocity | 0.5 m/s linear, 1.0 rad/s angular |
 | Battery | 7.4V Li-ion, ~2h runtime |
-| Safety | ISO 13850 E-stop + dual-channel relay |
+| Safety | ISO 13850-inspired hardware E-stop + dual-channel relay (not certified) |
 | Connectivity | Wi-Fi + BLE (+ 4G/5G optional) |
 | Reproduction Cost | <$500 |
 
@@ -377,6 +379,7 @@ We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for develop
 > [!WARNING]
 > This platform contains **moving mechanical parts** and **lithium batteries**.
 
+- Safety relay design is **inspired by** ISO 13850 but is **not certified** — do not use for safety-critical applications without independent certification
 - Always verify E-stop function before operation
 - Never bypass or modify the safety relay circuit
 - Follow battery handling guidelines in documentation
